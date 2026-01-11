@@ -23,7 +23,6 @@ func (r *Reactable) TryCrystallizeHydro(a *info.AttackEvent) bool {
 	if _, ok := r.core.Flags.Custom[LunarCrystallizeEnableKey]; ok {
 		return r.TryLunarCrystallize(a)
 	}
-
 	if r.GetAuraDurability(info.ReactionModKeyHydro) > info.ZeroDur {
 		return r.tryCrystallizeWithEle(a, attributes.Hydro, info.ReactionTypeCrystallizeHydro, event.OnCrystallizeHydro)
 	}

@@ -31,6 +31,7 @@ const (
 	ReactionTypeHyperbloom         ReactionType = "hyperbloom"
 	ReactionTypeLunarCharged       ReactionType = "lunarcharged"
 	ReactionTypeLunarCrystallize   ReactionType = "lunarcrystallize"
+	ReactionTypeLunarBloom         ReactionType = "lunarbloom"
 	ReactionTypeNoReaction         ReactionType = ""
 	ReactionTypeFreezeExtend       ReactionType = "freeze-extend"
 )
@@ -68,6 +69,8 @@ type Reactable interface {
 	ReactableSwirl
 	ReactableVaporize
 	ReactableLunarCharged
+	ReactableLunarCrystallize
+	ReactableLunarBloom
 }
 
 type ReactableBloom interface {
@@ -136,5 +139,9 @@ type ReactableLunarCharged interface {
 
 type ReactableLunarCrystallize interface {
 	TryLunarCrystallize(a *AttackEvent) bool
-	DoLCrAttack()
+	DoLCrAttack(owner int)
+}
+
+type ReactableLunarBloom interface {
+	GetVerdantDew() int
 }

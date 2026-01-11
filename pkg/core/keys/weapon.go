@@ -70,6 +70,7 @@ var weaponNames = []string{
 	"crescentpike",
 	"crimsonmoonssemblance",
 	"darkironsword",
+	"dawningfrost",
 	"deathmatch",
 	"debateclub",
 	"dialoguesofthedesertsages",
@@ -173,6 +174,7 @@ var weaponNames = []string{
 	"royallongsword",
 	"royalspear",
 	"rust",
+	"sacrificersstaff",
 	"sacrificialbow",
 	"sacrificialfragments",
 	"sacrificialgreatsword",
@@ -288,6 +290,7 @@ const (
 	CrescentPike
 	CrimsonMoonsSemblance
 	DarkIronSword
+	DawningFrost
 	Deathmatch
 	DebateClub
 	DialoguesOfTheDesertSages
@@ -391,6 +394,7 @@ const (
 	RoyalLongsword
 	RoyalSpear
 	Rust
+	SacrificersStaff
 	SacrificialBow
 	SacrificialFragments
 	SacrificialGreatsword

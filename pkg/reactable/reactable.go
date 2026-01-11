@@ -11,10 +11,8 @@ import (
 	"github.com/genshinsim/gcsim/pkg/core/info"
 )
 
-const maxChars = 4
-
 type Reactable struct {
-	Durability [info.ReactionModKeyEnd][maxChars]info.Durability
+	Durability [info.ReactionModKeyEnd][info.MaxChars]info.Durability
 	DecayRate  [info.ReactionModKeyEnd]info.Durability
 	// Source     []int //source frame of the aura
 	self info.Target
@@ -40,7 +38,7 @@ type Reactable struct {
 	crystallizeGCD  int
 
 	// lunar crystallize specific
-	lunarCrystallizeContributor [maxChars]bool
+	lunarCrystallizeContributor [info.MaxChars]bool
 
 	// lunar charged specific
 	lcAtkOwner int // index of owner of next LC tick

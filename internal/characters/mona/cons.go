@@ -51,14 +51,17 @@ func (c *char) c1Init() {
 					Base: modifier.NewBase("mona-c1", 8*60),
 					Amount: func(ai info.AttackInfo) (float64, bool) {
 						bonus := 0.15
-						if char.Index() != c.Core.Player.Active() {
-							bonus *= 1.6
-						}
 						switch ai.AttackTag {
 						// Hydro Swirl DMG increases by 15%.
 						// Electro-Charged DMG increases by 15%.
 						// Lunar-Charged DMG increases by 15%.
-						case attacks.AttackTagSwirlHydro, attacks.AttackTagECDamage, attacks.AttackTagReactionLunarCharge, attacks.AttackTagDirectLunarCharged, attacks.AttackTagReactionLunarCrystallize, attacks.AttackTagDirectLunarCrystallize:
+						case attacks.AttackTagSwirlHydro,
+							attacks.AttackTagECDamage,
+							attacks.AttackTagReactionLunarCharge,
+							attacks.AttackTagDirectLunarCharged,
+							attacks.AttackTagReactionLunarCrystallize,
+							attacks.AttackTagDirectLunarCrystallize,
+							attacks.AttackTagDirectLunarBloom:
 							return bonus, false
 						}
 
@@ -183,7 +186,7 @@ func (c *char) c4Init() {
 	}
 
 	// workaround for giving lunarcharge the 15% CR
-	c.Core.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnLunarChargedReactionAttack, func(args ...any) bool {
 		x, ok := args[0].(*enemy.Enemy)
 		if !ok {
 			return false

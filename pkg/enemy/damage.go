@@ -44,20 +44,21 @@ func (e *Enemy) calc(atk *info.AttackEvent, evt glog.Event) (float64, bool) {
 		a = atk.Snapshot.Stats.MaxHP()
 	case atk.Info.UseDef:
 		a = atk.Snapshot.Stats.TotalDEF()
+	case atk.Info.UseEM:
+		a = atk.Snapshot.Stats[attributes.EM]
 	default:
 		a = atk.Snapshot.Stats.TotalATK()
 	}
 
 	var base float64
 	if isDirectLunar(atk.Info.AttackTag) {
-		// Lunar flat damage is added after EM bonus, base Mult bonus, and secret mult bonus
+		// Lunar flat damage is added after EM bonus and special lunar multipliers.
 		base = (atk.Info.Mult * a) * (1 + atk.Info.BaseDmgBonus)
 	} else {
 		base = (atk.Info.Mult*a + atk.Info.FlatDmg) * (1 + atk.Info.BaseDmgBonus)
 	}
 
 	damage := base * (1 + dmgBonus)
-
 	preampdmg := damage
 
 	// calculate em bonus
@@ -68,13 +69,12 @@ func (e *Enemy) calc(atk *info.AttackEvent, evt glog.Event) (float64, bool) {
 	if atk.Info.Amped {
 		emBonus = (2.78 * em) / (1400 + em)
 		reactBonus = e.Core.Player.ByIndex(atk.Info.ActorIndex).ReactBonus(atk.Info)
-		// e.Core.Log.Debugw("debug", "frame", e.Core.F, core.LogPreDamageMod, "char", e.Index, "char_react", char.CharIndex(), "reactbonus", char.ReactBonus(atk.Info), "damage_pre", damage)
 		damage *= (atk.Info.AmpMult * (1 + emBonus + reactBonus))
 	}
 
 	if isDirectLunar(atk.Info.AttackTag) {
-		// special 3x mult for direct lunarcharged, 1.6x mult for direct Lunar crystallize
-		var lunarMult float64
+		// Special multipliers for direct lunar reactions.
+		lunarMult := 1.0
 		switch atk.Info.AttackTag {
 		case attacks.AttackTagDirectLunarCharged:
 			lunarMult = 3.0
@@ -87,14 +87,14 @@ func (e *Enemy) calc(atk *info.AttackEvent, evt glog.Event) (float64, bool) {
 
 		emBonus = (6 * em) / (2000 + em)
 		reactBonus = e.Core.Player.ByIndex(atk.Info.ActorIndex).ReactBonus(atk.Info)
-
 		damage *= 1 + emBonus + reactBonus
 
-		// Lunar flat damage is added after EM bonus, base Mult bonus, and secret mult bonus
+		// Add lunar flat damage after bonuses.
 		damage += atk.Info.FlatDmg
 	}
 
-	damage *= (1 + atk.Info.Elevation)
+	elevation := atk.Info.Elevation
+	damage *= 1 + elevation
 
 	res := e.resist(&atk.Info, evt)
 	defadj := e.defAdj(evt)
@@ -134,7 +134,6 @@ func (e *Enemy) calc(atk *info.AttackEvent, evt glog.Event) (float64, bool) {
 		damage *= (1 + atk.Snapshot.Stats[attributes.CD])
 		isCrit = true
 	}
-
 	// reduce damage by damage group
 	x := 1.0
 	if !atk.Info.SourceIsSim {
@@ -193,6 +192,8 @@ func (e *Enemy) calc(atk *info.AttackEvent, evt glog.Event) (float64, bool) {
 			Write("em_bonus", emBonus).
 			Write("react_bonus", reactBonus).
 			Write("amp_mult_total", (atk.Info.AmpMult*(1+emBonus+reactBonus))).
+			Write("react_base_dmg_bonus", atk.Info.BaseDmgBonus).
+			Write("elevation_bonus", elevation).
 			Write("pre_crit_dmg_react", precritdmg*(atk.Info.AmpMult*(1+emBonus+reactBonus))).
 			Write("dmg_if_crit_react", precritdmg*(1+atk.Snapshot.Stats[attributes.CD])*(atk.Info.AmpMult*(1+emBonus+reactBonus))).
 			Write("avg_crit_dmg_react", ((1-atk.Snapshot.Stats[attributes.CR])*precritdmg+atk.Snapshot.Stats[attributes.CR]*precritdmg*(1+atk.Snapshot.Stats[attributes.CD]))*(atk.Info.AmpMult*(1+emBonus+reactBonus))).
