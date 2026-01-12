@@ -124,6 +124,7 @@ var weaponNames = []string{
 	"keyofkhajnisut",
 	"kingssquire",
 	"kitaincrossspear",
+	"lightbearingmoonshard",
 	"lightoffoliarincision",
 	"lionsroar",
 	"lithicblade",
@@ -345,6 +346,7 @@ const (
 	KeyOfKhajNisut
 	KingsSquire
 	KitainCrossSpear
+	LightbearingMoonshard
 	LightOfFoliarIncision
 	LionsRoar
 	LithicBlade
