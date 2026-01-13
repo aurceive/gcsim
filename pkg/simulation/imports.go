@@ -140,6 +140,7 @@ import (
 	_ "github.com/genshinsim/gcsim/internal/weapons/catalyst/pocket"
 	_ "github.com/genshinsim/gcsim/internal/weapons/catalyst/prayer"
 	_ "github.com/genshinsim/gcsim/internal/weapons/catalyst/prototype"
+	_ "github.com/genshinsim/gcsim/internal/weapons/catalyst/reliquaryoftruth"
 	_ "github.com/genshinsim/gcsim/internal/weapons/catalyst/ringofyaxche"
 	_ "github.com/genshinsim/gcsim/internal/weapons/catalyst/royal"
 	_ "github.com/genshinsim/gcsim/internal/weapons/catalyst/sacrifical"
