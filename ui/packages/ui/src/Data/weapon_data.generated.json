@@ -736,6 +736,14 @@
       "image_name": "UI_EquipIcon_Sword_Ayus",
       "name_text_hash_map ": "275622963"
     },
+    "lightbearingmoonshard": {
+      "id": 11519,
+      "key": "lightbearingmoonshard",
+      "rarity": 5,
+      "weapon_class": "WEAPON_SWORD_ONE_HAND",
+      "image_name": "UI_EquipIcon_Sword_i_n11519",
+      "name_text_hash_map ": "0"
+    },
     "lionsroar": {
       "id": 11405,
       "key": "lionsroar",
@@ -887,6 +895,22 @@
       "weapon_class": "WEAPON_BOW",
       "image_name": "UI_EquipIcon_Bow_Maria",
       "name_text_hash_map ": "1860795787"
+    },
+    "nightweaverslookingglass": {
+      "id": 14520,
+      "key": "nightweaverslookingglass",
+      "rarity": 5,
+      "weapon_class": "WEAPON_CATALYST",
+      "image_name": "UI_EquipIcon_Catalyst_i_n14520",
+      "name_text_hash_map ": "0"
+    },
+    "nocturnescurtaincall": {
+      "id": 14522,
+      "key": "nocturnescurtaincall",
+      "rarity": 5,
+      "weapon_class": "WEAPON_CATALYST",
+      "image_name": "UI_EquipIcon_Catalyst_NocturnesCurtainCall",
+      "name_text_hash_map ": "0"
     },
     "oathsworneye": {
       "id": 14415,
@@ -1055,6 +1079,14 @@
       "weapon_class": "WEAPON_BOW",
       "image_name": "UI_EquipIcon_Bow_Curve",
       "name_text_hash_map ": "4267718859"
+    },
+    "reliquaryoftruth": {
+      "id": 14521,
+      "key": "reliquaryoftruth",
+      "rarity": 5,
+      "weapon_class": "WEAPON_CATALYST",
+      "image_name": "UI_EquipIcon_Catalyst_i_n14521",
+      "name_text_hash_map ": "0"
     },
     "redhornstonethresher": {
       "id": 12510,
