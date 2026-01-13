@@ -145,6 +145,7 @@ var weaponNames = []string{
 	"moonweaversdawn",
 	"mountainbracingbolt",
 	"mouunsmoon",
+	"nightweaverslookingglass",
 	"nocturnescurtaincall",
 	"oathsworneye",
 	"oldmercspal",
@@ -368,6 +369,7 @@ const (
 	MoonweaversDawn
 	MountainBracingBolt
 	MouunsMoon
+	NightweaversLookingGlass
 	NocturnesCurtainCall
 	OathswornEye
 	OldMercsPal
