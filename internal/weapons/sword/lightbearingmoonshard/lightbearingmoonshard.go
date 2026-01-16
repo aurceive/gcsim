@@ -35,11 +35,14 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	lcrBonus := 0.48 + 0.16*float64(r) // 64/80/96/112/128%
 	lcrDur := 5 * 60                   // 5s
 
+	defMod := make([]float64, attributes.EndStatType)
+	defMod[attributes.DEFP] = defBonus
+
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase(defKey, -1),
 		AffectedStat: attributes.DEFP,
 		Amount: func() ([]float64, bool) {
-			return []float64{defBonus}, true
+			return defMod, true
 		},
 	})
 
