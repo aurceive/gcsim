@@ -152,6 +152,14 @@
       "image_name": "UI_EquipIcon_Catalyst_Blackrock",
       "name_text_hash_map ": "3273999011"
     },
+    "blackmarrowlantern": {
+      "id": 14433,
+      "key": "blackmarrowlantern",
+      "rarity": 4,
+      "weapon_class": "WEAPON_CATALYST",
+      "image_name": "UI_EquipIcon_Catalyst_i_n14433",
+      "name_text_hash_map ": "0"
+    },
     "blackclifflongsword": {
       "id": 11408,
       "key": "blackclifflongsword",
