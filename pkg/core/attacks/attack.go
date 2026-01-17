@@ -42,6 +42,7 @@ const (
 	DirectLunarReactionEndDelim
 
 	AttackTagLength
+	AttackTagLunarCharged
 )
 
 func AttackTagIsLunar(atkTag AttackTag) bool {
