@@ -576,6 +576,14 @@
       "image_name": "UI_EquipIcon_Catalyst_Everfrost",
       "name_text_hash_map ": "2587614459"
     },
+    "fracturedhalo": {
+      "id": 13515,
+      "key": "fracturedhalo",
+      "rarity": 5,
+      "weapon_class": "WEAPON_POLE",
+      "image_name": "UI_EquipIcon_Pole_i_n13515",
+      "name_text_hash_map ": "0"
+    },
     "fruitfulhook": {
       "id": 12430,
       "key": "fruitfulhook",
