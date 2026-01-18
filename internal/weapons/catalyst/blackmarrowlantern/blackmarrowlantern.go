@@ -30,12 +30,6 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	w := &Weapon{}
 	r := float64(p.Refine)
 
-	moonsignCount := 0
-	for _, teammate := range c.Player.Chars() {
-		moonsignCount += teammate.Moonsign
-	}
-	hasAscendantGleam := moonsignCount >= 2
-
 	bloomBonus := 0.36 + 0.12*r // 0.48/0.60/0.72/0.84/0.96
 	lunarBonus := 0.09 + 0.03*r // 0.12/0.15/0.18/0.21/0.24
 
@@ -46,11 +40,7 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 			case attacks.AttackTagBloom:
 				return bloomBonus, false
 			case attacks.AttackTagDirectLunarBloom:
-				bonus := lunarBonus
-				if hasAscendantGleam {
-					bonus += lunarBonus
-				}
-				return bonus, false
+				return lunarBonus * getBonus(c), false
 			default:
 				return 0, false
 			}
@@ -58,4 +48,11 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	})
 
 	return w, nil
+}
+
+func getBonus(c *core.Core) float64 {
+	if c.Player.GetMoonsignCount() < 2 {
+		return 1.0
+	}
+	return 2.0
 }
