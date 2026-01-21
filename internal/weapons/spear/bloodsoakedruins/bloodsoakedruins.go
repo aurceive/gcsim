@@ -10,6 +10,7 @@ import (
 	"github.com/genshinsim/gcsim/pkg/core/info"
 	"github.com/genshinsim/gcsim/pkg/core/keys"
 	"github.com/genshinsim/gcsim/pkg/core/player/character"
+	"github.com/genshinsim/gcsim/pkg/enemy"
 	"github.com/genshinsim/gcsim/pkg/modifier"
 )
 
@@ -37,8 +38,7 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	r := p.Refine
 	energyRestore := 11 + float64(r)
 
-	mDmg := make([]float64, attributes.EndStatType)
-	mDmg[attributes.DmgP] = 0.24 + float64(r)*0.12
+	lcDmgBonus := 0.24 + float64(r)*0.12
 
 	mCrit := make([]float64, attributes.EndStatType)
 	mCrit[attributes.CD] = 0.21 + float64(r)*0.07
@@ -48,21 +48,30 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 			return false
 		}
 
-		char.AddAttackMod(character.AttackMod{
+		char.AddReactBonusMod(character.ReactBonusMod{
 			Base: modifier.NewBaseWithHitlag("bloodsoakedruins-dmg", 3.5*60),
-			Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
-				if atk.Info.AttackTag != attacks.AttackTagLunarCharged {
-					return nil, false
+			Amount: func(ai info.AttackInfo) (float64, bool) {
+				switch ai.AttackTag {
+				case attacks.AttackTagReactionLunarCharge, attacks.AttackTagDirectLunarCharged:
+					return lcDmgBonus, false
 				}
-				return mDmg, true
+				return 0, false
 			},
 		})
 
 		return false
 	}, fmt.Sprintf("bloodsoakedruins-burst-%v", char.Base.Key.String()))
 
+	// CRIT DMG + Energy restore only when the on-field wielder triggers (closes) the reaction.
 	c.Events.Subscribe(event.OnLunarCharged, func(args ...any) bool {
 		if c.Player.Active() != char.Index() {
+			return false
+		}
+		if _, ok := args[0].(*enemy.Enemy); !ok {
+			return false
+		}
+		atk := args[1].(*info.AttackEvent)
+		if atk.Info.ActorIndex != char.Index() {
 			return false
 		}
 
