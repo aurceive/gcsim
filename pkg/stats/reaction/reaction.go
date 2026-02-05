@@ -15,6 +15,7 @@ var eventToReaction = map[event.Event]info.ReactionType{
 	event.OnFrozen:             info.ReactionTypeFreeze,
 	event.OnShatter:            info.ReactionTypeShatter,
 	event.OnElectroCharged:     info.ReactionTypeElectroCharged,
+	event.OnLunarCharged:       info.ReactionTypeLunarCharged,
 	event.OnSwirlHydro:         info.ReactionTypeSwirlHydro,
 	event.OnSwirlCryo:          info.ReactionTypeSwirlCryo,
 	event.OnSwirlElectro:       info.ReactionTypeSwirlElectro,
@@ -31,7 +32,6 @@ var eventToReaction = map[event.Event]info.ReactionType{
 	event.OnHyperbloom:         info.ReactionTypeHyperbloom,
 	event.OnBurgeon:            info.ReactionTypeBurgeon,
 	event.OnBurning:            info.ReactionTypeBurning,
-	event.OnLunarCharged:       info.ReactionTypeLunarCharged,
 	event.OnLunarCrystallize:   info.ReactionTypeLunarCrystallize,
 }
 

@@ -23,7 +23,6 @@ type char struct {
 	phantasmalBubbleStacks int
 	omenStartingBonusDur   int
 	hexereiOmenExtension   int
-	c2icd                  int
 	c2AfterBurst           bool
 	c2Buff                 []float64
 	c6Src                  int
@@ -38,10 +37,7 @@ func NewChar(s *core.Core, w *character.CharWrapper, p info.CharacterProfile) er
 	c.NormalHitNum = normalHitNum
 	c.BurstCon = 3
 	c.SkillCon = 5
-
-	c.c2icd = -1
 	c.c6Src = -1
-
 	w.Character = &c
 
 	hexerei, ok := p.Params["hexerei"]
@@ -60,10 +56,18 @@ func (c *char) Init() error {
 
 	c.hexereiInit()
 
-	c.c1Init()
-	c.c2Init()
-	c.c4Init()
-	c.c6Init()
-
+	if c.Base.Cons >= 1 {
+		c.c1()
+	}
+	if c.Base.Cons >= 2 {
+		c.c2Init()
+		c.c2()
+	}
+	if c.Base.Cons >= 4 {
+		c.c4()
+	}
+	if c.Base.Cons >= 6 {
+		c.c6Init()
+	}
 	return nil
 }

@@ -16,8 +16,9 @@ import (
 )
 
 const (
-	c4key = "mona-c4"
-	c6Key = "mona-c6"
+	c2icdkey = "mona-c2-icd"
+	c4key    = "mona-c4"
+	c6Key    = "mona-c6"
 )
 
 // C1:
@@ -80,6 +81,11 @@ func (c *char) c1Init() {
 	}, "mona-c1-check")
 }
 
+// Upstream-style constellation hook (Init() gates by cons).
+func (c *char) c1() {
+	c.c1Init()
+}
+
 func (c *char) c2Init() {
 	if c.Base.Cons < 2 {
 		return
@@ -98,39 +104,64 @@ func (c *char) c2OnBurst() {
 // C2:
 // When a Normal Attack hits, there is a 20% chance that it will be automatically followed by a Charged Attack.
 // This effect can only occur once every 5s.
-func (c *char) c2NaCB(a info.AttackCB) {
-	trg := a.Target
+func (c *char) c2() {
 	if c.Base.Cons < 2 {
 		return
 	}
-	if a.Target.Type() != info.TargettableEnemy {
-		return
-	}
-	if c.c2icd > c.Core.F {
-		return
-	}
-	if !c.c2AfterBurst && c.Core.Rand.Float64() > .2 {
-		return
-	}
-	c.c2AfterBurst = false
-	c.c2icd = c.Core.F + 300 // every 5 seconds
+	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+		trg, ok := args[0].(*enemy.Enemy)
+		if !ok {
+			return false
+		}
 
-	ai := info.AttackInfo{
-		ActorIndex: c.Index(),
-		Abil:       "Charge Attack",
-		AttackTag:  attacks.AttackTagExtra,
-		ICDTag:     attacks.ICDTagNone,
-		ICDGroup:   attacks.ICDGroupDefault,
-		StrikeType: attacks.StrikeTypeDefault,
-		Element:    attributes.Hydro,
-		Durability: 25,
-		Mult:       charge[c.TalentLvlAttack()],
-	}
+		atk := args[1].(*info.AttackEvent)
+		if atk.Info.ActorIndex != c.Index() {
+			return false
+		}
+		if atk.Info.AttackTag != attacks.AttackTagNormal {
+			return false
+		}
 
-	c.Core.QueueAttack(ai, combat.NewCircleHitOnTarget(trg, nil, 3), chargeHitmark-chargeWindup, chargeHitmark-chargeWindup, c.makeHexereiCB(), c.c2CaCB, c.makeC6CAResetCB())
+		// Custom: allow a guaranteed proc once after burst.
+		if !c.c2AfterBurst {
+			if c.Core.Rand.Float64() > .2 {
+				return false
+			}
+		}
+		if c.StatusIsActive(c2icdkey) {
+			return false
+		}
+		c.AddStatus(c2icdkey, 5*60, true)
+		c.c2AfterBurst = false
+
+		c.QueueCharTask(func() {
+			ai := info.AttackInfo{
+				ActorIndex: c.Index(),
+				Abil:       "Charge Attack",
+				AttackTag:  attacks.AttackTagExtra,
+				ICDTag:     attacks.ICDTagNone,
+				ICDGroup:   attacks.ICDGroupDefault,
+				StrikeType: attacks.StrikeTypeDefault,
+				Element:    attributes.Hydro,
+				Durability: 25,
+				Mult:       charge[c.TalentLvlAttack()],
+			}
+			c.Core.QueueAttack(
+				ai,
+				combat.NewCircleHitOnTarget(trg, nil, 3),
+				0,
+				0,
+				c.makeHexereiCB(),
+				c.c2CaCB,
+				c.makeC6CAResetCB(),
+			)
+		}, .7*60)
+
+		return false
+	}, "mona-c2-followup")
 }
 
-// C2:
+// C2 (custom extension):
 // Additionally, when her Charged Attack hits an opponent, all nearby party members will have their Elemental Mastery increased by 80 for 12s.
 func (c *char) c2CaCB(a info.AttackCB) {
 	if c.Base.Cons < 2 {
@@ -142,13 +173,18 @@ func (c *char) c2CaCB(a info.AttackCB) {
 
 	for _, char := range c.Core.Player.Chars() {
 		char.AddStatMod(character.StatMod{
-			Base:         modifier.NewBaseWithHitlag("mona-c2", 480), // 8 s
+			Base:         modifier.NewBaseWithHitlag("mona-c2", 12*60),
 			AffectedStat: attributes.EM,
 			Amount: func() ([]float64, bool) {
 				return c.c2Buff, true
 			},
 		})
 	}
+}
+
+// Upstream-style constellation hook (Init() gates by cons).
+func (c *char) c4() {
+	c.c4Init()
 }
 
 // C4:

@@ -143,5 +143,5 @@ type ReactableLunarCrystallize interface {
 }
 
 type ReactableLunarBloom interface {
-	GetVerdantDew() int
+	LunarBloom()
 }
