@@ -39,8 +39,8 @@ func (e *Enemy) calc(atk *info.AttackEvent, evt glog.Event, grpMult float64) (fl
 		a = atk.Snapshot.Stats.TotalATK()
 	}
 
-	// TODO: Currently, only lunar attacks have BaseDmgBonus, so we don't know where this applies in the damage formula for normal talent attacks.
-	base := atk.Info.Mult*a*(1+atk.Info.BaseDmgBonus) + atk.Info.FlatDmg
+	// BaseDmgBonus affects flat attack for EM scaling based attacks and flatdmg from reactions
+	base := (atk.Info.Mult*a + atk.Info.FlatDmg) * (1 + atk.Info.BaseDmgBonus)
 	damage := base * (1 + dmgBonus)
 	preampdmg := damage
 
