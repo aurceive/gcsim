@@ -388,10 +388,6 @@ func setupAscendantGleam(core *core.Core) {
 				return
 			}
 
-			if !char.ReactBonusModIsActive("ascendant-gleam") {
-				return
-			}
-
 			// Ascendant gleam uses nonExtraStats
 			switch char.Base.Element {
 			case attributes.Electro, attributes.Pyro, attributes.Cryo:
@@ -424,8 +420,6 @@ func setupAscendantGleam(core *core.Core) {
 			return false
 		}
 
-		gleamBuffUpdateGen(char, src)()
-
 		for _, c := range core.Player.Chars() {
 			c.AddReactBonusMod(character.ReactBonusMod{
 				Base: modifier.NewBase("ascendant-gleam", 20*60),
@@ -440,6 +434,8 @@ func setupAscendantGleam(core *core.Core) {
 				},
 			})
 		}
+
+		gleamBuffUpdateGen(char, src)()
 
 		return false
 	}
