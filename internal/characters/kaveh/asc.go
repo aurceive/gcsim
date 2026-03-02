@@ -19,20 +19,20 @@ func (c *char) a1() {
 	if c.Base.Ascension < 1 {
 		return
 	}
-	c.Core.Events.Subscribe(event.OnPlayerHit, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnPlayerHit, func(args ...any) {
 		char := args[0].(int)
 		// don't trigger if kaveh was not hit
 		if char != c.Index() {
-			return false
+			return
 		}
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.AttackTag != attacks.AttackTagBloom &&
 			atk.Info.AttackTag != attacks.AttackTagHyperbloom &&
 			atk.Info.AttackTag != attacks.AttackTagBurgeon {
-			return false
+			return
 		}
 		if c.StatusIsActive(a1ICDKey) {
-			return false
+			return
 		}
 		c.AddStatus(a1ICDKey, 30, true)
 		c.Core.Player.Heal(info.HealInfo{
@@ -42,7 +42,6 @@ func (c *char) a1() {
 			Src:     3.0 * c.Stat(attributes.EM),
 			Bonus:   c.Stat(attributes.Heal),
 		})
-		return false
 	}, "kaveh-a1")
 }
 
@@ -51,9 +50,9 @@ func (c *char) a4() {
 	c.AddStatMod(character.StatMod{
 		Base:         modifier.NewBaseWithHitlag(a4Key, burstDuration),
 		AffectedStat: attributes.EM,
-		Amount: func() ([]float64, bool) {
+		Amount: func() []float64 {
 			m[attributes.EM] = float64(25 * c.a4Stacks)
-			return m, true
+			return m
 		},
 	})
 }
@@ -62,28 +61,27 @@ func (c *char) a4AddStacksHandler() {
 	if c.Base.Ascension < 4 {
 		return
 	}
-	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
 		if c.a4Stacks >= 4 {
-			return false
+			return
 		}
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != c.Index() {
-			return false
+			return
 		}
 		if atk.Info.AttackTag != attacks.AttackTagNormal &&
 			atk.Info.AttackTag != attacks.AttackTagExtra &&
 			atk.Info.AttackTag != attacks.AttackTagPlunge {
-			return false
+			return
 		}
 		if !c.StatusIsActive(burstKey) {
-			return false
+			return
 		}
 		if c.StatusIsActive(a4ICDKey) {
-			return false
+			return
 		}
 
 		c.AddStatus(a4ICDKey, 6, true)
 		c.a4Stacks++
-		return false
 	}, "kaveh-a4")
 }

@@ -30,31 +30,29 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	m := make([]float64, attributes.EndStatType)
 	m[attributes.ATKP] = 0.15 + float64(r)*0.05
 
-	addBuff := func(args ...any) bool {
+	addBuff := func(args ...any) {
 		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
+			return
 		}
 
 		atk := args[1].(*info.AttackEvent)
 		// don't proc if dmg not from weapon holder
 		if atk.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		// don't proc if off-field
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 
 		// add buff
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag("emeraldorb", 720),
 			AffectedStat: attributes.NoStat,
-			Amount: func() ([]float64, bool) {
-				return m, true
+			Amount: func() []float64 {
+				return m
 			},
 		})
-
-		return false
 	}
 
 	subKey := "emeraldorb-" + char.Base.Key.String()

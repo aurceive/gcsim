@@ -37,8 +37,8 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBase("instructor-2pc", -1),
 			AffectedStat: attributes.EM,
-			Amount: func() ([]float64, bool) {
-				return m, true
+			Amount: func() []float64 {
+				return m
 			},
 		})
 	}
@@ -47,15 +47,15 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 		m[attributes.EM] = 120
 
 		// TODO: does multiple instructor holders extend the duration?
-		add := func(args ...any) bool {
+		add := func(args ...any) {
 			atk := args[1].(*info.AttackEvent)
 			// Character must be on field to proc bonus
 			if c.Player.Active() != char.Index() {
-				return false
+				return
 			}
 			// Source of elemental reaction must be the character with instructor
 			if atk.Info.ActorIndex != char.Index() {
-				return false
+				return
 			}
 
 			// Add 120 EM to all characters
@@ -63,12 +63,11 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 				this.AddStatMod(character.StatMod{
 					Base:         modifier.NewBaseWithHitlag("instructor-4pc", 480),
 					AffectedStat: attributes.EM,
-					Amount: func() ([]float64, bool) {
-						return m, true
+					Amount: func() []float64 {
+						return m
 					},
 				})
 			}
-			return false
 		}
 
 		for i := event.ReactionEventStartDelim + 1; i < event.ReactionEventEndDelim; i++ {

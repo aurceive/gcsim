@@ -101,15 +101,15 @@ func (c *char) burstInfuseFn(char *character.CharWrapper, src int) {
 }
 
 func (c *char) burstSwap() {
-	c.Core.Events.Subscribe(event.OnCharacterSwap, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnCharacterSwap, func(args ...any) {
 		if !c.StatusIsActive(burstKey) {
-			return false
+			return
 		}
 		next := args[1].(int)
 		char := c.Core.Player.Chars()[next]
 		c.burstInfuseFn(char, c.burstSrc)
 		if c.waveCount > 2 {
-			return false
+			return
 		}
 		ai := info.AttackInfo{
 			ActorIndex:         c.Index(),
@@ -131,7 +131,6 @@ func (c *char) burstSwap() {
 			waveHitmark,
 		)
 		c.waveCount++
-		return false
 	}, "candace-q-swap")
 }
 
@@ -140,17 +139,17 @@ func (c *char) burstInit(char *character.CharWrapper) {
 	m[attributes.DmgP] = 0.2
 	char.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBase(burstDmgKey, -1),
-		Amount: func(atk *info.AttackEvent, _ info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, _ info.Target) []float64 {
 			if !c.StatusIsActive(burstKey) {
-				return nil, false
+				return nil
 			}
 			if atk.Info.AttackTag != attacks.AttackTagNormal {
-				return nil, false
+				return nil
 			}
 			if atk.Info.Element == attributes.Physical || atk.Info.Element == attributes.NoElement {
-				return nil, false
+				return nil
 			}
-			return m, true
+			return m
 		},
 	})
 }

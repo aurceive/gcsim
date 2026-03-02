@@ -47,12 +47,12 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 
 	energyRestore := 2.25 + float64(r)*0.25
 
-	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 
 		// can only trigger on plunge dmg
 		if atk.Info.AttackTag != attacks.AttackTagPlunge {
-			return false
+			return
 		}
 
 		// if dmg came from equipping char, then buff team plunge dmg
@@ -60,11 +60,11 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 			for _, char := range c.Player.Chars() {
 				char.AddAttackMod(character.AttackMod{
 					Base: modifier.NewBaseWithHitlag(buffKey, buffDuration),
-					Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+					Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 						if atk.Info.AttackTag != attacks.AttackTagPlunge {
-							return nil, false
+							return nil
 						}
-						return mDmg, true
+						return mDmg
 					},
 				})
 			}
@@ -72,12 +72,10 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 
 		// restore energy regardless of who did plunge dmg
 		if char.StatusIsActive(energyIcdKey) {
-			return false
+			return
 		}
 		char.AddStatus(energyIcdKey, energyIcd, true)
 		char.AddEnergy(energySrc, energyRestore)
-
-		return false
 	}, fmt.Sprintf("crane-onhit-%v", char.Base.Key.String()))
 
 	return w, nil

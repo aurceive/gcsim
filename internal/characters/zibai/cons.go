@@ -24,24 +24,24 @@ func (c *char) c1Init() {
 
 	c.AddReactBonusMod(character.ReactBonusMod{
 		Base: modifier.NewBase(c1Key+"-buff", -1),
-		Amount: func(ai info.AttackInfo) (float64, bool) {
+		Amount: func(ai info.AttackInfo) float64 {
 			if ai.ActorIndex != c.Index() {
-				return 0, false
+				return 0
 			}
 
 			if !c.StatusIsActive(c1Key) {
-				return 0, false
+				return 0
 			}
 
 			if ai.Abil != skillAbil2 {
-				return 0, false
+				return 0
 			}
 			if c.Core.Flags.LogDebug {
 				c.Core.Log.NewEvent("Adding C1 react bonus", glog.LogCharacterEvent, c.Index())
 			}
 
 			c.QueueCharTask(func() { c.DeleteStatus(c1Key) }, 1)
-			return 2.20, false
+			return 2.20
 		},
 	})
 }
@@ -69,9 +69,9 @@ func (c *char) c2Init() {
 	for _, char := range c.Core.Player.Chars() {
 		char.AddReactBonusMod(character.ReactBonusMod{
 			Base: modifier.NewBase(c2Key+"-buff", -1),
-			Amount: func(ai info.AttackInfo) (float64, bool) {
+			Amount: func(ai info.AttackInfo) float64 {
 				if !c.StatusIsActive(skillKey) {
-					return 0, false
+					return 0
 				}
 
 				if c.Core.Flags.LogDebug {
@@ -82,9 +82,9 @@ func (c *char) c2Init() {
 				case attacks.AttackTagReactionLunarCrystallize:
 				case attacks.AttackTagDirectLunarCrystallize:
 				default:
-					return 0, false
+					return 0
 				}
-				return 0.3, false
+				return 0.3
 			},
 		})
 	}
@@ -95,7 +95,7 @@ func (c *char) c2A4Mult() float64 {
 		return 0.6
 	}
 
-	if c.Core.Player.GetMoonsignCount() < 2 {
+	if c.Core.Player.GetMoonsignLevel() < 2 {
 		return 0.6
 	}
 
@@ -140,26 +140,25 @@ func (c *char) c6Init() {
 	if c.Base.Cons < 6 {
 		return
 	}
-	hook := func(aeInd int, tag attacks.AttackTag) func(args ...any) bool {
-		return func(args ...any) bool {
+	hook := func(aeInd int, tag attacks.AttackTag) func(args ...any) {
+		return func(args ...any) {
 			atk := args[aeInd].(*info.AttackEvent)
 			if atk.Info.AttackTag != tag {
-				return false
+				return
 			}
 
 			if !c.StatusIsActive(c6Key) {
-				return false
+				return
 			}
 
 			if atk.Info.ActorIndex != c.Index() {
-				return false
+				return
 			}
 
 			if c.Core.Flags.LogDebug {
 				c.Core.Log.NewEvent("Adding zibai c6 lunar crystallize elevation", glog.LogCharacterEvent, c.Index()).Write("amt", c.c6Elev)
 			}
 			atk.Info.Elevation += c.c6Elev
-			return false
 		}
 	}
 

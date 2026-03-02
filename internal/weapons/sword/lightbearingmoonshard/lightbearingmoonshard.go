@@ -41,29 +41,27 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase(defKey, -1),
 		AffectedStat: attributes.DEFP,
-		Amount: func() ([]float64, bool) {
-			return defMod, true
+		Amount: func() []float64 {
+			return defMod
 		},
 	})
 
-	c.Events.Subscribe(event.OnSkill, func(args ...any) bool {
+	c.Events.Subscribe(event.OnSkill, func(args ...any) {
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 
 		char.AddReactBonusMod(character.ReactBonusMod{
 			Base: modifier.NewBase(lcrKey, lcrDur),
-			Amount: func(atk info.AttackInfo) (float64, bool) {
+			Amount: func(atk info.AttackInfo) float64 {
 				switch atk.AttackTag {
 				case attacks.AttackTagReactionLunarCrystallize, attacks.AttackTagDirectLunarCrystallize:
-					return lcrBonus, false
+					return lcrBonus
 				default:
-					return 0, false
+					return 0
 				}
 			},
 		})
-
-		return false
 	}, "lightbearingmoonshard-skill")
 
 	return w, nil

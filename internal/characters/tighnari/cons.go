@@ -16,11 +16,11 @@ func (c *char) c1() {
 	m[attributes.CR] = 0.15
 	c.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBase("tighnari-c1", -1),
-		Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 			if atk.Info.AttackTag != attacks.AttackTagExtra {
-				return nil, false
+				return nil
 			}
-			return m, true
+			return m
 		},
 	})
 }
@@ -38,8 +38,8 @@ func (c *char) c2() {
 			c.AddStatMod(character.StatMod{
 				Base:         modifier.NewBase("tighnari-c2", 6*60),
 				AffectedStat: attributes.DendroP,
-				Amount: func() ([]float64, bool) {
-					return m, true
+				Amount: func() []float64 {
+					return m
 				},
 			})
 		}, i)
@@ -50,9 +50,9 @@ func (c *char) c2() {
 // TODO: If the Fashioner's Tanglevine Shaft triggers a Burning, Bloom, Quicken, or Spread reaction, their Elemental Mastery
 // will be further increased by 60. This latter case will also refresh the buff state's duration.
 func (c *char) c4() {
-	c.Core.Events.Subscribe(event.OnBurst, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnBurst, func(args ...any) {
 		if c.Core.Player.Active() != c.Index() {
-			return false
+			return
 		}
 
 		m := make([]float64, attributes.EndStatType)
@@ -61,26 +61,24 @@ func (c *char) c4() {
 			char.AddStatMod(character.StatMod{
 				Base:         modifier.NewBaseWithHitlag("tighnari-c4", 8*60),
 				AffectedStat: attributes.EM,
-				Amount: func() ([]float64, bool) {
-					return m, true
+				Amount: func() []float64 {
+					return m
 				},
 			})
 		}
-
-		return false
 	}, "tighnari-c4")
 
-	f := func(args ...any) bool {
+	f := func(args ...any) {
 		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
+			return
 		}
 
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != c.Index() {
-			return false
+			return
 		}
 		if atk.Info.AttackTag != attacks.AttackTagElementalBurst {
-			return false
+			return
 		}
 
 		m := make([]float64, attributes.EndStatType)
@@ -89,13 +87,11 @@ func (c *char) c4() {
 			char.AddStatMod(character.StatMod{
 				Base:         modifier.NewBaseWithHitlag("tighnari-c4", 8*60),
 				AffectedStat: attributes.EM,
-				Amount: func() ([]float64, bool) {
-					return m, true
+				Amount: func() []float64 {
+					return m
 				},
 			})
 		}
-
-		return false
 	}
 	c.Core.Events.Subscribe(event.OnBurning, f, "tighnari-c4-burning")
 	c.Core.Events.Subscribe(event.OnBloom, f, "tighnari-c4-bloom")

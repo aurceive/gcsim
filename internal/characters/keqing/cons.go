@@ -42,28 +42,23 @@ func (c *char) makeC2CB() info.AttackCBFunc {
 }
 
 func (c *char) c4() {
-	//nolint:unparam // ignoring for now, event refactor should get rid of bool return of event sub
-	cb := func(args ...any) bool {
+	cb := func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != c.Index() {
-			return false
+			return
 		}
 		c.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag("keqing-c4", 600),
 			AffectedStat: attributes.ATKP,
-			Amount: func() ([]float64, bool) {
-				return c.c4buff, true
+			Amount: func() []float64 {
+				return c.c4buff
 			},
 		})
-
-		return false
 	}
-
-	cbNoGadget := func(args ...any) bool {
-		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
+	cbNoGadget := func(args ...any) {
+		if _, ok := args[0].(*enemy.Enemy); ok {
+			cb(args...)
 		}
-		return cb(args...)
 	}
 	c.Core.Events.Subscribe(event.OnOverload, cbNoGadget, "keqing-c4")
 	c.Core.Events.Subscribe(event.OnElectroCharged, cbNoGadget, "keqing-c4")
@@ -80,8 +75,8 @@ func (c *char) c6(src string) {
 	c.AddStatMod(character.StatMod{
 		Base:         modifier.NewBaseWithHitlag("keqing-c6-"+src, 480),
 		AffectedStat: attributes.ElectroP,
-		Amount: func() ([]float64, bool) {
-			return c.c6buff, true
+		Amount: func() []float64 {
+			return c.c6buff
 		},
 	})
 }

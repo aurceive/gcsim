@@ -44,8 +44,8 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("freedom-dmg", -1),
 		AffectedStat: attributes.NoStat,
-		Amount: func() ([]float64, bool) {
-			return m, true
+		Amount: func() []float64 {
+			return m
 		},
 	})
 
@@ -62,16 +62,16 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	const cdKey = "freedom-sworn-cooldown"
 	cd := 20 * 60
 
-	stackFunc := func(args ...any) bool {
+	stackFunc := func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		if char.StatusIsActive(cdKey) {
-			return false
+			return
 		}
 		if char.StatusIsActive(icdKey) {
-			return false
+			return
 		}
 
 		char.AddStatus(icdKey, icd, true)
@@ -86,23 +86,22 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 				char.AddStatMod(character.StatMod{
 					Base:         modifier.NewBaseWithHitlag(common.MillennialKey, buffDuration),
 					AffectedStat: attributes.ATKP,
-					Amount: func() ([]float64, bool) {
-						return sharedVal, true
+					Amount: func() []float64 {
+						return sharedVal
 					},
 				})
 				char.AddAttackMod(character.AttackMod{
 					Base: modifier.NewBaseWithHitlag("freedomsworn", buffDuration),
-					Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+					Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 						switch atk.Info.AttackTag {
 						case attacks.AttackTagNormal, attacks.AttackTagExtra, attacks.AttackTagPlunge:
-							return uniqueVal, true
+							return uniqueVal
 						}
-						return nil, false
+						return nil
 					},
 				})
 			}
 		}
-		return false
 	}
 
 	for i := event.ReactionEventStartDelim + 1; i < event.ReactionEventEndDelim; i++ {

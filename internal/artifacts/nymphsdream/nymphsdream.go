@@ -36,8 +36,8 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBase("nd-2pc", -1),
 			AffectedStat: attributes.HydroP,
-			Amount: func() ([]float64, bool) {
-				return m, true
+			Amount: func() []float64 {
+				return m
 			},
 		})
 	}
@@ -58,7 +58,7 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("nd-4pc", -1),
 		AffectedStat: attributes.NoStat,
-		Amount: func() ([]float64, bool) {
+		Amount: func() []float64 {
 			stacks := 0
 			for _, k := range []string{
 				normalKey, chargedKey, plungeKey,
@@ -83,19 +83,19 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 				m[attributes.HydroP] = 0
 			}
 
-			return m, true
+			return m
 		},
 	})
 
 	const stackDuration = 480
 
-	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 
 		switch atk.Info.AttackTag {
@@ -110,8 +110,6 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 		case attacks.AttackTagElementalBurst:
 			char.AddStatus(burstKey, stackDuration, true)
 		}
-
-		return false
 	}, s.key)
 
 	return &s, nil

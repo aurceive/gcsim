@@ -40,8 +40,8 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBase("crimson-2pc", -1),
 			AffectedStat: attributes.PyroP,
-			Amount: func() ([]float64, bool) {
-				return m, true
+			Amount: func() []float64 {
+				return m
 			},
 		})
 	}
@@ -49,9 +49,9 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 	if count >= 4 {
 		mStacks := make([]float64, attributes.EndStatType)
 		// post snap shot to increase stacks
-		c.Events.Subscribe(event.OnSkill, func(args ...any) bool {
+		c.Events.Subscribe(event.OnSkill, func(args ...any) {
 			if c.Player.Active() != char.Index() {
-				return false
+				return
 			}
 
 			// every exectuion, add 1 stack, to a max of 3, reset cd to 10 seconds
@@ -69,27 +69,25 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 			char.AddStatMod(character.StatMod{
 				Base:         modifier.NewBaseWithHitlag(cw4pc, 10*60),
 				AffectedStat: attributes.PyroP,
-				Amount: func() ([]float64, bool) {
-					return mStacks, true
+				Amount: func() []float64 {
+					return mStacks
 				},
 			})
-
-			return false
 		}, fmt.Sprintf("%v-cw-4pc", char.Base.Key.String()))
 
 		char.AddReactBonusMod(character.ReactBonusMod{
 			Base: modifier.NewBase("crimson-4pc", -1),
-			Amount: func(ai info.AttackInfo) (float64, bool) {
+			Amount: func(ai info.AttackInfo) float64 {
 				switch ai.AttackTag {
 				case attacks.AttackTagOverloadDamage,
 					attacks.AttackTagBurningDamage,
 					attacks.AttackTagBurgeon:
-					return 0.4, false
+					return 0.4
 				}
 				if ai.Amped {
-					return 0.15, false
+					return 0.15
 				}
-				return 0, false
+				return 0
 			},
 		})
 	}

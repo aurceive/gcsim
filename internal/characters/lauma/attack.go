@@ -15,7 +15,6 @@ var (
 	attackFrames [][]int
 
 	attackHitmarks = []int{14, 11, 16}
-	attackOffsets  = []float64{0, 0, 0}
 	attackHitboxes = [][]float64{{2, 8}, {2, 8}, {2.8, 8}}
 )
 
@@ -49,7 +48,7 @@ func (c *char) Attack(p map[string]int) (action.Info, error) {
 		Mult:       attack[c.NormalCounter][c.TalentLvlAttack()],
 	}
 
-	if c.paleHymnStacks.Len() != 0 || c.c6PaleHymnStacks.Len() != 0 && c.Base.Cons >= 6 {
+	if c.Base.Cons >= 6 && c.paleHymnCount() > 0 {
 		ai.Abil = "Normal C6 Pale Hymn"
 		ai.AttackTag = attacks.AttackTagDirectLunarBloom
 		ai.Durability = 0
@@ -66,7 +65,7 @@ func (c *char) Attack(p map[string]int) (action.Info, error) {
 		combat.NewBoxHit(
 			c.Core.Combat.Player(),
 			c.Core.Combat.PrimaryTarget(),
-			info.Point{Y: attackOffsets[c.NormalCounter]},
+			nil,
 			attackHitboxes[c.NormalCounter][0],
 			attackHitboxes[c.NormalCounter][1],
 		),

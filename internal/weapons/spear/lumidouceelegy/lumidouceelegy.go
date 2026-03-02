@@ -46,43 +46,41 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase(atkBuffKey, -1),
 		AffectedStat: attributes.ATKP,
-		Amount: func() ([]float64, bool) {
-			return perm, true
+		Amount: func() []float64 {
+			return perm
 		},
 	})
 
 	w.buff = make([]float64, attributes.EndStatType)
 
-	c.Events.Subscribe(event.OnBurning, func(args ...any) bool {
+	c.Events.Subscribe(event.OnBurning, func(args ...any) {
 		_, ok := args[0].(*enemy.Enemy)
 		atk := args[1].(*info.AttackEvent)
 		if !ok {
-			return false
+			return
 		}
 		if atk.Info.ActorIndex != w.char.Index() {
-			return false
+			return
 		}
 		w.bonusCB()
-		return false
 	}, fmt.Sprintf("lumidouceelegy-on-burning-%v", char.Base.Key.String()))
 
-	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		t, ok := args[0].(*enemy.Enemy)
 		atk := args[1].(*info.AttackEvent)
 		if !ok {
-			return false
+			return
 		}
 		if !t.IsBurning() {
-			return false
+			return
 		}
 		if atk.Info.Element != attributes.Dendro {
-			return false
+			return
 		}
 		if atk.Info.ActorIndex != w.char.Index() {
-			return false
+			return
 		}
 		w.bonusCB()
-		return false
 	}, fmt.Sprintf("lumidouceelegy-on-damage-%v", char.Base.Key.String()))
 
 	return &w, nil
@@ -103,9 +101,9 @@ func (w *Weapon) bonusCB() {
 
 	w.char.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBaseWithHitlag(bonusBuffKey, 8*60),
-		Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 			w.buff[attributes.DmgP] = (0.05*float64(w.refine) + 0.13) * float64(w.stacks)
-			return w.buff, true
+			return w.buff
 		},
 	})
 }

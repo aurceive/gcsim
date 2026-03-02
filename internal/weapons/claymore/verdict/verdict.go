@@ -30,7 +30,6 @@ func (w *Weapon) Init() error      { return nil }
 const (
 	buffKey           = "verdict-skill-dmg"
 	buffDuration      = 15 * 60
-	sealLcrIcdKey     = "verdict-lcr-icd"
 	dmgWindowKey      = "verdict-dmg-window"
 	dmgWindowDuration = 0.2 * 60
 )
@@ -49,17 +48,17 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("verdict-atk", -1),
 		AffectedStat: attributes.ATKP,
-		Amount: func() ([]float64, bool) {
-			return m, true
+		Amount: func() []float64 {
+			return m
 		},
 	})
 
 	// seal gain on crystallize shard pickup
-	c.Events.Subscribe(event.OnShielded, func(args ...any) bool {
+	c.Events.Subscribe(event.OnShielded, func(args ...any) {
 		// Check shield
 		shd := args[0].(shield.Shield)
 		if shd.Type() != shield.Crystallize {
-			return false
+			return
 		}
 
 		if !char.StatModIsActive(buffKey) {
@@ -71,40 +70,21 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		c.Log.NewEvent("verdict adding stack", glog.LogWeaponEvent, char.Index()).
 			Write("stacks", w.stacks)
 		char.AddStatus(buffKey, buffDuration, true)
-		return false
 	}, fmt.Sprintf("verdict-seal-%v", char.Base.Key.String()))
-
-	// seal gain on lunar crystallize
-	c.Events.Subscribe(event.OnLunarCrystallize, func(args ...any) bool {
-		if !char.StatModIsActive(buffKey) {
-			w.stacks = 0
-		}
-		if char.StatusIsActive(sealLcrIcdKey) {
-			return false
-		}
-		char.AddStatus(sealLcrIcdKey, 60, true)
-		if w.stacks < 2 {
-			w.stacks++
-		}
-		c.Log.NewEvent("verdict adding stack", glog.LogWeaponEvent, char.Index()).
-			Write("stacks", w.stacks)
-		char.AddStatus(buffKey, buffDuration, true)
-		return false
-	}, fmt.Sprintf("verdict-seal-%v-lcr", char.Base.Key.String()))
 
 	// skill dmg increase while seals active
 	skillDmg := 0.135 + float64(r)*0.045
-	c.Events.Subscribe(event.OnEnemyHit, func(args ...any) bool {
+	c.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		if atk.Info.AttackTag != attacks.AttackTagElementalArt && atk.Info.AttackTag != attacks.AttackTagElementalArtHold {
-			return false
+			return
 		}
 		// don't do anything if not in buff
 		if !char.StatusIsActive(buffKey) {
-			return false
+			return
 		}
 		// otherwise if this is first time proccing
 		// - set duration for dmg window
@@ -121,7 +101,6 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 
 		c.Log.NewEvent("verdict adding skill dmg", glog.LogPreDamageMod, char.Index()).
 			Write("skill_dmg_added", skillDmgAdd)
-		return false
 	}, fmt.Sprintf("verdict-onhit-%v", char.Base.Key.String()))
 
 	return w, nil

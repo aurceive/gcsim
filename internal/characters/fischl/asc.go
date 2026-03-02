@@ -6,9 +6,7 @@ import (
 	"github.com/genshinsim/gcsim/pkg/core/combat"
 	"github.com/genshinsim/gcsim/pkg/core/event"
 	"github.com/genshinsim/gcsim/pkg/core/info"
-	"github.com/genshinsim/gcsim/pkg/core/player/character"
 	"github.com/genshinsim/gcsim/pkg/enemy"
-	"github.com/genshinsim/gcsim/pkg/modifier"
 )
 
 const a4IcdKey = "fischl-a4-icd"
@@ -24,20 +22,19 @@ func (c *char) a4() {
 	}
 
 	// Hyperbloom comes from a gadget so it doesn't ignore gadgets
-	//nolint:unparam // ignoring for now, event refactor should get rid of bool return of event sub
-	a4cb := func(args ...any) bool {
+	a4cb := func(args ...any) {
 		ae := args[1].(*info.AttackEvent)
 
 		if ae.Info.ActorIndex != c.Core.Player.Active() {
-			return false
+			return
 		}
 		// do nothing if oz not on field
 		if !c.StatusIsActive(ozActiveKey) {
-			return false
+			return
 		}
 		active := c.Core.Player.ActiveChar()
 		if active.StatusIsActive(a4IcdKey) {
-			return false
+			return
 		}
 		active.AddStatus(a4IcdKey, 0.5*60, true)
 
@@ -60,14 +57,11 @@ func (c *char) a4() {
 			c.ozSnapshot.Snapshot,
 			combat.NewCircleHitOnTarget(c.Core.Combat.PrimaryTarget(), nil, 0.5),
 			4)
-		return false
 	}
-
-	a4cbNoGadget := func(args ...any) bool {
-		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
+	a4cbNoGadget := func(args ...any) {
+		if _, ok := args[0].(*enemy.Enemy); ok {
+			a4cb(args...)
 		}
-		return a4cb(args...)
 	}
 
 	c.Core.Events.Subscribe(event.OnOverload, a4cbNoGadget, "fischl-a4")
@@ -79,96 +73,4 @@ func (c *char) a4() {
 	c.Core.Events.Subscribe(event.OnHyperbloom, a4cb, "fischl-a4")
 	c.Core.Events.Subscribe(event.OnQuicken, a4cbNoGadget, "fischl-a4")
 	c.Core.Events.Subscribe(event.OnAggravate, a4cbNoGadget, "fischl-a4")
-}
-
-func (c *char) hexereiInit() {
-	if !c.IsHexerei {
-		return
-	}
-
-	if c.Core.Player.GetHexereiCount() < 2 {
-		return
-	}
-
-	mAtkp := make([]float64, attributes.EndStatType)
-	c.Core.Events.Subscribe(event.OnOverload, func(args ...any) bool {
-		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
-		}
-
-		if !c.StatusIsActive(ozActiveKey) {
-			return false
-		}
-
-		for _, char := range c.Core.Player.Chars() {
-			if char.Index() == c.Index() {
-				continue
-			}
-			char.AddStatMod(character.StatMod{
-				Base:         modifier.NewBase("fischl-hexerei-atkp", 10*60),
-				AffectedStat: attributes.ATKP,
-				Amount: func() ([]float64, bool) {
-					if c.Core.Player.Active() != char.Index() {
-						return nil, false
-					}
-					mAtkp[attributes.ATKP] = 0.225 * c.c6HexereiBonus()
-					return mAtkp, true
-				},
-			})
-		}
-
-		c.AddStatMod(character.StatMod{
-			Base:         modifier.NewBase("fischl-hexerei-atkp", 10*60),
-			AffectedStat: attributes.ATKP,
-			Amount: func() ([]float64, bool) {
-				mAtkp[attributes.ATKP] = 0.225 * c.c6HexereiBonus()
-				return mAtkp, true
-			},
-		})
-
-		return false
-	}, "fischl-hexerei-ol")
-
-	mEM := make([]float64, attributes.EndStatType)
-
-	emStatMod := func(args ...any) bool {
-		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
-		}
-
-		if !c.StatusIsActive(ozActiveKey) {
-			return false
-		}
-
-		for _, char := range c.Core.Player.Chars() {
-			if char.Index() == c.Index() {
-				continue
-			}
-			char.AddStatMod(character.StatMod{
-				Base:         modifier.NewBase("fischl-hexerei-em", 10*60),
-				AffectedStat: attributes.EM,
-				Amount: func() ([]float64, bool) {
-					if c.Core.Player.Active() != char.Index() {
-						return nil, false
-					}
-					mEM[attributes.EM] = 90 * c.c6HexereiBonus()
-					return mEM, true
-				},
-			})
-		}
-
-		c.AddStatMod(character.StatMod{
-			Base:         modifier.NewBase("fischl-hexerei-em", 10*60),
-			AffectedStat: attributes.EM,
-			Amount: func() ([]float64, bool) {
-				mEM[attributes.EM] = 90 * c.c6HexereiBonus()
-				return mEM, true
-			},
-		})
-
-		return false
-	}
-
-	c.Core.Events.Subscribe(event.OnElectroCharged, emStatMod, "fischl-hexerei-ec")
-	c.Core.Events.Subscribe(event.OnLunarCharged, emStatMod, "fischl-hexerei-lc")
 }

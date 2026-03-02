@@ -44,44 +44,40 @@ func (c *char) a1() {
 	c.Core.Events.Subscribe(event.OnCrystallizeElectro, c.a1CB, "clorinde-a1-crystallize-electro")
 }
 
-func (c *char) a1CB(args ...any) bool {
+func (c *char) a1CB(args ...any) {
 	// no requirement who triggers other than that it must be against an enemy
-	if _, ok := args[0].(*enemy.Enemy); !ok {
-		return false
+	if _, ok := args[0].(*enemy.Enemy); ok {
+		c.a1CBGadget(args...)
 	}
-	return c.a1CBGadget(args...)
 }
 
-func (c *char) a1CBGadget(...any) bool {
+func (c *char) a1CBGadget(...any) {
 	// add a stack and refresh the mod for 15s
 	c.a1stacks.Add(clordineA1BuffDuration)
 	c.AddAttackMod(character.AttackMod{
-		Base:   modifier.NewBaseWithHitlag(clorindeA1BuffKey, clordineA1BuffDuration),
-		Amount: c.a1Amount,
+		Base: modifier.NewBaseWithHitlag(clorindeA1BuffKey, clordineA1BuffDuration),
+		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
+			var amt float64
+			switch atk.Info.AttackTag {
+			case attacks.AttackTagNormal:
+				if atk.Info.Element != attributes.Electro {
+					// only app
+					return nil
+				}
+			case attacks.AttackTagElementalBurst:
+			default:
+				return nil
+			}
+			totalAtk := atk.Snapshot.Stats.TotalATK()
+			amt = min(totalAtk*c.a1BuffPercent*float64(c.a1stacks.Count()), c.a1Cap)
+			atk.Info.FlatDmg += amt
+			c.Core.Log.NewEvent("a1 adding flat dmg", glog.LogCharacterEvent, c.Index()).
+				Write("amt", amt).
+				Write("c2_applied", c.Base.Cons >= 2)
+			// we don't actually change any stats here..
+			return nil
+		},
 	})
-	return false
-}
-
-func (c *char) a1Amount(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
-	var amt float64
-	switch atk.Info.AttackTag {
-	case attacks.AttackTagNormal:
-		if atk.Info.Element != attributes.Electro {
-			// only app
-			return nil, false
-		}
-	case attacks.AttackTagElementalBurst:
-	default:
-		return nil, false
-	}
-	totalAtk := atk.Snapshot.Stats.TotalATK()
-	amt = min(totalAtk*c.a1BuffPercent*float64(c.a1stacks.Count()), c.a1Cap)
-	atk.Info.FlatDmg += amt
-	c.Core.Log.NewEvent("a1 adding flat dmg", glog.LogCharacterEvent, c.Index()).
-		Write("amt", amt).
-		Write("c2_applied", c.Base.Cons >= 2)
-	// we don't actually change any stats here..
-	return nil, true
 }
 
 func (c *char) a4Init() {
@@ -92,15 +88,14 @@ func (c *char) a4Init() {
 	c.a4bonus = make([]float64, attributes.EndStatType)
 	c.prevHpDebt = c.CurrentHPDebtRatio()
 
-	c.Core.Events.Subscribe(event.OnHPDebt, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnHPDebt, func(args ...any) {
 		index := args[0].(int)
 		amount := -args[1].(float64)
 		if c.Index() != index {
-			return false
+			return
 		}
 		c.a4(amount)
 		c.prevHpDebt = c.CurrentHPDebtRatio()
-		return false
 	}, "clorinde-a4")
 }
 
@@ -117,14 +112,12 @@ func (c *char) a4(change float64) {
 	}
 	c.a4stacks.Add(clordineA4BuffDuration)
 	c.AddStatMod(character.StatMod{
-		Base:   modifier.NewBaseWithHitlag(clorindeA4BuffKey, clordineA4BuffDuration),
-		Amount: c.a4Amount,
+		Base: modifier.NewBaseWithHitlag(clorindeA4BuffKey, clordineA4BuffDuration),
+		Amount: func() []float64 {
+			c.a4bonus[attributes.CR] = float64(c.a4stacks.Count()) * a4CritBuff
+			return c.a4bonus
+		},
 	})
 	c.Core.Log.NewEvent("a4 triggered", glog.LogCharacterEvent, c.Index()).
 		Write("stacks", c.a4stacks.Count())
-}
-
-func (c *char) a4Amount() ([]float64, bool) {
-	c.a4bonus[attributes.CR] = float64(c.a4stacks.Count()) * a4CritBuff
-	return c.a4bonus, true
 }

@@ -35,7 +35,7 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	m[attributes.DmgP] = base
 	char.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBase("twilight-bonus-dmg", -1),
-		Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 			switch cycle {
 			case 2:
 				base = 0.105 + float64(r)*0.035
@@ -46,20 +46,20 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 			}
 
 			m[attributes.DmgP] = base
-			return m, true
+			return m
 		},
 	})
 
 	const icdKey = "twilight-icd"
 	icd := 420
-	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 
 		if char.StatusIsActive(icdKey) {
-			return false
+			return
 		}
 		char.AddStatus(icdKey, icd, true)
 		cycle++
@@ -67,8 +67,6 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		c.Log.NewEvent("fading twillight cycle changed", glog.LogWeaponEvent, char.Index()).
 			Write("cycle", cycle).
 			Write("next cycle (without hitlag)", c.F+icd)
-
-		return false
 	}, fmt.Sprintf("fadingtwilight-%v", char.Base.Key.String()))
 
 	return w, nil

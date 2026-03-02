@@ -23,17 +23,16 @@ func (c *char) c1Init() {
 	if c.Base.Cons < 1 {
 		return
 	}
-	c.Core.Events.Subscribe(event.OnLunarCharged, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnLunarCharged, func(args ...any) {
 		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
+			return
 		}
 		if c.StatusIsActive(c1IcdKey) {
-			return false
+			return
 		}
 
 		c.AddEnergy(c1Key, 8)
 		c.AddStatus(c1IcdKey, 5.5*60, true)
-		return false
 	}, c1Key)
 }
 
@@ -87,7 +86,7 @@ func (c *char) c2MakeAtkCB() func(info.AttackCB) {
 			IgnoreDefPercent: 1,
 		}
 		// TODO: What is C2's delay?
-		c.Core.QueueAttack(ai, combat.NewCircleHitOnTarget(e, nil, 4), 20, 20)
+		c.Core.QueueAttack(ai, combat.NewCircleHitOnTarget(e, nil, 2.5), 20, 20)
 	}
 }
 
@@ -96,27 +95,27 @@ func (c *char) c2GleamInit() {
 		return
 	}
 
-	if c.getMoonsignLevel() < 2 {
+	if c.Core.Player.GetMoonsignLevel() < 2 {
 		return
 	}
 
-	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		if c.Core.Player.Active() != c.Index() {
-			return false
+			return
 		}
 
 		t, ok := args[0].(*enemy.Enemy)
 		if !ok {
-			return false
+			return
 		}
 
 		atk := args[1].(*info.AttackEvent)
 
 		if atk.Info.ActorIndex != c.Index() {
-			return false
+			return
 		}
 		if atk.Info.Element != attributes.Electro {
-			return false
+			return
 		}
 
 		t.AddResistMod(info.ResistMod{
@@ -124,7 +123,6 @@ func (c *char) c2GleamInit() {
 			Ele:   attributes.Electro,
 			Value: -0.25,
 		})
-		return false
 	}, c2Key+"-gleam")
 }
 
@@ -136,10 +134,10 @@ func (c *char) c4Init() {
 	m[attributes.ATKP] = 0.2
 
 	c.AddStatMod(character.StatMod{
-		Base:         modifier.NewBaseWithHitlag(c4Key, -1),
+		Base:         modifier.NewBase(c4Key, -1),
 		AffectedStat: attributes.ATKP,
-		Amount: func() ([]float64, bool) {
-			return m, true
+		Amount: func() []float64 {
+			return m
 		},
 	})
 }
@@ -155,36 +153,49 @@ func (c *char) c6Init() {
 	if c.Base.Cons < 6 {
 		return
 	}
-	flinsMult := 0.35
-	otherMult := 0.0
+	flins := 0.35
+	other := 0.0
 
-	if c.getMoonsignLevel() >= 2 {
-		flinsMult += 0.1
-		otherMult += 0.1
+	if c.Core.Player.GetMoonsignLevel() >= 2 {
+		flins += 0.1
+		other += 0.1
 	}
 
-	// TODO: How to do elevate?
-	c.Core.Events.Subscribe(event.OnApplyAttack, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnApplyAttack, func(args ...any) {
 		atk := args[0].(*info.AttackEvent)
-		switch atk.Info.AttackTag {
-		case attacks.AttackTagDirectLunarCharged:
-		case attacks.AttackTagReactionLunarCharge:
-		default:
-			return false
+
+		// don't apply elevation to the reaction attack, since the subcomponent contributor attacks each got elevation applied already
+		if atk.Info.AttackTag != attacks.AttackTagDirectLunarCharged {
+			return
 		}
 
 		if atk.Info.ActorIndex == c.Index() {
-			atk.Info.Elevation += flinsMult
-
-			return false
+			atk.Info.Elevation += flins
+			return
 		}
 
-		if c.getMoonsignLevel() < 2 {
-			return false
+		if c.Core.Player.GetMoonsignLevel() < 2 {
+			return
 		}
 
-		atk.Info.Elevation += otherMult
-
-		return false
+		atk.Info.Elevation += other
 	}, c6Key)
+
+	c.Core.Events.Subscribe(event.OnLunarChargedReactionAttack, func(args ...any) {
+		atk := args[1].(*info.AttackEvent)
+		if atk.Info.AttackTag != attacks.AttackTagReactionLunarCharge {
+			return
+		}
+
+		if atk.Info.ActorIndex == c.Index() {
+			atk.Info.Elevation += flins
+			return
+		}
+
+		if c.Core.Player.GetMoonsignLevel() < 2 {
+			return
+		}
+
+		atk.Info.Elevation += other
+	}, c6Key+"-lc-atk")
 }

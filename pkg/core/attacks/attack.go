@@ -45,10 +45,6 @@ const (
 	AttackTagLunarCharged
 )
 
-func AttackTagIsLunar(atkTag AttackTag) bool {
-	return LunarReactionStartDelim < atkTag && atkTag < LunarReactionEndDelim || DirectLunarReactionStartDelim < atkTag && atkTag < DirectLunarReactionEndDelim
-}
-
 type StrikeType int
 
 const (
@@ -66,3 +62,9 @@ const (
 	AdditionalTagNightsoul
 	AdditionalTagKinichCannon
 )
+
+func AttackTagIsLunar(tag AttackTag) bool {
+	isReaction := LunarReactionStartDelim < tag && tag < LunarReactionEndDelim
+	isDirect := DirectLunarReactionStartDelim < tag && tag < DirectLunarReactionEndDelim
+	return isReaction || isDirect
+}

@@ -32,30 +32,29 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	m := make([]float64, attributes.EndStatType)
 	m[attributes.ATKP] = 0.10 + float64(r)*0.02
 
-	c.Events.Subscribe(event.OnTargetDied, func(args ...any) bool {
+	c.Events.Subscribe(event.OnTargetDied, func(args ...any) {
 		_, ok := args[0].(*enemy.Enemy)
 		// ignore if not an enemy
 		if !ok {
-			return false
+			return
 		}
 		atk := args[1].(*info.AttackEvent)
 		// don't proc if someone else defeated the enemy
 		if atk.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		// don't proc if off-field
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 		// add buff
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag("twinnephrite", 900), // 15s
 			AffectedStat: attributes.ATKP,
-			Amount: func() ([]float64, bool) {
-				return m, true
+			Amount: func() []float64 {
+				return m
 			},
 		})
-		return false
 	}, fmt.Sprintf("twinnephrite-%v", char.Base.Key.String()))
 
 	return w, nil

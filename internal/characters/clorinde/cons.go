@@ -18,7 +18,6 @@ const (
 	c2A1PercentBuff    float64 = 0.3
 	c6Icd              int     = 12 * 60
 	c6IcdKey                   = "clorinde-c6-icd"
-	c6Mitigate                 = 0.8
 	c6GlimbrightIcdKey         = "glimbrightIcdKey"
 	c6GlimbrightAtkP           = 2
 )
@@ -37,22 +36,22 @@ func (c *char) c1() {
 		return
 	}
 
-	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		if !c.StatusIsActive(skillStateKey) {
-			return false
+			return
 		}
 		if c.StatusIsActive(c1IcdKey) {
-			return false
+			return
 		}
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.AttackTag != attacks.AttackTagNormal {
-			return false
+			return
 		}
 		if atk.Info.Element != attributes.Electro {
-			return false
+			return
 		}
 		if atk.Info.ActorIndex != c.Index() {
-			return false
+			return
 		}
 		c.AddStatus(c1IcdKey, c1Icd, false)
 		c1AI := info.AttackInfo{
@@ -77,7 +76,6 @@ func (c *char) c1() {
 				c.particleCB,
 			)
 		}
-		return false
 	}, "clorinde-c1")
 }
 
@@ -94,12 +92,12 @@ func (c *char) c4() {
 	m := make([]float64, attributes.EndStatType)
 	c.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBase("clorinde-c4-burst-bonus", -1),
-		Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 			if atk.Info.AttackTag != attacks.AttackTagElementalBurst {
-				return nil, false
+				return nil
 			}
 			m[attributes.DmgP] = min(c.CurrentHPDebtRatio()*100*0.02, 2)
-			return m, true
+			return m
 		},
 	})
 }
@@ -124,8 +122,8 @@ func (c *char) c6skill() {
 	c.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("clorinde-c6-cr-bonus", c6Icd),
 		AffectedStat: attributes.CR,
-		Amount: func() ([]float64, bool) {
-			return mCR, true
+		Amount: func() []float64 {
+			return mCR
 		},
 	})
 
@@ -134,8 +132,8 @@ func (c *char) c6skill() {
 	c.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("clorinde-c6-cd-bonus", c6Icd),
 		AffectedStat: attributes.CD,
-		Amount: func() ([]float64, bool) {
-			return mCD, true
+		Amount: func() []float64 {
+			return mCD
 		},
 	})
 }

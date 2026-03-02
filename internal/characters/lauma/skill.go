@@ -1,7 +1,7 @@
 package lauma
 
 import (
-	"math"
+	"fmt"
 
 	"github.com/genshinsim/gcsim/internal/frames"
 	"github.com/genshinsim/gcsim/pkg/core/action"
@@ -11,7 +11,6 @@ import (
 	"github.com/genshinsim/gcsim/pkg/core/info"
 	"github.com/genshinsim/gcsim/pkg/enemy"
 	"github.com/genshinsim/gcsim/pkg/modifier"
-	"github.com/genshinsim/gcsim/pkg/reactable"
 )
 
 var skillFrames [][]int
@@ -25,9 +24,8 @@ const (
 	skillConsumeDew                   = 29
 	frostgroveSanctuaryKey            = "lauma-frostgrove-sanctuary"
 	frostgroveSanctuaryParticleICDKey = "lauma-frostgrove-sanctuary-particle-icd"
-	laumaC4RefundKey                  = "lauma-c4-refund"
-	c6SkillHitName                    = "Frostgrove Sanctuary C6"
-	moonSongAddedKey                  = "moon-song-added"
+
+	moonSongIcdKey = "moonsong-icd"
 )
 
 func init() {
@@ -55,35 +53,27 @@ func init() {
 	skillFrames[1][action.ActionSwap] = 56
 }
 
-func ceil(x float64) int {
-	return int(math.Ceil(x))
-}
-
 func (c *char) Skill(p map[string]int) (action.Info, error) {
 	c.AddStatus(c1Key, 20*60, true)
-	c.AddStatus(frostgroveSanctuaryKey, 15*60, true)
 	c.AddStatus(a1Key, 20*60, true)
-
-	if c.Base.Cons >= 6 {
-		c.c6SkillPaleHymnCount = 0
-		c.c6PaleHymnStacks.Clear()
-	}
-
+	c.c6OnSkill()
+	c.AddStatus(frostgroveSanctuaryKey, 15*60, true)
 	c.skillSrc = c.Core.F
-	for i := 0.0; i < skillTicks; i++ {
-		c.Core.Tasks.Add(c.frostgroveSantuaryTick(c.skillSrc), skillFirstTickDelay+ceil(frostgroveSanctuaryInterval*i))
+	for i := range skillTicks {
+		c.QueueCharTask(c.frostgroveSantuaryTick(c.skillSrc), skillFirstTickDelay+frostgroveSanctuaryInterval*i)
 	}
 
-	if p["hold"] == 0 || int(c.Core.Flags.Custom[reactable.VerdantDewKey]) == 0 {
+	if p["hold"] == 0 {
 		return c.skillPress()
 	}
+
 	return c.skillHold()
 }
 
 func (c *char) skillPress() (action.Info, error) {
 	ai := info.AttackInfo{
 		ActorIndex: c.Index(),
-		Abil:       "Runo: Dawnless Rest of Karsikko (Press)",
+		Abil:       "Hymn of Hunting (Press)",
 		AttackTag:  attacks.AttackTagElementalArt,
 		ICDTag:     attacks.ICDTagNone,
 		ICDGroup:   attacks.ICDGroupDefault,
@@ -117,9 +107,13 @@ func (c *char) skillPress() (action.Info, error) {
 }
 
 func (c *char) skillHold() (action.Info, error) {
+	if c.Core.Player.VerdantDew() <= 0 {
+		return action.Info{}, fmt.Errorf("%v: Cannot use Skill Hold without Verdant Dew", c.Base.Key)
+	}
+
 	ai := info.AttackInfo{
 		ActorIndex: c.Index(),
-		Abil:       "Runo: Dawnless Rest of Karsikko",
+		Abil:       "Hymn of Eternal Rest (Hold)",
 		AttackTag:  attacks.AttackTagElementalArtHold,
 		ICDTag:     attacks.ICDTagNone,
 		ICDGroup:   attacks.ICDGroupDefault,
@@ -131,7 +125,7 @@ func (c *char) skillHold() (action.Info, error) {
 
 	aiDirectLB := info.AttackInfo{
 		ActorIndex:       c.Index(),
-		Abil:             "Runo: Dawnless Rest of Karsikko (Lunar-Bloom)",
+		Abil:             "Hymn of Eternal Rest (Hold) (Lunar-Bloom)",
 		AttackTag:        attacks.AttackTagDirectLunarBloom,
 		ICDTag:           attacks.ICDTagNone,
 		ICDGroup:         attacks.ICDGroupDefault,
@@ -139,6 +133,7 @@ func (c *char) skillHold() (action.Info, error) {
 		Element:          attributes.Dendro,
 		UseEM:            true,
 		IgnoreDefPercent: 1,
+		Mult:             skillHold2[c.TalentLvlSkill()],
 	}
 
 	c.Core.QueueAttack(
@@ -155,24 +150,22 @@ func (c *char) skillHold() (action.Info, error) {
 	)
 
 	c.QueueCharTask(func() {
-		dewCount := c.Core.Flags.Custom[reactable.VerdantDewKey]
+		dewCount := min(c.Core.Player.VerdantDew(), 3)
+		c.Core.Player.ConsumeVerdantDew(dewCount)
 
-		aiDirectLB.Mult = skillHold2[c.TalentLvlSkill()] * dewCount
-
-		c.Core.Flags.Custom[reactable.VerdantDewKey] = 0.0
-
-		c.handleMoonSong(int(dewCount))
+		aiDirectLB.Mult = skillHold2[c.TalentLvlSkill()] * float64(dewCount)
+		c.addMoonSong(dewCount)
 
 		c.Core.QueueAttack(
 			aiDirectLB,
-			combat.NewCircleHit(
+			combat.NewCircleHitOnTarget(
 				c.Core.Combat.Player(),
-				c.Core.Combat.Player().Pos(),
 				nil,
 				6,
 			),
 			skillHoldHitmark-skillConsumeDew,
 			skillHoldHitmark-skillConsumeDew,
+			c.applySkillShredCB,
 		)
 	}, skillConsumeDew)
 
@@ -186,16 +179,48 @@ func (c *char) skillHold() (action.Info, error) {
 	}, nil
 }
 
-func (c *char) handleMoonSong(dewCount int) {
-	if c.StatusIsActive(burstKey) && !c.StatusIsActive(moonSongAddedKey) {
-		c.addPaleHymn(dewCount * 6)
-		c.AddStatus(moonSongAddedKey, c.StatusDuration(burstKey), true)
+func (c *char) addMoonSong(moonsong int) {
+	if moonsong <= 0 {
 		return
 	}
 
-	if c.moonSong < dewCount {
-		c.moonSong = dewCount
+	if c.StatusIsActive(burstKey) && !c.StatusIsActive(moonSongIcdKey) {
+		c.setPaleHymnMoonsong(moonsong * 6)
+		c.AddStatus(moonSongIcdKey, c.StatusDuration(burstKey), true)
+		c.moonSong = 0
+		c.moonSongSrc = -1
+		return
 	}
+
+	c.moonSong = moonsong
+	src := c.Core.F
+	c.moonSongSrc = src
+
+	// remove moonsong stacks after 15s if not refreshed
+	c.QueueCharTask(func() {
+		if c.moonSongSrc == src {
+			c.moonSong = 0
+		}
+	}, 15*60)
+}
+
+func (c *char) moonSongOnBurst() {
+	if c.moonSong <= 0 {
+		return
+	}
+
+	if !c.StatusIsActive(burstKey) {
+		return
+	}
+
+	if c.StatusIsActive(moonSongIcdKey) {
+		return
+	}
+
+	c.setPaleHymnMoonsong(c.moonSong * 6)
+	c.AddStatus(moonSongIcdKey, c.StatusDuration(burstKey), true)
+	c.moonSong = 0
+	c.moonSongSrc = -1
 }
 
 func (c *char) applySkillShredCB(a info.AttackCB) {
@@ -222,6 +247,7 @@ func (c *char) frostgroveSantuaryTick(src int) func() {
 			return
 		}
 
+		em := c.Stat(attributes.EM)
 		ai := info.AttackInfo{
 			ActorIndex: c.Index(),
 			Abil:       "Frostgrove Sanctuary",
@@ -232,16 +258,13 @@ func (c *char) frostgroveSantuaryTick(src int) func() {
 			Element:    attributes.Dendro,
 			Durability: 25,
 			Mult:       frostgroveSanctuaryAtk[c.TalentLvlSkill()],
+			FlatDmg:    em * frostgroveSanctuaryEM[c.TalentLvlSkill()],
 		}
-
-		em := c.Stat(attributes.EM)
-		ai.FlatDmg = em * frostgroveSanctuaryEM[c.TalentLvlSkill()]
 
 		c.Core.QueueAttack(
 			ai,
-			combat.NewCircleHit(
+			combat.NewCircleHitOnTarget(
 				c.Core.Combat.Player(),
-				c.Core.Combat.Player().Pos(),
 				nil,
 				6,
 			),

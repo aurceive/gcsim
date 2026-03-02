@@ -33,19 +33,19 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	r := p.Refine
 
 	hp := 0.17 + float64(r)*0.03
-	val := make([]float64, attributes.EndStatType)
-	val[attributes.DmgP] = 0.09 + float64(r)*0.03
+	m := make([]float64, attributes.EndStatType)
+	m[attributes.DmgP] = 0.09 + float64(r)*0.03
 
-	c.Events.Subscribe(event.OnPlayerHPDrain, func(args ...any) bool {
+	c.Events.Subscribe(event.OnPlayerHPDrain, func(args ...any) {
 		di := args[0].(*info.DrainInfo)
 		if !di.External {
-			return false
+			return
 		}
 		if di.Amount <= 0 {
-			return false
+			return
 		}
 		if char.StatusIsActive(icdKey) {
-			return false
+			return
 		}
 		char.AddStatus(icdKey, 2700, true)
 
@@ -59,15 +59,17 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 			Ele:        attributes.NoElement,
 			Expires:    c.F + 600,
 		})
-		return false
 	}, fmt.Sprintf("bell-%v", char.Base.Key.String()))
 
 	// add damage if shielded
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("bell", -1),
 		AffectedStat: attributes.NoStat,
-		Amount: func() ([]float64, bool) {
-			return val, c.Player.Shields.CharacterIsShielded(char.Index(), c.Player.Active())
+		Amount: func() []float64 {
+			if c.Player.Shields.CharacterIsShielded(char.Index(), c.Player.Active()) {
+				return m
+			}
+			return nil
 		},
 	})
 

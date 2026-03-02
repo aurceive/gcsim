@@ -39,22 +39,22 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	m := make([]float64, attributes.EndStatType)
 	dmg := .075 + float64(r)*.025
 
-	hrfunc := func(otherEle attributes.Element, key string, gadgetEmit bool) func(args ...any) bool {
-		return func(args ...any) bool {
+	hrfunc := func(otherEle attributes.Element, key string, gadgetEmit bool) func(args ...any) {
+		return func(args ...any) {
 			trg := args[0].(info.Target)
 			if gadgetEmit && trg.Type() != info.TargettableGadget {
-				return false
+				return
 			}
 			if !gadgetEmit && trg.Type() != info.TargettableEnemy {
-				return false
+				return
 			}
 			ae := args[1].(*info.AttackEvent)
 
 			if c.Player.Active() != char.Index() {
-				return false
+				return
 			}
 			if ae.Info.ActorIndex != char.Index() {
-				return false
+				return
 			}
 
 			clear(w.elementICD)
@@ -74,10 +74,10 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 				other.AddStatMod(character.StatMod{
 					Base:         modifier.NewBaseWithHitlag(fmt.Sprintf(buffKey, charEle), 6*60),
 					AffectedStat: stat,
-					Amount: func() ([]float64, bool) {
+					Amount: func() []float64 {
 						clear(m)
 						m[stat] = dmg
-						return m, true
+						return m
 					},
 				})
 			}
@@ -90,7 +90,6 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 					Write("trigger", key).
 					Write("expiring (without hitlag)", c.F+6*60)
 			}
-			return false
 		}
 	}
 

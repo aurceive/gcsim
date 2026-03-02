@@ -30,26 +30,24 @@ func (c *char) c1() {
 		return
 	}
 
-	c.Core.Events.Subscribe(event.OnOverload, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnOverload, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		// does not include chevreuse
 		if atk.Info.ActorIndex == c.Index() {
-			return false
+			return
 		}
 		// does not trigger off-field
 		if atk.Info.ActorIndex != c.Core.Player.Active() {
-			return false
+			return
 		}
 		// does not trigger if on cd
 		if c.StatusIsActive(c1ICDKey) {
-			return false
+			return
 		}
 		c.AddStatus(c1ICDKey, 10*60, true)
 
 		active := c.Core.Player.ByIndex(atk.Info.ActorIndex)
 		active.AddEnergy("chev-c1", 6)
-
-		return false
 	}, "chev-c1")
 }
 
@@ -156,8 +154,8 @@ func (c *char) c6(char *character.CharWrapper) {
 
 	char.AddStatMod(character.StatMod{
 		Base: modifier.NewBaseWithHitlag(fmt.Sprintf("chev-c6-%v-stack", c.c6StackCounts[char.Index()]+1), 8*60),
-		Amount: func() ([]float64, bool) {
-			return m, true
+		Amount: func() []float64 {
+			return m
 		},
 	})
 	c.c6StackCounts[char.Index()] = (c.c6StackCounts[char.Index()] + 1) % 3

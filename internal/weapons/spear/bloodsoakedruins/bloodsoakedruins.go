@@ -10,7 +10,6 @@ import (
 	"github.com/genshinsim/gcsim/pkg/core/info"
 	"github.com/genshinsim/gcsim/pkg/core/keys"
 	"github.com/genshinsim/gcsim/pkg/core/player/character"
-	"github.com/genshinsim/gcsim/pkg/enemy"
 	"github.com/genshinsim/gcsim/pkg/modifier"
 )
 
@@ -36,60 +35,51 @@ func (w *Weapon) Init() error      { return nil }
 func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) (info.Weapon, error) {
 	w := &Weapon{}
 	r := p.Refine
+
 	energyRestore := 11 + float64(r)
-
-	lcDmgBonus := 0.24 + float64(r)*0.12
-
+	lcBonus := 0.24 + float64(r)*0.12
 	mCrit := make([]float64, attributes.EndStatType)
 	mCrit[attributes.CD] = 0.21 + float64(r)*0.07
 
-	c.Events.Subscribe(event.OnBurst, func(args ...any) bool {
+	c.Events.Subscribe(event.OnBurst, func(args ...any) {
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 
 		char.AddReactBonusMod(character.ReactBonusMod{
-			Base: modifier.NewBaseWithHitlag("bloodsoakedruins-dmg", 3.5*60),
-			Amount: func(ai info.AttackInfo) (float64, bool) {
-				switch ai.AttackTag {
-				case attacks.AttackTagReactionLunarCharge, attacks.AttackTagDirectLunarCharged:
-					return lcDmgBonus, false
+			Base: modifier.NewBaseWithHitlag("bloodsoakedruins-lc", 3.5*60),
+			Amount: func(ai info.AttackInfo) float64 {
+				if ai.AttackTag != attacks.AttackTagReactionLunarCharge && ai.AttackTag != attacks.AttackTagDirectLunarCharged {
+					return 0
 				}
-				return 0, false
+				return lcBonus
 			},
 		})
-
-		return false
 	}, fmt.Sprintf("bloodsoakedruins-burst-%v", char.Base.Key.String()))
 
-	// CRIT DMG + Energy restore only when the on-field wielder triggers (closes) the reaction.
-	c.Events.Subscribe(event.OnLunarCharged, func(args ...any) bool {
+	c.Events.Subscribe(event.OnLunarCharged, func(args ...any) {
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
-		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
-		}
-		atk := args[1].(*info.AttackEvent)
-		if atk.Info.ActorIndex != char.Index() {
-			return false
+
+		ae := args[1].(*info.AttackEvent)
+		if ae.Info.ActorIndex != char.Index() {
+			return
 		}
 
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag("bloodsoakedruins-cd", 6*60),
 			AffectedStat: attributes.CD,
-			Amount: func() ([]float64, bool) {
-				return mCrit, true
+			Amount: func() []float64 {
+				return mCrit
 			},
 		})
 
 		if char.StatusIsActive(energyIcdKey) {
-			return false
+			return
 		}
 		char.AddStatus(energyIcdKey, 14*60, true)
 		char.AddEnergy("bloodsoakedruins", energyRestore)
-
-		return false
 	}, fmt.Sprintf("bloodsoakedruins-lunarcharged-%v", char.Base.Key.String()))
 
 	return w, nil

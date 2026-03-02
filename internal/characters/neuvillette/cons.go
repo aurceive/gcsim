@@ -33,28 +33,28 @@ func (c *char) c2() {
 	c2Buff := make([]float64, attributes.EndStatType)
 	c.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBase("neuvillette-c2", -1),
-		Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 			if strings.Contains(atk.Info.Abil, chargeJudgementName) {
 				c2Buff[attributes.CD] = 0.14 * float64(c.countA1())
-				return c2Buff, true
+				return c2Buff
 			}
-			return nil, false
+			return nil
 		},
 	})
 }
 
 func (c *char) c4() {
-	c.Core.Events.Subscribe(event.OnHeal, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnHeal, func(args ...any) {
 		target := args[1].(int)
 
 		if c.Core.Player.Active() != c.Index() {
-			return false
+			return
 		}
 		if c.Index() != target {
-			return false
+			return
 		}
 		if c.StatusIsActive(c4ICDKey) {
-			return false
+			return
 		}
 
 		// 4s CD
@@ -75,8 +75,6 @@ func (c *char) c4() {
 			info.GadgetTypSourcewaterDropletNeuv,
 		)
 		c.Core.Combat.Log.NewEvent("C4: Spawned 1 droplet", glog.LogCharacterEvent, c.Index())
-
-		return false
 	}, "neuvillette-c4")
 }
 

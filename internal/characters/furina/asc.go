@@ -21,20 +21,20 @@ func (c *char) a1() {
 		return
 	}
 
-	c.Core.Events.Subscribe(event.OnHeal, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnHeal, func(args ...any) {
 		hi := args[0].(*info.HealInfo)
 		overheal := args[3].(float64)
 
 		if hi.Caller == c.Index() {
-			return false
+			return
 		}
 
 		if overheal <= 0 {
-			return false
+			return
 		}
 
 		if hi.Target != c.Core.Player.Active() && hi.Target != -1 {
-			return false
+			return
 		}
 
 		if !c.StatusIsActive(a1HealKey) {
@@ -43,8 +43,6 @@ func (c *char) a1() {
 		}
 
 		c.AddStatus(a1HealKey, 4*60, true)
-
-		return false
 	}, "furina-a1")
 }
 
@@ -76,15 +74,15 @@ func (c *char) a4() {
 	c.a4Buff = make([]float64, attributes.EndStatType)
 	c.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBase(a4BuffKey, -1),
-		Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 			if atk.Info.AttackTag != attacks.AttackTagElementalArt {
-				return nil, false
+				return nil
 			}
 
 			if !strings.Contains(atk.Info.Abil, salonMemberKey) {
-				return nil, false
+				return nil
 			}
-			return c.a4Buff, true
+			return c.a4Buff
 		},
 	})
 }

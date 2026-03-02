@@ -53,13 +53,12 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("haran-ele-bonus", -1),
 		AffectedStat: attributes.NoStat,
-		Amount: func() ([]float64, bool) {
-			return m, true
+		Amount: func() []float64 {
+			return m
 		},
 	})
 
 	wavespikeStacks := 0
-
 	nonActiveFn := func() {
 		// once every 0.3s
 		if char.StatusIsActive(icdKey) {
@@ -74,32 +73,28 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		char.AddStatus(icdKey, 18, true)
 	}
 
-	val := make([]float64, attributes.EndStatType)
-	activeFn := func() bool {
-		val[attributes.DmgP] = (0.15 + float64(r)*0.05) * float64(wavespikeStacks)
+	mDmg := make([]float64, attributes.EndStatType)
+	activeFn := func() {
+		mDmg[attributes.DmgP] = (0.15 + float64(r)*0.05) * float64(wavespikeStacks)
 		char.AddAttackMod(character.AttackMod{
 			Base: modifier.NewBaseWithHitlag("ripping-upheaval", 480),
-			Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+			Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 				if atk.Info.AttackTag != attacks.AttackTagNormal {
-					return nil, false
+					return nil
 				}
-				return val, true
+				return mDmg
 			},
 		})
 		wavespikeStacks = 0
-		return false
 	}
 
 	// TODO: this used to be on post. make sure nothing broke here
-	c.Events.Subscribe(event.OnSkill, func(args ...any) bool {
+	c.Events.Subscribe(event.OnSkill, func(args ...any) {
 		if c.Player.Active() != char.Index() {
 			nonActiveFn()
-			return false
+		} else if wavespikeStacks > 0 {
+			activeFn()
 		}
-		if wavespikeStacks != 0 {
-			return activeFn()
-		}
-		return false
 	}, fmt.Sprintf("wavespike-%v", char.Base.Key.String()))
 
 	return w, nil

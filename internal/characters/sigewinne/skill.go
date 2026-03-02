@@ -237,47 +237,46 @@ func (c *char) bubbleTierDamageMod() {
 	m := make([]float64, attributes.EndStatType)
 	c.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBase("sigewinne-bubble-tier", -1),
-		Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 			switch atk.Info.AttackTag {
 			case attacks.AttackTagElementalArt:
 			case attacks.AttackTagElementalArtHold:
 			default:
-				return nil, false
+				return nil
 			}
 			if c.currentBubbleTier == 0 {
-				return nil, false
+				return nil
 			}
 			if atk.Info.Abil != c.skillAttackInfo.Abil {
-				return nil, false
+				return nil
 			}
 			m[attributes.DmgP] = float64(c.currentBubbleTier) * bubbleTierBuff
-			return m, true
+			return m
 		},
 	})
 }
 
 func (c *char) energyBondClearMod() {
 	// TODO: override healing functions?
-	c.Core.Events.Subscribe(event.OnHPDebt, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnHPDebt, func(args ...any) {
 		index := args[0].(int)
 		if index != c.Index() {
-			return false
+			return
 		}
 		debtChange := args[1].(float64)
 		if debtChange < 0 {
 			c.collectedHpDebt += -float32(debtChange)
 		}
 		if c.CurrentHPDebt() > 0 {
-			return false
+			return
 		}
 		if c.collectedHpDebt < 0.0001 {
-			return false
+			return
 		}
 
 		energyAmt := min(5., c.collectedHpDebt/hpDebtEnergyRatio)
 		c.collectedHpDebt = 0
 		c.AddEnergy("sigewinne-skill", float64(energyAmt))
-		return false
 	}, "sigewinne-hpdebt-hook")
 }
 

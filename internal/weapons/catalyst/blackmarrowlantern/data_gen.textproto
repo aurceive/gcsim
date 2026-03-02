@@ -2,7 +2,7 @@ id: 14433
 key: "blackmarrowlantern"
 rarity: 4
 weapon_class: WEAPON_CATALYST
-image_name: "UI_EquipIcon_Catalyst_i_n14433"
+image_name: "UI_EquipIcon_Catalyst_Ilmarinen"
 base_stats: {
    base_props: {
       prop_type: FIGHT_PROP_BASE_ATTACK
@@ -60,4 +60,4 @@ base_stats: {
       }
    }
 }
-name_text_hash_map: 0
+name_text_hash_map: 658627627

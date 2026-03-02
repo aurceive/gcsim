@@ -53,20 +53,20 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	w.char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase(buffKey, -1),
 		AffectedStat: attributes.NoStat,
-		Amount: func() ([]float64, bool) {
+		Amount: func() []float64 {
 			m[attributes.EM] = em * float64(w.stacks)
 			m[attributes.ATKP] = atkLoss * float64(w.stacks)
-			return m, true
+			return m
 		},
 	})
 
-	f := func(args ...any) bool {
+	f := func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != w.char.Index() {
-			return false
+			return
 		}
 		if w.char.StatusIsActive(icdKey) {
-			return false
+			return
 		}
 		w.char.AddStatus(icdKey, 18, true)
 
@@ -80,8 +80,6 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 
 		w.core.Log.NewEvent("fruitoffulfillment gained stack", glog.LogWeaponEvent, w.char.Index()).
 			Write("stacks", w.stacks)
-
-		return false
 	}
 
 	for i := event.ReactionEventStartDelim + 1; i < event.ReactionEventEndDelim; i++ {

@@ -32,11 +32,10 @@ func (c *Traveler) c4() {
 
 // Gets removed on swap - from Kolibri
 func (c *Traveler) c6Init() {
-	c.Core.Events.Subscribe(event.OnCharacterSwap, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnCharacterSwap, func(args ...any) {
 		prev := args[0].(int)
 		prevChar := c.Core.Player.ByIndex(prev)
 		prevChar.DeleteStatMod("dmc-c6")
-		return false
 	}, "dmc-c6-remove")
 }
 
@@ -64,8 +63,8 @@ func (c *Traveler) c6Buff(delay int) {
 		active := c.Core.Player.ActiveChar()
 		active.AddStatMod(character.StatMod{
 			Base: modifier.NewBaseWithHitlag("dmc-c6", 60),
-			Amount: func() ([]float64, bool) {
-				return m, true
+			Amount: func() []float64 {
+				return m
 			},
 		})
 	}, delay)

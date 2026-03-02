@@ -74,8 +74,8 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBase("husk-2pc", -1),
 			AffectedStat: attributes.DEFP,
-			Amount: func() ([]float64, bool) {
-				return m, true
+			Amount: func() []float64 {
+				return m
 			},
 		})
 	}
@@ -85,31 +85,30 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 
 	m := make([]float64, attributes.EndStatType)
 
-	c.Events.Subscribe(event.OnCharacterSwap, func(args ...any) bool {
+	c.Events.Subscribe(event.OnCharacterSwap, func(args ...any) {
 		prev := args[0].(int)
 		if prev != char.Index() {
-			return false
+			return
 		}
 		s.lastSwap = c.F
 		c.Tasks.Add(s.gainStackOfffield(c.F), 3*60)
-		return false
 	}, fmt.Sprintf("husk-4pc-off-field-gain-%v", char.Base.Key.String()))
 
-	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		// Only triggers when onfield
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 		if atk.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 
 		if char.StatusIsActive(s.stackGainICDKey) {
-			return false
+			return
 		}
 		if atk.Info.Element != attributes.Geo {
-			return false
+			return
 		}
 
 		if s.stacks < 4 {
@@ -125,17 +124,15 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 
 		s.lastStackGain = c.F
 		char.QueueCharTask(s.checkStackLoss(c.F), s.stackLossTimer)
-
-		return false
 	}, fmt.Sprintf("husk-4pc-%v", char.Base.Key.String()))
 
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("husk-4pc", -1),
 		AffectedStat: attributes.NoStat,
-		Amount: func() ([]float64, bool) {
+		Amount: func() []float64 {
 			m[attributes.DEFP] = 0.06 * float64(s.stacks)
 			m[attributes.GeoP] = 0.06 * float64(s.stacks)
-			return m, true
+			return m
 		},
 	})
 

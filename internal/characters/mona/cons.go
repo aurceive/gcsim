@@ -27,19 +27,16 @@ const (
 // - Vaporize DMG increases by 15%.
 // - Hydro Swirl DMG increases by 15%.
 // - Frozen duration is extended by 15%.
-func (c *char) c1Init() {
-	if c.Base.Cons < 1 {
-		return
-	}
+func (c *char) c1() {
 	// TODO: "Frozen duration is extended by 15%." is bugged
-	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		// ignore if target doesn't have debuff
 		t, ok := args[0].(*enemy.Enemy)
 		if !ok {
-			return false
+			return
 		}
 		if !t.StatusIsActive(bubbleKey) && !t.StatusIsActive(omenKey) {
-			return false
+			return
 		}
 		// add c1 to all party members, delay by 1, because:
 		// "This bonus does not apply in the triggering attack nor from the resulting Hydro DMG dealt by Illusory Bubble in Stellaris Phantasm regardless if they were from resulting reactions."
@@ -50,55 +47,32 @@ func (c *char) c1Init() {
 				// requires ReactBonusMod refactor
 				char.AddReactBonusMod(character.ReactBonusMod{
 					Base: modifier.NewBase("mona-c1", 8*60),
-					Amount: func(ai info.AttackInfo) (float64, bool) {
-						bonus := 0.15
+					Amount: func(ai info.AttackInfo) float64 {
+						// doesn't work off-field
+						if c.Core.Player.Active() != char.Index() {
+							return 0
+						}
+
 						switch ai.AttackTag {
 						// Hydro Swirl DMG increases by 15%.
 						// Electro-Charged DMG increases by 15%.
 						// Lunar-Charged DMG increases by 15%.
-						case attacks.AttackTagSwirlHydro,
-							attacks.AttackTagECDamage,
-							attacks.AttackTagReactionLunarCharge,
-							attacks.AttackTagDirectLunarCharged,
-							attacks.AttackTagReactionLunarCrystallize,
-							attacks.AttackTagDirectLunarCrystallize,
-							attacks.AttackTagDirectLunarBloom:
-							return bonus, false
+						case attacks.AttackTagSwirlHydro, attacks.AttackTagECDamage, attacks.AttackTagReactionLunarCharge, attacks.AttackTagDirectLunarCharged:
+							return 0.15
 						}
 
 						// Vaporize DMG increases by 15%.
 						// the only way Hydro Swirl can vape is via an AoE Hydro Swirl which doesn't do damage anyways, so this is fine
-						if ai.Amped && ai.AmpType == info.ReactionTypeVaporize {
-							return bonus, false
+						if ai.Amped {
+							return 0.15
 						}
 
-						return 0, false
+						return 0
 					},
 				})
 			}, 1)
 		}
-		return false
 	}, "mona-c1-check")
-}
-
-// Upstream-style constellation hook (Init() gates by cons).
-func (c *char) c1() {
-	c.c1Init()
-}
-
-func (c *char) c2Init() {
-	if c.Base.Cons < 2 {
-		return
-	}
-	c.c2Buff = make([]float64, attributes.EndStatType)
-	c.c2Buff[attributes.EM] = 80
-}
-
-func (c *char) c2OnBurst() {
-	if c.Base.Cons < 2 {
-		return
-	}
-	c.c2AfterBurst = true
 }
 
 // C2:
@@ -108,31 +82,27 @@ func (c *char) c2() {
 	if c.Base.Cons < 2 {
 		return
 	}
-	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		trg, ok := args[0].(*enemy.Enemy)
 		if !ok {
-			return false
+			return
 		}
 
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != c.Index() {
-			return false
+			return
 		}
 		if atk.Info.AttackTag != attacks.AttackTagNormal {
-			return false
+			return
 		}
 
-		// Custom: allow a guaranteed proc once after burst.
-		if !c.c2AfterBurst {
-			if c.Core.Rand.Float64() > .2 {
-				return false
-			}
+		if c.Core.Rand.Float64() > .2 {
+			return
 		}
 		if c.StatusIsActive(c2icdkey) {
-			return false
+			return
 		}
 		c.AddStatus(c2icdkey, 5*60, true)
-		c.c2AfterBurst = false
 
 		c.QueueCharTask(func() {
 			ai := info.AttackInfo{
@@ -146,155 +116,65 @@ func (c *char) c2() {
 				Durability: 25,
 				Mult:       charge[c.TalentLvlAttack()],
 			}
-			c.Core.QueueAttack(
-				ai,
-				combat.NewCircleHitOnTarget(trg, nil, 3),
-				0,
-				0,
-				c.makeHexereiCB(),
-				c.c2CaCB,
-				c.makeC6CAResetCB(),
-			)
+			c.Core.QueueAttack(ai, combat.NewCircleHitOnTarget(trg, nil, 3), 0, 0)
 		}, .7*60)
-
-		return false
 	}, "mona-c2-followup")
-}
-
-// C2 (custom extension):
-// Additionally, when her Charged Attack hits an opponent, all nearby party members will have their Elemental Mastery increased by 80 for 12s.
-func (c *char) c2CaCB(a info.AttackCB) {
-	if c.Base.Cons < 2 {
-		return
-	}
-	if a.Target.Type() != info.TargettableEnemy {
-		return
-	}
-
-	for _, char := range c.Core.Player.Chars() {
-		char.AddStatMod(character.StatMod{
-			Base:         modifier.NewBaseWithHitlag("mona-c2", 12*60),
-			AffectedStat: attributes.EM,
-			Amount: func() ([]float64, bool) {
-				return c.c2Buff, true
-			},
-		})
-	}
-}
-
-// Upstream-style constellation hook (Init() gates by cons).
-func (c *char) c4() {
-	c.c4Init()
 }
 
 // C4:
 // When any party member attacks an opponent affected by an Omen, their CRIT Rate is increased by 15%.
-func (c *char) c4Init() {
-	if c.Base.Cons < 4 {
-		return
-	}
+func (c *char) c4() {
 	m := make([]float64, attributes.EndStatType)
 	m[attributes.CR] = 0.15
 
 	for _, char := range c.Core.Player.Chars() {
 		char.AddAttackMod(character.AttackMod{
 			Base: modifier.NewBase(c4key, -1),
-			Amount: func(_ *info.AttackEvent, t info.Target) ([]float64, bool) {
+			Amount: func(_ *info.AttackEvent, t info.Target) []float64 {
 				x, ok := t.(*enemy.Enemy)
 				if !ok {
-					return nil, false
+					return nil
 				}
-				// exit if neither bubble nor omen are present
-				if !x.StatusIsActive(bubbleKey) && !x.StatusIsActive(omenKey) {
-					return nil, false
+				// ok only if either bubble or omen is present
+				if x.StatusIsActive(bubbleKey) || x.StatusIsActive(omenKey) {
+					return m
 				}
-
-				// Additionally, when any Hexerei party member attacks an opponent affected by an Omen, their CRIT DMG is increased by 15%.
-				if char.IsHexerei {
-					m[attributes.CD] = 0.15
-				} else {
-					m[attributes.CD] = 0
-				}
-
-				return m, true
+				return nil
 			},
 		})
 	}
 
 	// workaround for giving lunarcharge the 15% CR
-	c.Core.Events.Subscribe(event.OnLunarChargedReactionAttack, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnLunarChargedReactionAttack, func(args ...any) {
 		x, ok := args[0].(*enemy.Enemy)
 		if !ok {
-			return false
+			return
 		}
 
 		ae, ok := args[1].(*info.AttackEvent)
 		if !ok {
-			return false
+			return
 		}
 
 		if !x.StatusIsActive(bubbleKey) && !x.StatusIsActive(omenKey) {
-			return false
+			return
 		}
 
-		isHexerei := c.Core.Player.ByIndex(ae.Info.ActorIndex).IsHexerei
-
 		if c.Core.Flags.LogDebug {
-			evt := c.Core.Log.NewEvent("Mona C4 added to Lunar Damage", glog.LogPreDamageMod, ae.Info.ActorIndex).
-				Write("before CR", ae.Snapshot.Stats[attributes.CR]).
-				Write("additional CR", 0.15)
-			if isHexerei {
-				evt.Write("before CDMG", ae.Snapshot.Stats[attributes.CD]).
-					Write("additional CDMG", 0.15)
-			}
+			c.Core.Log.NewEvent("Mona C4 CR added to Lunarcharged", glog.LogPreDamageMod, ae.Info.ActorIndex).
+				Write("before", ae.Snapshot.Stats[attributes.CR]).
+				Write("addition", 0.15)
 		}
 
 		ae.Snapshot.Stats[attributes.CR] += 0.15
-		if isHexerei {
-			ae.Snapshot.Stats[attributes.CD] += 0.15
-		}
-
-		return false
-	}, c4key+"-lunar")
-}
-
-func (c *char) c6Check() bool {
-	if c.Base.Cons < 6 {
-		return false
-	}
-
-	monaDashing := c.Core.Player.Active() == c.Index() && c.Core.Player.CurrentState() == action.DashState
-
-	// TODO: does this require her to be on field?
-	nearbyOmen := false
-	for _, e := range c.Core.Combat.EnemiesWithinArea(combat.NewCircleHitOnTarget(c.Core.Combat.Player(), nil, 10), nil) {
-		if e.StatusIsActive(bubbleKey) || e.StatusIsActive(omenKey) {
-			nearbyOmen = true
-			break
-		}
-	}
-	return monaDashing || nearbyOmen
-}
-
-func (c *char) c6() {
-	if c.Base.Cons < 6 {
-		return
-	}
-	// need to keep track of src in case of Mona Dash Dash, where the second dash starts between two c6 ticks
-	// without a src check the second Dash would gain a stack before 1s is up and a second one at 1s
-
-	// only start new task if a previous one isn't active
-	if c.c6Src == -1 {
-		c.c6Src = c.Core.F
-		c.Core.Tasks.Add(c.c6Tick(c.Core.F), 60)
-	}
+	}, c4key+"-lunarcharged")
 }
 
 // C6:
 // Upon entering Illusory Torrent, Mona gains a 60% increase to the DMG of her next Charged Attack per second of movement.
 // A maximum DMG Bonus of 180% can be achieved in this manner.
 // The effect lasts for no more than 8s.
-func (c *char) c6Tick(src int) func() {
+func (c *char) c6(src int) func() {
 	return func() {
 		if c.c6Src != src {
 			c.Core.Log.NewEvent(fmt.Sprintf("%v stack gain check ignored, src diff", c6Key), glog.LogCharacterEvent, c.Index()).
@@ -302,9 +182,12 @@ func (c *char) c6Tick(src int) func() {
 				Write("new src", c.c6Src)
 			return
 		}
-
-		if !c.c6Check() {
-			c.c6Src = -1
+		// do nothing if not Mona
+		if c.Core.Player.Active() != c.Index() {
+			return
+		}
+		// do nothing if we aren't dashing anymore
+		if c.Core.Player.CurrentState() != action.DashState {
 			return
 		}
 
@@ -318,31 +201,30 @@ func (c *char) c6Tick(src int) func() {
 		m := make([]float64, attributes.EndStatType)
 		c.AddAttackMod(character.AttackMod{
 			Base: modifier.NewBase(c6Key, 8*60),
-			Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+			Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 				if atk.Info.AttackTag != attacks.AttackTagExtra {
-					return nil, false
+					return nil
 				}
 				m[attributes.DmgP] = 0.60 * float64(c.c6Stacks)
-				return m, true
+				return m
 			},
 		})
 
 		// reset C6 stacks in 8s if we didn't use a CA
 		c.Core.Tasks.Add(c.c6TimerReset, 8*60+1)
 		// queue up another stack and buff refresh in 1s
-		c.Core.Tasks.Add(c.c6Tick(src), 60)
+		c.Core.Tasks.Add(c.c6(src), 60)
 	}
 }
 
 func (c *char) makeC6CAResetCB() info.AttackCBFunc {
-	if c.Base.Cons < 6 {
+	if c.Base.Cons < 6 || !c.StatusIsActive(c6Key) {
 		return nil
 	}
 	return func(a info.AttackCB) {
-		if a.Target.Type() != info.TargettableEnemy {
+		if a.Target.Type() == info.TargettableEnemy {
 			return
 		}
-
 		if !c.StatusIsActive(c6Key) {
 			return
 		}
@@ -358,33 +240,4 @@ func (c *char) c6TimerReset() {
 		c.c6Stacks = 0
 		c.Core.Log.NewEvent(fmt.Sprintf("%v stacks reset via timer", c6Key), glog.LogCharacterEvent, c.Index())
 	}
-}
-
-func (c *char) c6Init() {
-	if c.Base.Cons < 6 {
-		return
-	}
-	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) bool {
-		e, ok := args[0].(*enemy.Enemy)
-		if !ok {
-			return false
-		}
-
-		ae := args[1].(*info.AttackEvent)
-
-		if ae.Info.ActorIndex != c.Index() {
-			return false
-		}
-
-		if ae.Info.AttackTag != attacks.AttackTagExtra {
-			return false
-		}
-
-		if !e.StatusIsActive(bubbleKey) && !e.StatusIsActive(omenKey) {
-			return false
-		}
-
-		ae.Info.Mult *= 2.0
-		return false
-	}, "mona-c6-ca-omen")
 }

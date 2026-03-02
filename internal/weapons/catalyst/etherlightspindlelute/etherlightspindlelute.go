@@ -29,19 +29,17 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 
 	val := make([]float64, attributes.EndStatType)
 	val[attributes.EM] = 75 + 25*float64(r)
-	c.Events.Subscribe(event.OnSkill, func(args ...any) bool {
+	c.Events.Subscribe(event.OnSkill, func(args ...any) {
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag("etherlight", 20*60),
 			AffectedStat: attributes.EM,
-			Amount: func() ([]float64, bool) {
-				return val, true
+			Amount: func() []float64 {
+				return val
 			},
 		})
-
-		return false
 	}, fmt.Sprintf("etherlight-%v", char.Base.Key.String()))
 	return w, nil
 }

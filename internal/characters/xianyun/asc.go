@@ -29,16 +29,16 @@ func (c *char) a1() {
 		mCR := make([]float64, attributes.EndStatType)
 		char.AddAttackMod(character.AttackMod{
 			Base: modifier.NewBase("xianyun-a1-buff", -1),
-			Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+			Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 				if atk.Info.AttackTag != attacks.AttackTagPlunge {
-					return nil, false
+					return nil
 				}
 				stackCount := min(c.a1Buffer[i], 4)
 				if stackCount == 0 {
-					return nil, false
+					return nil
 				}
 				mCR[attributes.CR] = a1Crit[stackCount]
-				return mCR, true
+				return mCR
 			},
 		})
 	}
@@ -98,23 +98,23 @@ func (c *char) a4() {
 	c.a4Max = 9000
 	c.a4Ratio = 2.0
 
-	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
 		ae := args[1].(*info.AttackEvent)
 		if ae.Info.AttackTag != attacks.AttackTagPlunge {
-			return false
+			return
 		}
 
 		// Collision has 0 durability. Don't buff collision damage
 		if ae.Info.Durability == 0 {
-			return false
+			return
 		}
 
 		if !c.StatusIsActive(a4WindowKey) {
-			return false
+			return
 		}
 
 		if c.StatusIsActive(a4ICDKey) {
-			return false
+			return
 		}
 
 		// A4 cap
@@ -127,7 +127,5 @@ func (c *char) a4() {
 
 		ae.Info.FlatDmg += amt
 		c.AddStatus(a4ICDKey, 0.4*60, true)
-
-		return false
 	}, "xianyun-starwicker-hook")
 }

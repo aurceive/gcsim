@@ -43,8 +43,8 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBase("predator-atk", -1),
 			AffectedStat: attributes.NoStat,
-			Amount: func() ([]float64, bool) {
-				return mATK, true
+			Amount: func() []float64 {
+				return mATK
 			},
 		})
 	}
@@ -56,20 +56,20 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	const stackKey = "predator-stacks"
 	stackDuration := 360
 
-	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		dmg := args[2].(float64)
 		if atk.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 		if atk.Info.Element != attributes.Cryo {
-			return false
+			return
 		}
 		if dmg == 0 {
-			return false
+			return
 		}
 
 		if !char.StatusIsActive(stackKey) {
@@ -84,16 +84,14 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 
 		char.AddAttackMod(character.AttackMod{
 			Base: modifier.NewBaseWithHitlag("predator-dmg", stackDuration),
-			Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+			Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 				if (atk.Info.AttackTag == attacks.AttackTagNormal) || (atk.Info.AttackTag == attacks.AttackTagExtra) {
 					mDMG[attributes.DmgP] = buffDmgP * float64(stacks)
-					return mDMG, true
+					return mDMG
 				}
-				return nil, false
+				return nil
 			},
 		})
-
-		return false
 	}, fmt.Sprintf("predator-%v", char.Base.Key.String()))
 
 	return w, nil

@@ -46,31 +46,31 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("symphonist-atkp", -1),
 		AffectedStat: attributes.ATKP,
-		Amount: func() ([]float64, bool) {
+		Amount: func() []float64 {
 			m[attributes.ATKP] = selfAtkP
 			if c.Player.Active() != char.Index() {
 				m[attributes.ATKP] += selfAtkP
 			}
-			return m, true
+			return m
 		},
 	})
 
 	buffOnHeal := make([]float64, attributes.EndStatType)
 	buffOnHeal[attributes.ATKP] = 0.24 + float64(r)*0.08
 
-	c.Events.Subscribe(event.OnHeal, func(args ...any) bool {
+	c.Events.Subscribe(event.OnHeal, func(args ...any) {
 		source := args[0].(*info.HealInfo)
 		index := args[1].(int)
 
 		if source.Caller != char.Index() {
-			return false
+			return
 		}
 
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag(buffKey, bufDur),
 			AffectedStat: attributes.ATKP,
-			Amount: func() ([]float64, bool) {
-				return buffOnHeal, true
+			Amount: func() []float64 {
+				return buffOnHeal
 			},
 		})
 
@@ -79,12 +79,11 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 			otherChar.AddStatMod(character.StatMod{
 				Base:         modifier.NewBaseWithHitlag(buffKey, bufDur),
 				AffectedStat: attributes.ATKP,
-				Amount: func() ([]float64, bool) {
-					return buffOnHeal, true
+				Amount: func() []float64 {
+					return buffOnHeal
 				},
 			})
 		}
-		return false
 	}, fmt.Sprintf("symphonist-of-scents-%v", char.Base.Key.String()))
 
 	return w, nil

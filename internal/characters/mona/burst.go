@@ -54,8 +54,6 @@ func (c *char) Burst(p map[string]int) (action.Info, error) {
 		t.AddStatus(bubbleKey, 481, true) // 1 frame extra so we don't run into problems breaking
 		c.Core.Log.NewEvent("mona bubble on target", glog.LogCharacterEvent, c.Index()).
 			Write("char", c.Index())
-
-		c.c6()
 	}
 	c.Core.QueueAttack(ai, combat.NewCircleHitOnTarget(c.Core.Combat.Player(), nil, 10), -1, burstHitmark, cb)
 
@@ -76,9 +74,6 @@ func (c *char) Burst(p map[string]int) (action.Info, error) {
 	c.SetCD(action.ActionBurst, 15*60)
 	c.ConsumeEnergy(5)
 
-	c.hexereiOnBurst()
-	c.c2OnBurst()
-
 	return action.Info{
 		Frames:          frames.NewAbilFunc(burstFrames),
 		AnimationLength: burstFrames[action.InvalidAction],
@@ -93,16 +88,16 @@ func (c *char) burstDamageBonus() {
 	for _, char := range c.Core.Player.Chars() {
 		char.AddAttackMod(character.AttackMod{
 			Base: modifier.NewBase("mona-omen", -1),
-			Amount: func(_ *info.AttackEvent, t info.Target) ([]float64, bool) {
+			Amount: func(_ *info.AttackEvent, t info.Target) []float64 {
 				x, ok := t.(*enemy.Enemy)
 				if !ok {
-					return nil, false
+					return nil
 				}
 				// ok only if either bubble or omen is present
 				if x.StatusIsActive(bubbleKey) || x.StatusIsActive(omenKey) {
-					return m, true
+					return m
 				}
-				return nil, false
+				return nil
 			},
 		})
 	}
@@ -116,29 +111,27 @@ func (c *char) burstHook() {
 	// TODO: this implementation would currently cause bubble to break immediately on the first EC tick.
 	// According to: https://docs.google.com/document/d/1pXlgCaYEpoizMIP9-QKlSkQbmRicWfrEoxb9USWD1Ro/edit#
 	// only 2nd ec tick should break
-	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		// ignore if target doesn't have debuff
 		t, ok := args[0].(*enemy.Enemy)
 		if !ok {
-			return false
+			return
 		}
 		if !t.StatusIsActive(bubbleKey) {
-			return false
+			return
 		}
 		// always break if it's due to time up
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.AttackTag == attacks.AttackTagMonaBubbleBreak {
 			c.triggerBubbleBurst(t)
-			return false
+			return
 		}
 		// dont break if no impulse
 		if atk.Info.NoImpulse {
-			return false
+			return
 		}
 		// otherwise break on damage
 		c.triggerBubbleBurst(t)
-
-		return false
 	}, "mona-bubble-check")
 }
 
@@ -146,7 +139,7 @@ func (c *char) triggerBubbleBurst(t *enemy.Enemy) {
 	// remove bubble tag
 	t.DeleteStatus(bubbleKey)
 	// add omen debuff
-	dur := int(omenDuration[c.TalentLvlBurst()]*60) + c.omenStartingBonusDur
+	dur := int(omenDuration[c.TalentLvlBurst()] * 60)
 	t.AddStatus(omenKey, dur, true)
 	// trigger dmg
 	ai := info.AttackInfo{

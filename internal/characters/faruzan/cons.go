@@ -42,11 +42,11 @@ func (c *char) c6Buff(char *character.CharWrapper) {
 	m[attributes.CD] = 0.4
 	char.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBaseWithHitlag("faruzan-c6", 240),
-		Amount: func(atk *info.AttackEvent, _ info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, _ info.Target) []float64 {
 			if atk.Info.Element != attributes.Anemo {
-				return nil, false
+				return nil
 			}
-			return m, true
+			return m
 		},
 	})
 }
@@ -54,24 +54,23 @@ func (c *char) c6Buff(char *character.CharWrapper) {
 const c6ICDKey = "faruzan-c6-icd"
 
 func (c *char) c6Collapse() {
-	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		if dmg := args[2].(float64); dmg == 0 {
-			return false
+			return
 		}
 		atk := args[1].(*info.AttackEvent)
 		char := c.Core.Player.ActiveChar()
 		if char.Index() != atk.Info.ActorIndex {
-			return false
+			return
 		}
 		if !char.StatusIsActive(burstBuffKey) {
-			return false
+			return
 		}
 		if c.StatusIsActive(c6ICDKey) {
-			return false
+			return
 		}
 		c.AddStatus(c6ICDKey, 180, false)
 		enemy := args[0].(*enemy.Enemy)
 		c.pressurizedCollapse(enemy.Pos())
-		return false
 	}, "faruzan-c6-hook")
 }

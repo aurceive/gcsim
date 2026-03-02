@@ -36,33 +36,31 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	emBuffSkill := make([]float64, attributes.EndStatType)
 	emBuffSkill[attributes.EM] = 36 + float64(r)*12
 
-	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 
 		switch atk.Info.AttackTag {
 		case attacks.AttackTagExtra:
 			char.AddStatMod(character.StatMod{
 				Base: modifier.NewBaseWithHitlag("dawning-frost-ca", 10*60),
-				Amount: func() ([]float64, bool) {
-					return emBuffCa, true
+				Amount: func() []float64 {
+					return emBuffCa
 				},
 			})
 		case attacks.AttackTagElementalArt, attacks.AttackTagElementalArtHold:
 			char.AddStatMod(character.StatMod{
 				Base: modifier.NewBaseWithHitlag("dawning-frost-skill", 10*60),
-				Amount: func() ([]float64, bool) {
-					return emBuffSkill, true
+				Amount: func() []float64 {
+					return emBuffSkill
 				},
 			})
 		}
-
-		return false
 	}, fmt.Sprintf("dawning-frost-%v-ondamage", char.Base.Key.String()))
 
 	return w, nil

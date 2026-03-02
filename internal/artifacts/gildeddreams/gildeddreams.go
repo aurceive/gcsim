@@ -75,34 +75,33 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBase("gd-2pc", -1),
 			AffectedStat: attributes.EM,
-			Amount: func() ([]float64, bool) {
-				return m, true
+			Amount: func() []float64 {
+				return m
 			},
 		})
 	}
 	if count >= 4 {
 		const icdKey = "gd-4pc-icd"
-		add := func(args ...any) bool {
+		add := func(args ...any) {
 			atk := args[1].(*info.AttackEvent)
 			if atk.Info.ActorIndex != char.Index() {
-				return false
+				return
 			}
 			if char.StatusIsActive(icdKey) {
-				return false
+				return
 			}
 			char.AddStatus(icdKey, 8*60, true)
 
 			char.AddStatMod(character.StatMod{
 				Base:         modifier.NewBaseWithHitlag("gd-4pc", 8*60),
 				AffectedStat: attributes.NoStat,
-				Amount: func() ([]float64, bool) {
-					return s.buff, true
+				Amount: func() []float64 {
+					return s.buff
 				},
 			})
 			c.Log.NewEvent("gilded dreams proc'd", glog.LogArtifactEvent, char.Index()).
 				Write("em", s.buff[attributes.EM]).
 				Write("atk", s.buff[attributes.ATKP])
-			return false
 		}
 
 		for i := event.ReactionEventStartDelim + 1; i < event.ReactionEventEndDelim; i++ {

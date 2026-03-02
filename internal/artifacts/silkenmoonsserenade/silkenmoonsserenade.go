@@ -43,8 +43,8 @@ func (s *Set) Init() error {
 	s.char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase(setKey2, -1),
 		AffectedStat: attributes.ER,
-		Amount: func() ([]float64, bool) {
-			return m, true
+		Amount: func() []float64 {
+			return m
 		},
 	})
 
@@ -53,57 +53,50 @@ func (s *Set) Init() error {
 	}
 
 	m2 := make([]float64, attributes.EndStatType)
-	switch s.getMoonsignLevel() {
+	switch s.core.Player.GetMoonsignLevel() {
 	case 0:
+		return nil
 	case 1:
 		m2[attributes.EM] = 60
 	default:
 		m2[attributes.EM] = 120
 	}
-	lunarReactHook := func(args ...any) bool {
+
+	hook := func(args ...any) {
 		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
+			return
 		}
-		ae, ok := args[1].(*info.AttackEvent)
-		if !ok {
-			return false
-		}
-
-		if ae.Info.ActorIndex != s.char.Index() {
-			return false
-		}
-
-		switch ae.Info.Element {
+		atk := args[1].(*info.AttackEvent)
+		switch atk.Info.Element {
+		case attributes.Pyro:
 		case attributes.Hydro:
 		case attributes.Electro:
-		case attributes.Pyro:
 		case attributes.Cryo:
-		case attributes.Geo:
 		case attributes.Anemo:
+		case attributes.Geo:
 		case attributes.Dendro:
 		default:
-			return false
+			return
 		}
 
 		for _, char := range s.core.Player.Chars() {
 			char.AddStatMod(character.StatMod{
 				Base:         modifier.NewBase(gleamingMoonDevotionEMKey, 8*60),
 				AffectedStat: attributes.EM,
-				Amount: func() ([]float64, bool) {
-					return m2, true
+				Amount: func() []float64 {
+					return m2
 				},
 			})
 		}
-
-		return false
 	}
-	s.core.Events.Subscribe(event.OnEnemyDamage, lunarReactHook, setKey4+"-"+s.char.Base.Key.String())
+	s.core.Events.Subscribe(event.OnEnemyDamage, hook, setKey4+"-dmg-"+s.char.Base.Key.String())
+
 	for _, char := range s.core.Player.Chars() {
 		char.AddReactBonusMod(character.ReactBonusMod{
 			Base: modifier.NewBase(gleamingMoonDevotionReactKey, -1),
-			Amount: func(ai info.AttackInfo) (float64, bool) {
+			Amount: func(ai info.AttackInfo) float64 {
 				if !attacks.AttackTagIsLunar(ai.AttackTag) {
-					return 0, false
+					return 0
 				}
 
 				hasGleamingMoonDevotion := false
@@ -115,22 +108,14 @@ func (s *Set) Init() error {
 				}
 
 				if !hasGleamingMoonDevotion {
-					return 0, false
+					return 0
 				}
-				return 0.1, false
+				return 0.1
 			},
 		})
 	}
 
 	return nil
-}
-
-func (s *Set) getMoonsignLevel() int {
-	count := 0
-	for _, c := range s.core.Player.Chars() {
-		count += c.Moonsign
-	}
-	return count
 }
 
 func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[string]int) (info.Set, error) {

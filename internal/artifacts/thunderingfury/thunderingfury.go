@@ -43,8 +43,8 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBase("tf-2pc", -1),
 			AffectedStat: attributes.ElectroP,
-			Amount: func() ([]float64, bool) {
-				return m, true
+			Amount: func() []float64 {
+				return m
 			},
 		})
 	}
@@ -58,48 +58,44 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 
 	char.AddReactBonusMod(character.ReactBonusMod{
 		Base: modifier.NewBase("tf-4pc", -1),
-		Amount: func(ai info.AttackInfo) (float64, bool) {
+		Amount: func(ai info.AttackInfo) float64 {
 			if ai.Catalyzed && ai.CatalyzedType == info.ReactionTypeAggravate {
-				return 0.2, false
+				return 0.2
 			}
 			switch ai.AttackTag {
 			case attacks.AttackTagOverloadDamage,
 				attacks.AttackTagECDamage,
 				attacks.AttackTagSuperconductDamage,
 				attacks.AttackTagHyperbloom:
-				return 0.4, false
+				return 0.4
 			case attacks.AttackTagDirectLunarCharged, attacks.AttackTagReactionLunarCharge:
-				return 0.2, false
+				return 0.2
 			}
-			return 0, false
+			return 0
 		},
 	})
 
-	//nolint:unparam // ignoring for now, event refactor should get rid of bool return of event sub
-	reduce := func(args ...any) bool {
+	reduce := func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 		if char.StatusIsActive(icdKey) {
-			return false
+			return
 		}
 		char.AddStatus(icdKey, icd, true)
 		char.ReduceActionCooldown(action.ActionSkill, 60)
 		c.Log.NewEvent("thunderfury 4pc proc", glog.LogArtifactEvent, char.Index()).
 			Write("reaction", atk.Info.Abil).
 			Write("new cd", char.Cooldown(action.ActionSkill))
-		return false
 	}
-
-	reduceNoGadget := func(args ...any) bool {
-		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
+	reduceNoGadget := func(args ...any) {
+		if _, ok := args[0].(*enemy.Enemy); ok {
+			reduce(args...)
 		}
-		return reduce(args...)
 	}
 
 	c.Events.Subscribe(event.OnOverload, reduceNoGadget, fmt.Sprintf("tf-4pc-%v", char.Base.Key.String()))

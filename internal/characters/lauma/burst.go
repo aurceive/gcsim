@@ -6,11 +6,24 @@ import (
 	"github.com/genshinsim/gcsim/pkg/core/attacks"
 	"github.com/genshinsim/gcsim/pkg/core/attributes"
 	"github.com/genshinsim/gcsim/pkg/core/event"
+	"github.com/genshinsim/gcsim/pkg/core/glog"
 	"github.com/genshinsim/gcsim/pkg/core/info"
 	"github.com/genshinsim/gcsim/pkg/enemy"
 )
 
 var burstFrames []int
+
+const paleHymnDur = 15 * 60
+
+const (
+	paleHymnC6       = 0
+	paleHymnMoonsong = 1
+	paleHymnBurst    = 2
+
+	paleHymnC6Key       = "lauma-pale-hymn-c6"
+	paleHymnMoonsongKey = "lauma-pale-hymn-moonsong"
+	paleHymnBurstKey    = "lauma-pale-hymn-burst"
+)
 
 func init() {
 	burstFrames = frames.InitAbilSlice(115) // Q -> walk
@@ -29,21 +42,17 @@ const (
 )
 
 func (c *char) Burst(p map[string]int) (action.Info, error) {
-	c.c1OnBurst()
-
+	c.DeleteStatus(burstKey)
+	c.DeleteStatus(moonSongIcdKey)
 	c.Core.Tasks.Add(func() {
-		c.addPaleHymn(18)
-
-		c.AddStatus(burstKey, 15*60, true) // should this be here?
-		if c.moonSong != 0 {
-			c.addPaleHymn(6 * c.moonSong)
-			c.moonSong = 0
-			c.AddStatus(moonSongAddedKey, 15*60, true)
-		}
+		c.setPaleHymnBurst(18)
+		c.AddStatus(burstKey, paleHymnDur, true)
+		c.moonSongOnBurst()
+		c.c1OnBurst()
 	}, paleHymnGainFrame)
 
 	c.ConsumeEnergy(8)
-	c.SetCD(action.ActionBurst, 15*60)
+	c.SetCD(action.ActionBurst, paleHymnDur)
 	return action.Info{
 		Frames: func(next action.Action) int {
 			if c.deerStateReady && next == action.ActionCharge {
@@ -58,122 +67,94 @@ func (c *char) Burst(p map[string]int) (action.Info, error) {
 }
 
 func (c *char) initBurst() {
-	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
 		_, ok := args[0].(*enemy.Enemy)
 		if !ok {
-			return false
+			return
 		}
-		if c.paleHymnStacks.Len() == 0 && c.c6PaleHymnStacks.Len() == 0 {
-			return false
+		if c.paleHymnCount() <= 0 {
+			return
 		}
 
 		ae := args[1].(*info.AttackEvent)
 		em := c.Stat(attributes.EM)
 
 		switch ae.Info.AttackTag {
-		case attacks.AttackTagBountifulCore | attacks.AttackTagBloom | attacks.AttackTagHyperbloom | attacks.AttackTagBurgeon:
+		case attacks.AttackTagBountifulCore, attacks.AttackTagBloom, attacks.AttackTagHyperbloom, attacks.AttackTagBurgeon:
 			ae.Info.FlatDmg += em * bloomDmgIncrease[c.TalentLvlBurst()]
-
-			ae.Info.FlatDmg += em * c.c2PaleHymnScaling(false)
+			ae.Info.FlatDmg += em * c.c2PaleHymnScalingBloom()
 		case attacks.AttackTagDirectLunarBloom:
-
 			ae.Info.FlatDmg += em * lunarBloomDmgIncrease[c.TalentLvlBurst()]
-
-			ae.Info.FlatDmg += em * c.c2PaleHymnScaling(true)
+			ae.Info.FlatDmg += em * c.c2PaleHymnScalingLunarBloom()
 		default:
-			return false
+			return
 		}
 
 		if ae.Info.Abil == c6SkillHitName {
-			return false
+			return
 		}
 
 		c.consumePaleHymn()
-
-		return false
+		if c.Core.Flags.LogDebug {
+			c.Core.Log.NewEvent("lauma pale hymn consumed", glog.LogCharacterEvent, c.Index()).Write("remaining", c.paleHymnCount())
+		}
 	}, "lauma-pale-hymn-buff")
 }
 
-func (c *char) addPaleHymn(amount int) {
-	if c.paleHymnStacks.Len() == 0 {
-		c.Core.Tasks.Add(c.removePaleHymn(), 15*60)
-	}
+func (c *char) paleHymnCount() int {
+	return c.paleHymn[paleHymnBurst] + c.paleHymn[paleHymnMoonsong] + c.paleHymn[paleHymnC6]
+}
 
-	endFrame := c.Core.F + 15*60
+func (c *char) setPaleHymnBurst(amount int) {
+	ind := paleHymnBurst
+	c.paleHymn[ind] = amount
+	c.paleHymnSrc[ind] = c.Core.F
+	c.AddStatus(paleHymnBurstKey, paleHymnDur, true)
+	c.QueueCharTask(c.removeExpiredPaleHymn(c.paleHymnSrc[ind], ind), paleHymnDur)
+}
 
-	for range amount {
-		c.paleHymnStacks.PushBack(endFrame)
-	}
+func (c *char) setPaleHymnMoonsong(amount int) {
+	ind := paleHymnMoonsong
+	c.paleHymn[ind] = amount
+	c.paleHymnSrc[ind] = c.Core.F
+	c.AddStatus(paleHymnMoonsongKey, paleHymnDur, true)
+	c.QueueCharTask(c.removeExpiredPaleHymn(c.paleHymnSrc[ind], ind), paleHymnDur)
 }
 
 func (c *char) addC6PaleHymn(amount int) {
-	if c.paleHymnStacks.Len() == 0 {
-		c.Core.Tasks.Add(c.removePaleHymn(), 15*60)
-	}
-
-	endFrame := c.Core.F + 15*60
-
-	for range amount {
-		c.c6PaleHymnStacks.PushBack(endFrame)
-	}
+	ind := paleHymnC6
+	c.paleHymn[ind] += amount
+	c.paleHymnSrc[ind] = c.Core.F
+	c.AddStatus(paleHymnC6Key, paleHymnDur, true)
+	c.QueueCharTask(c.removeExpiredPaleHymn(c.paleHymnSrc[ind], ind), paleHymnDur)
 }
 
+// attempts to consume a pale hymn.
 func (c *char) consumePaleHymn() {
-	if c.paleHymnStacks.Len() == 0 {
-		c.c6PaleHymnStacks.PopFront()
+	if c.paleHymn[paleHymnC6] > 0 {
+		c.paleHymn[paleHymnC6]--
 		return
 	}
-	if c.c6PaleHymnStacks.Len() == 0 {
-		c.paleHymnStacks.PopFront()
-		return
-	}
-	currentPaleHymn := c.paleHymnStacks.Front()
-	currentC6PaleHymn := c.c6PaleHymnStacks.Front()
 
-	if currentPaleHymn < currentC6PaleHymn {
-		c.paleHymnStacks.PopFront()
-	} else {
-		c.c6PaleHymnStacks.PopFront()
+	if c.paleHymn[paleHymnMoonsong] > 0 {
+		c.paleHymn[paleHymnMoonsong]--
+		return
 	}
+
+	if c.paleHymn[paleHymnBurst] > 0 {
+		c.paleHymn[paleHymnBurst]--
+		return
+	}
+
+	// err or panic?
+	// panic("consumePaleHymn called when there are no pale hymn stacks")
 }
 
-func (c *char) removePaleHymn() func() {
+func (c *char) removeExpiredPaleHymn(src, index int) func() {
 	return func() {
-		currentFrame := c.Core.F
-
-		var nextRemovePaleHymn int
-		var currentPaleHymn int
-		var currentC6PaleHymn int
-
-		if c.paleHymnStacks.Len() != 0 {
-			currentPaleHymn = c.paleHymnStacks.Front()
-
-			for currentPaleHymn <= currentFrame {
-				if c.paleHymnStacks.Len() == 0 {
-					break
-				}
-				c.paleHymnStacks.PopFront()
-			}
-
-			if currentPaleHymn > currentFrame {
-				nextRemovePaleHymn = currentPaleHymn
-			}
+		if c.paleHymnSrc[index] != src {
+			return
 		}
-
-		if c.c6PaleHymnStacks.Len() != 0 {
-			currentC6PaleHymn = c.c6PaleHymnStacks.Back()
-
-			if currentC6PaleHymn <= currentFrame {
-				c.c6PaleHymnStacks.Clear()
-			}
-		}
-
-		if currentC6PaleHymn > currentFrame && currentC6PaleHymn < nextRemovePaleHymn {
-			nextRemovePaleHymn = currentC6PaleHymn
-		}
-
-		if nextRemovePaleHymn != 0 {
-			c.Core.Tasks.Add(c.removePaleHymn(), nextRemovePaleHymn-currentFrame)
-		}
+		c.paleHymn[index] = 0
 	}
 }

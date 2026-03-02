@@ -19,10 +19,9 @@ type char struct {
 	a4Bonus []float64
 	c1bonus []float64
 	c2bonus []float64
-	c6buff  []float64
 }
 
-func NewChar(s *core.Core, w *character.CharWrapper, p info.CharacterProfile) error {
+func NewChar(s *core.Core, w *character.CharWrapper, _ info.CharacterProfile) error {
 	c := char{}
 	c.Character = tmpl.NewWithWrapper(s, w)
 
@@ -32,12 +31,6 @@ func NewChar(s *core.Core, w *character.CharWrapper, p info.CharacterProfile) er
 	c.NormalHitNum = normalHitNum
 
 	w.Character = &c
-
-	hexerei, ok := p.Params["hexerei"]
-	if !ok {
-		hexerei = 1
-	}
-	c.IsHexerei = hexerei > 0
 
 	return nil
 }
@@ -55,10 +48,12 @@ func (c *char) Init() error {
 		}
 		return 0, false
 	})
-
-	c.c1Init()
-	c.c2Init()
-	c.c6Init()
+	if c.Base.Cons >= 1 {
+		c.c1()
+	}
+	if c.Base.Cons >= 2 {
+		c.c2()
+	}
 
 	return nil
 }

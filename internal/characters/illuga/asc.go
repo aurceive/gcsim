@@ -30,18 +30,18 @@ func (c *char) a1Init() {
 	c.a1BuffGleam[attributes.EM] = c.c6A1BuffGleam()
 
 	// workaround for giving lunarcrystallize the CR/CD
-	c.Core.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) {
 		ae, ok := args[1].(*info.AttackEvent)
 		if !ok {
-			return false
+			return
 		}
 
 		if ae.Info.Element != attributes.Geo {
-			return false
+			return
 		}
 
 		if !c.Core.Player.ByIndex(ae.Info.ActorIndex).StatModIsActive(a1Key) {
-			return false
+			return
 		}
 
 		if c.Core.Flags.LogDebug {
@@ -53,7 +53,6 @@ func (c *char) a1Init() {
 		}
 		ae.Snapshot.Stats[attributes.CR] += 0.05
 		ae.Snapshot.Stats[attributes.CD] += 0.1
-		return false
 	}, a1Key+"-lcr")
 }
 
@@ -61,23 +60,23 @@ func (c *char) a1OnSkillBurst() {
 	for _, char := range c.Core.Player.Chars() {
 		char.AddAttackMod(character.AttackMod{
 			Base: modifier.NewBaseWithHitlag(a1Key, 20*60),
-			Amount: func(atk *info.AttackEvent, _ info.Target) ([]float64, bool) {
+			Amount: func(atk *info.AttackEvent, _ info.Target) []float64 {
 				if atk.Info.Element != attributes.Geo {
-					return nil, false
+					return nil
 				}
-				return c.a1Buff, true
+				return c.a1Buff
 			},
 		})
 
-		if c.Core.Player.GetMoonsignCount() < 2 {
+		if c.Core.Player.GetMoonsignLevel() < 2 {
 			continue
 		}
 
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag(a1Key+"-gleam", 20*60),
 			AffectedStat: attributes.EM,
-			Amount: func() ([]float64, bool) {
-				return c.a1BuffGleam, true
+			Amount: func() []float64 {
+				return c.a1BuffGleam
 			},
 		})
 	}

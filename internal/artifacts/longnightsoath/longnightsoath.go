@@ -67,11 +67,11 @@ func (s *Set) pc2() {
 	m[attributes.DmgP] = 0.25
 	s.char.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBase("longnightsoath-2pc", -1),
-		Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 			if atk.Info.AttackTag != attacks.AttackTagPlunge {
-				return nil, false
+				return nil
 			}
-			return m, true
+			return m
 		},
 	})
 }
@@ -81,23 +81,23 @@ func (s *Set) pc4() {
 		return
 	}
 
-	s.c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	s.c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != s.char.Index() {
-			return false
+			return
 		}
 
 		active := s.c.Player.ActiveChar()
 		if atk.Info.ActorIndex != active.Index() {
-			return false
+			return
 		}
 
 		info, ok := attackStackInfo[atk.Info.AttackTag]
 		if !ok {
-			return false
+			return
 		}
 		if s.char.StatusIsActive(info.icdStatus) {
-			return false
+			return
 		}
 		s.char.AddStatus(info.icdStatus, 1*60, true)
 
@@ -107,19 +107,17 @@ func (s *Set) pc4() {
 		s.c.Log.NewEventBuildMsg(glog.LogArtifactEvent, s.char.Index(), "adding long night's oath stacks").
 			Write("count", info.stacks).
 			Write("total", s.stacks.Count())
-
-		return false
 	}, fmt.Sprintf("longnightsoath-4pc-%v", s.char.Base.Key.String()))
 
 	m := make([]float64, attributes.EndStatType)
 	s.char.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBase("longnightsoath-4pc", -1),
-		Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 			if atk.Info.AttackTag != attacks.AttackTagPlunge {
-				return nil, false
+				return nil
 			}
 			m[attributes.DmgP] = 0.15 * float64(s.stacks.Count())
-			return m, true
+			return m
 		},
 	})
 }

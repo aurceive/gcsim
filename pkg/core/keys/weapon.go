@@ -105,9 +105,9 @@ var weaponNames = []string{
 	"flowingpurity",
 	"footprintoftherainbow",
 	"forestregalia",
+	"fracturedhalo",
 	"freedomsworn",
 	"frostbearer",
-	"fracturedhalo",
 	"fruitfulhook",
 	"fruitoffulfillment",
 	"hakushinring",
@@ -139,6 +139,7 @@ var weaponNames = []string{
 	"mailedflower",
 	"makhairaaquamarine",
 	"mappamare",
+	"masterkey",
 	"memoryofdust",
 	"messenger",
 	"missivewindspear",
@@ -191,6 +192,7 @@ var weaponNames = []string{
 	"scionoftheblazingsun",
 	"seasonedhuntersbow",
 	"sequenceofsolitude",
+	"serenityscall",
 	"serpentspine",
 	"sharpshootersoath",
 	"silvershowerheartstrings",
@@ -203,6 +205,7 @@ var weaponNames = []string{
 	"skywardpride",
 	"skywardspine",
 	"slingshot",
+	"snarehook",
 	"snowtombedstarsilver",
 	"solarpearl",
 	"songofbrokenpines",
@@ -332,9 +335,9 @@ const (
 	FlowingPurity
 	FootprintOfTheRainbow
 	ForestRegalia
+	FracturedHalo
 	FreedomSworn
 	Frostbearer
-	FracturedHalo
 	FruitfulHook
 	FruitOfFulfillment
 	HakushinRing
@@ -366,6 +369,7 @@ const (
 	MailedFlower
 	MakhairaAquamarine
 	MappaMare
+	MasterKey
 	MemoryOfDust
 	Messenger
 	MissiveWindspear
@@ -418,6 +422,7 @@ const (
 	ScionOfTheBlazingSun
 	SeasonedHuntersBow
 	SequenceOfSolitude
+	SerenitysCall
 	SerpentSpine
 	SharpshootersOath
 	SilvershowerHeartstrings
@@ -430,6 +435,7 @@ const (
 	SkywardPride
 	SkywardSpine
 	Slingshot
+	SnareHook
 	SnowTombedStarsilver
 	SolarPearl
 	SongOfBrokenPines

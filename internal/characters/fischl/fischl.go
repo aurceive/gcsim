@@ -46,12 +46,6 @@ func NewChar(s *core.Core, w *character.CharWrapper, p info.CharacterProfile) er
 		c.ozTravel = travel
 	}
 
-	hexerei, ok := p.Params["hexerei"]
-	if !ok {
-		hexerei = 1
-	}
-	c.IsHexerei = hexerei > 0
-
 	w.Character = &c
 
 	return nil
@@ -59,8 +53,21 @@ func NewChar(s *core.Core, w *character.CharWrapper, p info.CharacterProfile) er
 
 func (c *char) Init() error {
 	c.a4()
-	c.hexereiInit()
-	return c.c6Init()
+
+	if c.Base.Cons >= 6 {
+		w, err := minazuki.New(
+			minazuki.WithMandatory(keys.Fischl, "fischl c6", ozActiveKey, "", 60, c.c6Wave, c.Core),
+			minazuki.WithTickOnActive(true),
+			minazuki.WithAnimationDelayCheck(info.AnimationYelanN0StartDelay, func() bool {
+				return c.Core.Player.ActiveChar().NormalCounter == 1
+			}),
+		)
+		if err != nil {
+			return err
+		}
+		c.c6Watcher = w
+	}
+	return nil
 }
 
 func (c *char) Condition(fields []string) (any, error) {

@@ -66,10 +66,10 @@ func (c *char) Burst(p map[string]int) (action.Info, error) {
 }
 
 func (c *char) burstInit() {
-	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
 		ae := args[1].(*info.AttackEvent)
 		if ae.Info.Element != attributes.Geo {
-			return false
+			return
 		}
 
 		switch ae.Info.AttackTag {
@@ -81,19 +81,19 @@ func (c *char) burstInit() {
 		case attacks.AttackTagPlunge:
 		case attacks.AttackTagDirectLunarCrystallize:
 		default:
-			return false
+			return
 		}
 
 		if ae.Info.ActorIndex != c.Core.Player.Active() {
-			return false
+			return
 		}
 
 		if !c.StatusIsActive(burstKey) {
-			return false
+			return
 		}
 
 		if c.burstStacks == 0 {
-			return false
+			return
 		}
 
 		c.useStack()
@@ -114,8 +114,6 @@ func (c *char) burstInit() {
 			Write("addition", amt)
 
 		ae.Info.FlatDmg += amt
-
-		return false
 	}, "illuga-burst-hook")
 }
 

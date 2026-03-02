@@ -125,7 +125,7 @@ func (c *char) skillAttack() (action.Info, error) {
 				attackHitboxes[c.NormalCounter][1],
 			)
 		}
-		if c.NormalCounter == 3 && c.Core.Player.GetMoonsignCount() >= 2 {
+		if c.NormalCounter == 3 && c.Core.Player.GetMoonsignLevel() >= 2 {
 			ai.Mult = skillLastAttackBonus[c.TalentLvlAttack()]
 			c.Core.QueueAttack(ai, ap, attackHitmarks[c.NormalCounter][i], attackHitmarks[c.NormalCounter][i], c.particleCB, c.radianceCB)
 			ai.Abil += lunarCrystallizeAbil

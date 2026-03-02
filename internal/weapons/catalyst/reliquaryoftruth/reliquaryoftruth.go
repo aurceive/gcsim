@@ -48,8 +48,8 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase(crKey, -1),
 		AffectedStat: attributes.CR,
-		Amount: func() ([]float64, bool) {
-			return mCR, true
+		Amount: func() []float64 {
+			return mCR
 		},
 	})
 
@@ -57,16 +57,16 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase(secretKey, -1),
 		AffectedStat: attributes.EM,
-		Amount: func() ([]float64, bool) {
+		Amount: func() []float64 {
 			if !char.StatusIsActive(secretStatus) {
-				return mEM, false
+				return mEM
 			}
 			val := emBonus
 			if char.StatusIsActive(moonStatus) {
 				val *= overlapMult
 			}
 			mEM[attributes.EM] = val
-			return mEM, true
+			return mEM
 		},
 	})
 
@@ -74,37 +74,35 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase(moonKey, -1),
 		AffectedStat: attributes.CD,
-		Amount: func() ([]float64, bool) {
+		Amount: func() []float64 {
 			if !char.StatusIsActive(moonStatus) {
-				return mCD, false
+				return mCD
 			}
 			val := cdBonus
 			if char.StatusIsActive(secretStatus) {
 				val *= overlapMult
 			}
 			mCD[attributes.CD] = val
-			return mCD, true
+			return mCD
 		},
 	})
 
-	c.Events.Subscribe(event.OnSkill, func(args ...any) bool {
+	c.Events.Subscribe(event.OnSkill, func(args ...any) {
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 		char.AddStatus(secretStatus, secretDur, true)
-		return false
 	}, fmt.Sprintf("reliquaryoftruth-skill-%v", char.Base.Key.String()))
 
-	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		if atk.Info.AttackTag != attacks.AttackTagDirectLunarBloom {
-			return false
+			return
 		}
 		char.AddStatus(moonStatus, moonDur, true)
-		return false
 	}, fmt.Sprintf("reliquaryoftruth-lb-dmg-%v", char.Base.Key.String()))
 
 	return w, nil

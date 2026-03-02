@@ -23,8 +23,8 @@ func (c *char) c1() {
 	c.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("dehya-c1", -1),
 		AffectedStat: attributes.HPP,
-		Amount: func() ([]float64, bool) {
-			return m, true
+		Amount: func() []float64 {
+			return m
 		},
 	})
 	// abil flat dmg
@@ -50,30 +50,29 @@ func (c *char) c2() {
 	val[attributes.DmgP] = 0.5
 	c.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBase("dehya-sanctum-dot-c2", -1),
-		Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 			if atk.Info.Abil != skillDoTAbil || !c.hasC2DamageBuff {
-				return nil, false
+				return nil
 			}
-			return val, true
+			return val
 		},
 	})
-	c.Core.Events.Subscribe(event.OnPlayerHit, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnPlayerHit, func(args ...any) {
 		char := args[0].(int)
 		// don't trigger if active char not hit
 		if char != c.Core.Player.Active() {
-			return false
+			return
 		}
 		// field needs to be active
 		if !c.StatusIsActive(dehyaFieldKey) {
-			return false
+			return
 		}
 		// player needs to be in field
 		if !c.Core.Combat.Player().IsWithinArea(c.skillArea) {
-			return false
+			return
 		}
 		c.Core.Log.NewEvent("dehya-sanctum-c2-damage activated", glog.LogCharacterEvent, c.Index())
 		c.hasC2DamageBuff = true
-		return false
 	}, "dehya-c2")
 }
 
@@ -121,13 +120,13 @@ func (c *char) c6() {
 
 	c.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBase("dehya-c6", -1),
-		Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 			if atk.Info.AttackTag != attacks.AttackTagElementalBurst {
-				return nil, false
+				return nil
 			}
 			val[attributes.CD] = 0.15 * float64(c.c6Count)
 
-			return val, true
+			return val
 		},
 	})
 }

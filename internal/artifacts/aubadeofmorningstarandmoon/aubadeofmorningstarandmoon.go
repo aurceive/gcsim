@@ -55,8 +55,8 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("morningstar-2pc", -1),
 		AffectedStat: attributes.EM,
-		Amount: func() ([]float64, bool) {
-			return m, true
+		Amount: func() []float64 {
+			return m
 		},
 	})
 
@@ -68,30 +68,29 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 		s.buff = make([]float64, attributes.EndStatType)
 		s.buff[attributes.DmgP] = 0.25
 
-		c.Events.Subscribe(event.OnCharacterSwap, func(args ...any) bool {
+		c.Events.Subscribe(event.OnCharacterSwap, func(args ...any) {
 			next := args[1].(int)
 			if next == char.Index() {
 				char.AddStatus(onFieldGraceKey, 3*60, true)
 			}
-			return false
 		}, fmt.Sprintf("morningstar-4pc-%v", char.Base.Key.String()))
 
 		char.AddReactBonusMod(character.ReactBonusMod{
 			Base: modifier.NewBase("morningstar-4pc", -1),
-			Amount: func(ai info.AttackInfo) (float64, bool) {
+			Amount: func(ai info.AttackInfo) float64 {
 				if !attacks.AttackTagIsLunar(ai.AttackTag) {
-					return 0, false
+					return 0
 				}
 				if c.Player.Active() == char.Index() && !char.StatusIsActive(onFieldGraceKey) {
-					return 0, false
+					return 0
 				}
 
 				val := 0.2
-				if c.Player.GetMoonsignCount() >= 2 {
+				if c.Player.GetMoonsignLevel() >= 2 {
 					val += 0.4
 				}
 
-				return val, false
+				return val
 			},
 		})
 	}

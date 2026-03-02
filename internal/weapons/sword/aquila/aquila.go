@@ -39,8 +39,8 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("aquila favonia", -1),
 		AffectedStat: attributes.NoStat,
-		Amount: func() ([]float64, bool) {
-			return m, true
+		Amount: func() []float64 {
+			return m
 		},
 	})
 
@@ -48,19 +48,19 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	heal := .85 + .15*float64(r)
 	const icdKey = "aquila-icd"
 
-	c.Events.Subscribe(event.OnPlayerHPDrain, func(args ...any) bool {
+	c.Events.Subscribe(event.OnPlayerHPDrain, func(args ...any) {
 		di := args[0].(*info.DrainInfo)
 		if !di.External {
-			return false
+			return
 		}
 		if di.Amount <= 0 {
-			return false
+			return
 		}
 		if di.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		if char.StatusIsActive(icdKey) {
-			return false
+			return
 		}
 		char.AddStatus(icdKey, 900, true) // 15 sec
 		ai := info.AttackInfo{
@@ -84,7 +84,6 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 			Src:     snap.Stats.TotalATK() * heal,
 			Bonus:   char.Stat(attributes.Heal),
 		})
-		return false
 	}, fmt.Sprintf("aquila-%v", char.Base.Key.String()))
 	return w, nil
 }

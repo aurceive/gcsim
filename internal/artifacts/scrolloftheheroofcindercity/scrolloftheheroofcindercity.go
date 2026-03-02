@@ -59,19 +59,19 @@ func (s *Set) SetIndex(idx int) { s.Index = idx }
 func (s *Set) GetCount() int    { return s.Count }
 func (s *Set) Init() error      { return nil }
 
-func (s *Set) buffCB(react info.ReactionType, gadgetEmit bool) func(args ...any) bool {
-	return func(args ...any) bool {
+func (s *Set) buffCB(react info.ReactionType, gadgetEmit bool) func(args ...any) {
+	return func(args ...any) {
 		trg := args[0].(info.Target)
 		if gadgetEmit && trg.Type() != info.TargettableGadget {
-			return false
+			return
 		}
 		if !gadgetEmit && trg.Type() != info.TargettableEnemy {
-			return false
+			return
 		}
 
 		ae := args[1].(*info.AttackEvent)
 		if ae.Info.ActorIndex != s.char.Index() {
-			return false
+			return
 		}
 
 		hasNightsoul := s.char.StatusIsActive(nightsoul.NightsoulBlessingStatus)
@@ -82,10 +82,10 @@ func (s *Set) buffCB(react info.ReactionType, gadgetEmit bool) func(args ...any)
 				other.AddStatMod(character.StatMod{
 					Base:         modifier.NewBaseWithHitlag(fmt.Sprintf("scroll-4pc-%v", ele), 15*60),
 					AffectedStat: stat,
-					Amount: func() ([]float64, bool) {
+					Amount: func() []float64 {
 						clear(s.buff)
 						s.buff[stat] = 0.12
-						return s.buff, true
+						return s.buff
 					},
 				})
 
@@ -95,15 +95,14 @@ func (s *Set) buffCB(react info.ReactionType, gadgetEmit bool) func(args ...any)
 				other.AddStatMod(character.StatMod{
 					Base:         modifier.NewBaseWithHitlag(fmt.Sprintf("scroll-4pc-nightsoul-%v", ele), 20*60),
 					AffectedStat: stat,
-					Amount: func() ([]float64, bool) {
+					Amount: func() []float64 {
 						clear(s.nightsoulBuff)
 						s.nightsoulBuff[stat] = 0.28
-						return s.nightsoulBuff, true
+						return s.nightsoulBuff
 					},
 				})
 			}
 		}
-		return false
 	}
 }
 
@@ -118,9 +117,8 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 	// 2 Piece: When a nearby party member triggers a Nightsoul Burst, the equipping
 	// character regenerates 6 Elemental Energy.
 	if count >= 2 {
-		c.Combat.Events.Subscribe(event.OnNightsoulBurst, func(args ...any) bool {
+		c.Combat.Events.Subscribe(event.OnNightsoulBurst, func(args ...any) {
 			char.AddEnergy("scroll-2pc", 6)
-			return false
 		}, fmt.Sprintf("scroll-2pc-%v", char.Base.Key.String()))
 	}
 	// 4 Piece: After the equipping character triggers a reaction related to their

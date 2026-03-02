@@ -39,17 +39,17 @@ func (g *GoldenMajesty) NewWeapon(c *core.Core, char *character.CharWrapper, p i
 	stacks := 0
 	m := make([]float64, attributes.EndStatType)
 
-	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		ae := args[1].(*info.AttackEvent)
 
 		if ae.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 		if char.StatusIsActive(icdKey) {
-			return false
+			return
 		}
 		char.AddStatus(icdKey, 18, true)
 
@@ -65,15 +65,14 @@ func (g *GoldenMajesty) NewWeapon(c *core.Core, char *character.CharWrapper, p i
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag(buffKey, 60*8),
 			AffectedStat: attributes.NoStat,
-			Amount: func() ([]float64, bool) {
+			Amount: func() []float64 {
 				m[attributes.ATKP] = atkbuff * float64(stacks)
 				if c.Player.Shields.CharacterIsShielded(char.Index(), c.Player.Active()) {
 					m[attributes.ATKP] *= 2
 				}
-				return m, true
+				return m
 			},
 		})
-		return false
 	}, key)
 
 	return g, nil

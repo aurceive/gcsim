@@ -29,24 +29,24 @@ func (c *char) a1Init() {
 		c.Core.Events.Subscribe(event, c.a1MakeResShred(elements), fmt.Sprintf("durin-a1-hook-%v", event))
 	}
 
-	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		t, ok := args[0].(*enemy.Enemy)
 		atk := args[1].(*info.AttackEvent)
 		if !ok {
-			return false
+			return
 		}
 		if !t.IsBurning() {
-			return false
+			return
 		}
 		switch atk.Info.Element {
 		case attributes.Dendro:
 		case attributes.Pyro:
 		default:
-			return false
+			return
 		}
 
 		if !c.StatusIsActive(burstKeyWhite) {
-			return false
+			return
 		}
 
 		t.AddResistMod(info.ResistMod{
@@ -61,7 +61,6 @@ func (c *char) a1Init() {
 			Value: -0.20 * c.hexereiA1Bonus(),
 		})
 
-		return false
 	}, "durin-a1-hook-on-dmg")
 }
 
@@ -77,24 +76,24 @@ func (c *char) a1OnBurst(isWhite bool) {
 
 	c.AddReactBonusMod(character.ReactBonusMod{
 		Base: modifier.NewBaseWithHitlag(a1BlackKey, 20*60),
-		Amount: func(ai info.AttackInfo) (float64, bool) {
+		Amount: func(ai info.AttackInfo) float64 {
 			if ai.Amped {
-				return 0.40 * c.hexereiA1Bonus(), false
+				return 0.40 * c.hexereiA1Bonus()
 			}
-			return 0, false
+			return 0
 		},
 	})
 }
 
-func (c *char) a1MakeResShred(elements []attributes.Element) func(args ...any) bool {
-	return func(args ...any) bool {
+func (c *char) a1MakeResShred(elements []attributes.Element) func(args ...any) {
+	return func(args ...any) {
 		t, ok := args[0].(*enemy.Enemy)
 		if !ok {
-			return false
+			return
 		}
 
 		if !c.StatusIsActive(burstKeyWhite) {
-			return false
+			return
 		}
 
 		for _, ele := range elements {
@@ -104,7 +103,6 @@ func (c *char) a1MakeResShred(elements []attributes.Element) func(args ...any) b
 				Value: -0.20 * c.hexereiA1Bonus(),
 			})
 		}
-		return false
 	}
 }
 

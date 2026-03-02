@@ -59,26 +59,24 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag(buffKey, buffDuration),
 			AffectedStat: stat,
-			Amount: func() ([]float64, bool) {
-				return m, true
+			Amount: func() []float64 {
+				return m
 			},
 		})
 	}
 
-	c.Events.Subscribe(event.OnBurst, func(args ...any) bool {
+	c.Events.Subscribe(event.OnBurst, func(args ...any) {
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 		addBuff()
-		return false
 	}, fmt.Sprintf("jadefall-onburst-%v", char.Base.Key.String()))
-	c.Events.Subscribe(event.OnShielded, func(args ...any) bool {
+	c.Events.Subscribe(event.OnShielded, func(args ...any) {
 		shd := args[0].(shield.Shield)
 		if shd.ShieldOwner() != char.Index() {
-			return false
+			return
 		}
 		addBuff()
-		return false
 	}, fmt.Sprintf("jadefall-onshielded-%v", char.Base.Key.String()))
 
 	return w, nil

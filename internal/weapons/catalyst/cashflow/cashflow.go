@@ -62,52 +62,50 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("cashflow-supervision-atkp", -1),
 		AffectedStat: attributes.ATKP,
-		Amount: func() ([]float64, bool) {
-			return val, true
+		Amount: func() []float64 {
+			return val
 		},
 	})
-	c.Events.Subscribe(event.OnPlayerHPDrain, func(args ...any) bool {
+	c.Events.Subscribe(event.OnPlayerHPDrain, func(args ...any) {
 		di := args[0].(*info.DrainInfo)
 
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 		if di.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		if di.Amount <= 0 {
-			return false
+			return
 		}
 		if char.StatusIsActive(buffIcd) {
-			return false
+			return
 		}
 
 		w.onChangeHP()
-		return false
 	}, fmt.Sprintf("cashflow-drain-%v", char.Base.Key.String()))
 
-	c.Events.Subscribe(event.OnHeal, func(args ...any) bool {
+	c.Events.Subscribe(event.OnHeal, func(args ...any) {
 		index := args[1].(int)
 		amount := args[2].(float64)
 		overheal := args[3].(float64)
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 		if index != char.Index() {
-			return false
+			return
 		}
 		if amount <= 0 {
-			return false
+			return
 		}
 		if math.Abs(amount-overheal) <= 1e-9 {
-			return false
+			return
 		}
 		if char.StatusIsActive(buffIcd) {
-			return false
+			return
 		}
 
 		w.onChangeHP()
-		return false
 	}, fmt.Sprintf("cashflow-heal-%v", char.Base.Key.String()))
 	return w, nil
 }
@@ -126,16 +124,16 @@ func (w *Weapon) onChangeHP() {
 	w.char.AddStatus(buffIcd, 0.3*60, true)
 	w.char.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBaseWithHitlag(buffKey, 4*60),
-		Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 			w.buffNA[attributes.DmgP] = (0.12 + 0.04*float64(w.refine)) * float64(w.stacks)
 			w.buffCA[attributes.DmgP] = (0.105 + 0.035*float64(w.refine)) * float64(w.stacks)
 			switch atk.Info.AttackTag {
 			case attacks.AttackTagNormal:
-				return w.buffNA, true
+				return w.buffNA
 			case attacks.AttackTagExtra:
-				return w.buffCA, true
+				return w.buffCA
 			default:
-				return nil, false
+				return nil
 			}
 		},
 	})
@@ -143,12 +141,12 @@ func (w *Weapon) onChangeHP() {
 		w.char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag(atkSpdKey, 4*60),
 			AffectedStat: attributes.AtkSpd,
-			Amount: func() ([]float64, bool) {
+			Amount: func() []float64 {
 				if w.core.Player.CurrentState() != action.NormalAttackState {
-					return nil, false
+					return nil
 				}
 				w.mAtkSpd[attributes.AtkSpd] = 0.06 + float64(w.refine)*0.02
-				return w.mAtkSpd, true
+				return w.mAtkSpd
 			},
 		})
 	}

@@ -35,7 +35,7 @@ func (w *Wavebreaker) NewWeapon(c *core.Core, char *character.CharWrapper, p inf
 
 	var amt float64
 
-	c.Events.Subscribe(event.OnInitialize, func(args ...any) bool {
+	c.Events.Subscribe(event.OnInitialize, func(args ...any) {
 		var energy float64
 
 		for _, x := range c.Player.Chars() {
@@ -55,14 +55,13 @@ func (w *Wavebreaker) NewWeapon(c *core.Core, char *character.CharWrapper, p inf
 		m[attributes.DmgP] = amt
 		char.AddAttackMod(character.AttackMod{
 			Base: modifier.NewBase("wavebreaker", -1),
-			Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+			Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 				if atk.Info.AttackTag == attacks.AttackTagElementalBurst {
-					return m, true
+					return m
 				}
-				return nil, false
+				return nil
 			},
 		})
-		return true
 	}, fmt.Sprintf("wavebreaker-%v", char.Base.Key.String()))
 
 	return w, nil

@@ -11,57 +11,43 @@ import (
 	"github.com/genshinsim/gcsim/pkg/modifier"
 )
 
-const (
-	c6ICDKey  = "razor-c6-icd"
-	c6BuffKey = "razor-c6-buff"
-)
-
 // Picking up an Elemental Orb or Particle increases Razor's DMG by 10% for 8s.
-func (c *char) c1Init() {
-	if c.Base.Cons < 1 {
-		return
-	}
-
+func (c *char) c1() {
 	c.c1bonus = make([]float64, attributes.EndStatType)
 	c.c1bonus[attributes.DmgP] = 0.1
 
-	c.Core.Events.Subscribe(event.OnParticleReceived, func(_ ...any) bool {
+	c.Core.Events.Subscribe(event.OnParticleReceived, func(_ ...any) {
 		// ignore if character not on field
 		if c.Core.Player.Active() != c.Index() {
-			return false
+			return
 		}
 		c.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag("razor-c1", 8*60),
 			AffectedStat: attributes.DmgP,
-			Amount: func() ([]float64, bool) {
-				return c.c1bonus, true
+			Amount: func() []float64 {
+				return c.c1bonus
 			},
 		})
-		return false
 	}, "razor-c1")
 }
 
 // Increases CRIT Rate against opponents with less than 30% HP by 10%.
-func (c *char) c2Init() {
-	if c.Base.Cons < 2 {
-		return
-	}
-
+func (c *char) c2() {
 	if c.Core.Combat.DamageMode {
 		c.c2bonus = make([]float64, attributes.EndStatType)
 		c.c2bonus[attributes.CR] = 0.1
 
 		c.AddAttackMod(character.AttackMod{
 			Base: modifier.NewBase("razor-c2", -1),
-			Amount: func(_ *info.AttackEvent, t info.Target) ([]float64, bool) {
+			Amount: func(_ *info.AttackEvent, t info.Target) []float64 {
 				x, ok := t.(*enemy.Enemy)
 				if !ok {
-					return nil, false
+					return nil
 				}
 				if x.HP()/x.MaxHP() < 0.3 {
-					return c.c2bonus, true
+					return c.c2bonus
 				}
-				return nil, false
+				return nil
 			},
 		})
 	}
@@ -78,6 +64,8 @@ func (c *char) c4cb(a info.AttackCB) {
 		Value: -0.15,
 	})
 }
+
+const c6ICDKey = "razor-c6-icd"
 
 // Every 10s, Razor's sword charges up, causing the next Normal Attack to release lightning that deals 100% of Razor's ATK as Electro DMG.
 // When Razor is not using Lightning Fang, a lightning strike on an opponent will grant Razor an Electro Sigil for Claw and Thunder.
@@ -109,7 +97,7 @@ func (c *char) c6cb(a info.AttackCB) {
 		if c.StatusIsActive(burstBuffKey) {
 			return
 		}
-		c.addSigil()(a)
+		c.addSigil(false)(a)
 	}
 
 	c.Core.QueueAttack(
@@ -119,32 +107,4 @@ func (c *char) c6cb(a info.AttackCB) {
 		1,
 		sigilcb,
 	)
-}
-
-func (c *char) c6Init() {
-	if c.Base.Cons < 6 {
-		return
-	}
-	c.c6buff = make([]float64, attributes.EndStatType)
-	c.c6buff[attributes.CR] = 0.1
-	c.c6buff[attributes.CD] = 0.5
-}
-
-func (c *char) c6Sigil() int {
-	if c.Base.Cons < 6 {
-		return 1
-	}
-	return 3
-}
-
-func (c *char) c6OnSiglConsume() {
-	if c.Base.Cons < 6 {
-		return
-	}
-	c.AddStatMod(character.StatMod{
-		Base: modifier.NewBaseWithHitlag(c6BuffKey, 15*60),
-		Amount: func() ([]float64, bool) {
-			return c.c6buff, true
-		},
-	})
 }

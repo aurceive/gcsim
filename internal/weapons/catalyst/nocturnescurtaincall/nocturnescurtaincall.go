@@ -53,8 +53,8 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("nocturnes-curtain-call-hp%", -1),
 		AffectedStat: attributes.HPP,
-		Amount: func() ([]float64, bool) {
-			return permHP, true
+		Amount: func() []float64 {
+			return permHP
 		},
 	})
 
@@ -71,19 +71,19 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag(buffKey+"-hp%", 12*60),
 			AffectedStat: attributes.HPP,
-			Amount: func() ([]float64, bool) {
-				return buffHP, true
+			Amount: func() []float64 {
+				return buffHP
 			},
 		})
 
 		// Applies to direct lunar reaction damage (AttackMods skip non-direct reaction damage).
 		char.AddAttackMod(character.AttackMod{
 			Base: modifier.NewBaseWithHitlag(buffKey+"-cd", 12*60),
-			Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+			Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 				if !attacks.AttackTagIsLunar(atk.Info.AttackTag) {
-					return nil, false
+					return nil
 				}
-				return buffCD, true
+				return buffCD
 			},
 		})
 
@@ -96,13 +96,12 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	}
 
 	// Triggered a Lunar reaction (OnLunarBloom does not necessarily imply lunar-tagged damage).
-	triggerReaction := func(args ...any) bool {
+	triggerReaction := func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		proc()
-		return false
 	}
 
 	c.Events.Subscribe(event.OnLunarCharged, triggerReaction, fmt.Sprintf("nocturnes-curtain-call-lc-%v", char.Base.Key.String()))
@@ -110,32 +109,30 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	c.Events.Subscribe(event.OnLunarBloom, triggerReaction, fmt.Sprintf("nocturnes-curtain-call-lb-%v", char.Base.Key.String()))
 
 	// Deals Lunar Reaction DMG.
-	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
+			return
 		}
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		if !attacks.AttackTagIsLunar(atk.Info.AttackTag) {
-			return false
+			return
 		}
 		proc()
-		return false
 	}, fmt.Sprintf("nocturnes-curtain-call-lunar-dmg-%v", char.Base.Key.String()))
 
 	// Apply CRIT DMG bonus to non-direct lunar reaction damage contributions (LC/LCr).
-	c.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) bool {
+	c.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		if !char.StatusIsActive(buffKey) {
-			return false
+			return
 		}
 		atk.Snapshot.Stats[attributes.CD] += lunarCritDmgBonus
-		return false
 	}, fmt.Sprintf("nocturnes-curtain-call-lunar-react-atk-%v", char.Base.Key.String()))
 
 	return w, nil

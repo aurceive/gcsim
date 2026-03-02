@@ -20,16 +20,12 @@ type char struct {
 	skillActive     bool
 	skillArea       info.AttackPattern
 	skillAttackInfo info.AttackInfo
-	// hexerei
-	aureliths      [2]int
-	oldestAurelith int
-	hexereiBuff    []float64
+	skillSnapshot   info.Snapshot
 	// c2 tracking
-	c1Buff   []float64
 	c2stacks int
 }
 
-func NewChar(s *core.Core, w *character.CharWrapper, p info.CharacterProfile) error {
+func NewChar(s *core.Core, w *character.CharWrapper, _ info.CharacterProfile) error {
 	c := char{}
 	c.Character = tmpl.NewWithWrapper(s, w)
 
@@ -40,21 +36,12 @@ func NewChar(s *core.Core, w *character.CharWrapper, p info.CharacterProfile) er
 
 	w.Character = &c
 
-	hexerei, ok := p.Params["hexerei"]
-	if !ok {
-		hexerei = 1
-	}
-	c.IsHexerei = hexerei > 0
-
 	return nil
 }
 
 func (c *char) Init() error {
 	c.skillHook()
 	c.a1()
-	c.hexereiInit()
-	c.c1Init()
-	c.c6Init()
 	return nil
 }
 

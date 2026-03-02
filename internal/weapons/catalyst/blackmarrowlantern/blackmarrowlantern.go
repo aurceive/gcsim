@@ -20,39 +20,28 @@ type Weapon struct {
 func (w *Weapon) SetIndex(idx int) { w.Index = idx }
 func (w *Weapon) Init() error      { return nil }
 
-const reactModKey = "blackmarrowlantern-react"
-
-// Blackmarrow Lantern (i_n14433):
-//   - Bloom DMG +48/60/72/84/96%
-//   - Lunar-Bloom DMG +12/15/18/21/24%
-//   - Moonsign: Ascendant Gleam: Lunar-Bloom DMG +additional 12/15/18/21/24%
+// Bloom DMG is increased by 48%, and Lunar-Bloom DMG is increased by 12%.
+// Moonsign: Ascendant Gleam: Lunar-Bloom DMG is increased by an additional 12%.
 func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) (info.Weapon, error) {
 	w := &Weapon{}
-	r := float64(p.Refine)
-
-	bloomBonus := 0.36 + 0.12*r // 0.48/0.60/0.72/0.84/0.96
-	lunarBonus := 0.09 + 0.03*r // 0.12/0.15/0.18/0.21/0.24
+	refine := p.Refine
+	buff := 0.09 + 0.03*float64(refine)
 
 	char.AddReactBonusMod(character.ReactBonusMod{
-		Base: modifier.NewBase(reactModKey, -1),
-		Amount: func(ai info.AttackInfo) (float64, bool) {
+		Base: modifier.NewBase("blackmarrow-lantern", -1),
+		Amount: func(ai info.AttackInfo) float64 {
 			switch ai.AttackTag {
 			case attacks.AttackTagBloom:
-				return bloomBonus, false
+				return buff * 4
 			case attacks.AttackTagDirectLunarBloom:
-				return lunarBonus * getBonus(c), false
-			default:
-				return 0, false
+				if c.Player.GetMoonsignLevel() >= 2 {
+					return buff * 2
+				}
+				return buff
 			}
+			return 0
 		},
 	})
 
 	return w, nil
-}
-
-func getBonus(c *core.Core) float64 {
-	if c.Player.GetMoonsignCount() < 2 {
-		return 1.0
-	}
-	return 2.0
 }

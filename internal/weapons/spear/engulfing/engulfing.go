@@ -38,7 +38,7 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("engulfing-lightning", -1),
 		AffectedStat: attributes.ATKP,
-		Amount: func() ([]float64, bool) {
+		Amount: func() []float64 {
 			er := max(char.NonExtraStat(attributes.ER)-1, 0)
 			c.Log.NewEvent("engulfing lightning snapshot", glog.LogWeaponEvent, char.Index()).
 				Write("er", er)
@@ -47,25 +47,24 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 				bonus = maxBonus
 			}
 			val[attributes.ATKP] = bonus
-			return val, true
+			return val
 		},
 	})
 
 	erval := make([]float64, attributes.EndStatType)
 	erval[attributes.ER] = .25 + .05*float64(r)
 
-	c.Events.Subscribe(event.OnBurst, func(args ...any) bool {
+	c.Events.Subscribe(event.OnBurst, func(args ...any) {
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag("engulfing-er", 720),
 			AffectedStat: attributes.ER,
-			Amount: func() ([]float64, bool) {
-				return erval, true
+			Amount: func() []float64 {
+				return erval
 			},
 		})
-		return false
 	}, fmt.Sprintf("engulfing-%v", char.Base.Key.String()))
 	return w, nil
 }

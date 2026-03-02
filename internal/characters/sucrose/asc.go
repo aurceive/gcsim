@@ -1,7 +1,6 @@
 package sucrose
 
 import (
-	"github.com/genshinsim/gcsim/pkg/core/attacks"
 	"github.com/genshinsim/gcsim/pkg/core/attributes"
 	"github.com/genshinsim/gcsim/pkg/core/event"
 	"github.com/genshinsim/gcsim/pkg/core/glog"
@@ -20,20 +19,20 @@ func (c *char) a1() {
 
 	c.a1Buff = make([]float64, attributes.EndStatType)
 	c.a1Buff[attributes.EM] = 50
-	swirlfunc := func(ele attributes.Element) func(args ...any) bool {
+	swirlfunc := func(ele attributes.Element) func(args ...any) {
 		icd := -1
-		return func(args ...any) bool {
+		return func(args ...any) {
 			if _, ok := args[0].(*enemy.Enemy); !ok {
-				return false
+				return
 			}
 
 			atk := args[1].(*info.AttackEvent)
 			if atk.Info.ActorIndex != c.Index() {
-				return false
+				return
 			}
 			// do not overwrite mod if same frame
 			if c.Core.F < icd {
-				return false
+				return
 			}
 			icd = c.Core.F + 1
 
@@ -45,8 +44,8 @@ func (c *char) a1() {
 				this.AddStatMod(character.StatMod{
 					Base:         modifier.NewBaseWithHitlag("sucrose-a1", 480), // 8s
 					AffectedStat: attributes.EM,
-					Amount: func() ([]float64, bool) {
-						return c.a1Buff, true
+					Amount: func() []float64 {
+						return c.a1Buff
 					},
 				})
 			}
@@ -54,7 +53,6 @@ func (c *char) a1() {
 			c.Core.Log.NewEvent("sucrose a1 triggered", glog.LogCharacterEvent, c.Index()).
 				Write("reaction", "swirl-"+ele.String()).
 				Write("expiry", c.Core.F+480)
-			return false
 		}
 	}
 
@@ -83,8 +81,8 @@ func (c *char) a4() {
 			Base:         modifier.NewBaseWithHitlag("sucrose-a4", 480), // 8 s
 			AffectedStat: attributes.EM,
 			Extra:        true,
-			Amount: func() ([]float64, bool) {
-				return c.a4Buff, true
+			Amount: func() []float64 {
+				return c.a4Buff
 			},
 		})
 	}
@@ -92,83 +90,4 @@ func (c *char) a4() {
 	c.Core.Log.NewEvent("sucrose a4 triggered", glog.LogCharacterEvent, c.Index()).
 		Write("em snapshot", c.a4Buff[attributes.EM]).
 		Write("expiry", c.Core.F+480)
-}
-
-func (c *char) hexereiInit() {
-	if !c.IsHexerei {
-		return
-	}
-
-	if c.Core.Player.GetHexereiCount() < 2 {
-		return
-	}
-
-	c.hexereiBuffSkill = make([]float64, attributes.EndStatType)
-	c.hexereiBuffSkill[attributes.DmgP] = 0.0571428
-
-	c.hexereiBuffBurst = make([]float64, attributes.EndStatType)
-	c.hexereiBuffBurst[attributes.DmgP] = 0.0714285
-}
-
-func (c *char) hexereiOnSkill() {
-	if !c.IsHexerei {
-		return
-	}
-
-	if c.Core.Player.GetHexereiCount() < 2 {
-		return
-	}
-
-	for _, char := range c.Core.Player.Chars() {
-		char.AddAttackMod(character.AttackMod{
-			Base: modifier.NewBase("sucrose-hexerei-skill", -1),
-			Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
-				switch atk.Info.AttackTag {
-				case attacks.AttackTagNormal,
-					attacks.AttackTagExtra,
-					attacks.AttackTagPlunge,
-					attacks.AttackTagElementalArt,
-					attacks.AttackTagElementalArtHold,
-					attacks.AttackTagElementalBurst:
-				default:
-					return nil, false
-				}
-
-				return c.hexereiBuffSkill, true
-			},
-		})
-	}
-}
-
-func (c *char) hexereiOnBurst() {
-	if !c.IsHexerei {
-		return
-	}
-
-	if c.Core.Player.GetHexereiCount() < 2 {
-		return
-	}
-
-	for _, char := range c.Core.Player.Chars() {
-		if !char.IsHexerei {
-			continue
-		}
-		char.AddAttackMod(character.AttackMod{
-			Base: modifier.NewBase("sucrose-hexerei-burst", -1),
-			Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
-				switch atk.Info.AttackTag {
-				case attacks.AttackTagNormal,
-					attacks.AttackTagExtra,
-					attacks.AttackTagPlunge,
-					attacks.AttackTagElementalArt,
-					attacks.AttackTagElementalArtHold,
-					attacks.AttackTagElementalBurst:
-				default:
-					return nil, false
-				}
-
-				return c.hexereiBuffBurst, true
-			},
-		})
-	}
 }

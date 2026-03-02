@@ -18,22 +18,22 @@ func (c *char) passive() {
 	c.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("arlecchino-passive", -1),
 		AffectedStat: attributes.PyroP,
-		Amount: func() ([]float64, bool) {
-			return m, true
+		Amount: func() []float64 {
+			return m
 		},
 	})
 }
 
 func (c *char) a1OnKill() {
-	c.Core.Events.Subscribe(event.OnTargetDied, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnTargetDied, func(args ...any) {
 		e, ok := args[0].(*enemy.Enemy)
 		// ignore if not an enemy
 		if !ok {
-			return false
+			return
 		}
 
 		if !e.StatusIsActive(directiveKey) {
-			return false
+			return
 		}
 		// always max level debt
 		newDebt := directiveScaling[len(directiveScaling)-1] * c.MaxHP()
@@ -48,7 +48,6 @@ func (c *char) a1OnKill() {
 		e.RemoveTag(directiveKey)
 		e.RemoveTag(directiveSrcKey)
 		e.DeleteStatus(directiveKey)
-		return false
 	}, "arlechinno-a1-onkill")
 }
 

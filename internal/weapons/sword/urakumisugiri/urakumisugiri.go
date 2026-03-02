@@ -42,32 +42,32 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	mNormal := make([]float64, attributes.EndStatType)
 	char.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBase("urakumisugiri-na", -1),
-		Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 			if atk.Info.AttackTag != attacks.AttackTagNormal {
-				return nil, false
+				return nil
 			}
 
 			mNormal[attributes.DmgP] = normalDmg
 			if char.StatusIsActive(buffKey) {
 				mNormal[attributes.DmgP] *= 2
 			}
-			return mNormal, true
+			return mNormal
 		},
 	})
 
 	mSkill := make([]float64, attributes.EndStatType)
 	char.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBase("urakumisugiri-skill", -1),
-		Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 			if atk.Info.AttackTag != attacks.AttackTagElementalArt && atk.Info.AttackTag != attacks.AttackTagElementalArtHold {
-				return nil, false
+				return nil
 			}
 
 			mSkill[attributes.DmgP] = skillDmg
 			if char.StatusIsActive(buffKey) {
 				mSkill[attributes.DmgP] *= 2
 			}
-			return mSkill, true
+			return mSkill
 		},
 	})
 
@@ -76,18 +76,17 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("urakumisugiri-def", -1),
 		AffectedStat: attributes.DEFP,
-		Amount: func() ([]float64, bool) {
-			return mDef, true
+		Amount: func() []float64 {
+			return mDef
 		},
 	})
 
-	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.Element != attributes.Geo {
-			return false
+			return
 		}
 		char.AddStatus(buffKey, 900, true)
-		return false
 	}, fmt.Sprintf("urakumisugiri-%v", char.Base.Key.String()))
 
 	return w, nil

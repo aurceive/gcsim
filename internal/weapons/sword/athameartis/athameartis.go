@@ -36,26 +36,26 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 
 	char.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBase("athame-artis-burst-cdmg", -1),
-		Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 			if atk.Info.AttackTag == attacks.AttackTagElementalBurst {
 				mCD[attributes.CD] = cd
-				return mCD, true
+				return mCD
 			}
 
-			return nil, false
+			return nil
 		},
 	})
 
-	c.Events.Subscribe(event.OnEnemyHit, func(args ...any) bool {
+	c.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
 		// If attack does not belong to the equipped character then ignore
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 
 		// If this is not a burst then ignore
 		if atk.Info.AttackTag != attacks.AttackTagElementalBurst {
-			return false
+			return
 		}
 
 		for _, chars := range c.Player.Chars() {
@@ -66,14 +66,12 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 			chars.AddStatMod(character.StatMod{
 				Base:         modifier.NewBaseWithHitlag("athame-artis-atkp", 3*60),
 				AffectedStat: attributes.ATKP,
-				Amount: func() ([]float64, bool) {
+				Amount: func() []float64 {
 					mAtkp[attributes.ATKP] = buff * getBonus(c)
-					return mAtkp, true
+					return mAtkp
 				},
 			})
 		}
-
-		return false
 	}, fmt.Sprintf("athame-artis-hook-%v", char.Base.Key.String()))
 	return &w, nil
 }

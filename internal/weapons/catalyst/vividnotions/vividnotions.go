@@ -38,8 +38,8 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	m[attributes.ATKP] = 0.21 + float64(r)*0.07
 	char.AddStatMod(character.StatMod{
 		Base: modifier.NewBase("vividnotions-atk", -1),
-		Amount: func() ([]float64, bool) {
-			return m, true
+		Amount: func() []float64 {
+			return m
 		},
 	})
 
@@ -49,9 +49,9 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 
 	char.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBase("vividnotions-cd", -1),
-		Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 			if atk.Info.AttackTag != attacks.AttackTagPlunge {
-				return nil, false
+				return nil
 			}
 
 			mCD[attributes.CD] = 0
@@ -61,38 +61,35 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 			if char.StatusIsActive(skillBurstBuff) {
 				mCD[attributes.CD] += skillBurstCD
 			}
-			return mCD, true
+			return mCD
 		},
 	})
 
-	c.Events.Subscribe(event.OnStateChange, func(args ...any) bool {
+	c.Events.Subscribe(event.OnStateChange, func(args ...any) {
 		next := args[1].(action.AnimationState)
 		if next == action.PlungeAttackState {
 			char.AddStatus(plungeBuff, 15*60, true)
 		}
-		return false
 	}, fmt.Sprintf("vividnotions-plunge-%s", char.Base.Key.String()))
 
-	c.Events.Subscribe(event.OnSkill, func(args ...any) bool {
+	c.Events.Subscribe(event.OnSkill, func(args ...any) {
 		char.AddStatus(skillBurstBuff, 15*60, true)
-		return false
 	}, fmt.Sprintf("vividnotions-skill-%s", char.Base.Key.String()))
 
-	c.Events.Subscribe(event.OnBurst, func(args ...any) bool {
+	c.Events.Subscribe(event.OnBurst, func(args ...any) {
 		char.AddStatus(skillBurstBuff, 15*60, true)
-		return false
 	}, fmt.Sprintf("vividnotions-burst-%s", char.Base.Key.String()))
 
-	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		ae := args[1].(*info.AttackEvent)
 		if ae.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		if ae.Info.AttackTag != attacks.AttackTagPlunge {
-			return false
+			return
 		}
 		if ae.Info.Durability == 0 {
-			return false
+			return
 		}
 
 		// TODO: hitlag affected?
@@ -106,8 +103,6 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 				char.DeleteStatus(skillBurstBuff)
 			}
 		}, 0.1*60)
-
-		return false
 	}, fmt.Sprintf("vividnotions-%s", char.Base.Key.String()))
 
 	return w, nil

@@ -20,7 +20,7 @@ func (c *char) c1Init() {
 		return
 	}
 
-	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 
 		switch atk.Info.AttackTag {
@@ -31,13 +31,13 @@ func (c *char) c1Init() {
 		case attacks.AttackTagExtra:
 		case attacks.AttackTagPlunge:
 		default:
-			return false
+			return
 		}
 
 		char := c.Core.Player.ByIndex(atk.Info.ActorIndex)
 
 		if char.Tags[c1Key] == 0 {
-			return false
+			return
 		}
 
 		key, needOnField := burstKeyWhite, true
@@ -49,11 +49,11 @@ func (c *char) c1Init() {
 		consume *= c.c4c1ConsumeMult()
 
 		if !c.StatusIsActive(key) {
-			return false
+			return
 		}
 
 		if needOnField && atk.Info.ActorIndex != c.Core.Player.Active() {
-			return false
+			return
 		}
 
 		amt := mult * c.TotalAtk() // TODO: Is this affected by A4?
@@ -69,8 +69,6 @@ func (c *char) c1Init() {
 		}
 
 		atk.Info.FlatDmg += amt
-
-		return false
 	}, "durin-c1-hook")
 }
 
@@ -115,14 +113,13 @@ func (c *char) c2Init() {
 
 	c.c2Buff = make([]float64, attributes.EndStatType)
 
-	makeBuff := func(elements []attributes.Element) func(args ...any) bool {
-		return func(args ...any) bool {
+	makeBuff := func(elements []attributes.Element) func(args ...any) {
+		return func(args ...any) {
 			_, ok := args[0].(*enemy.Enemy)
 			if !ok {
-				return false
+				return
 			}
 			c.c2MakeBuff(elements)
-			return false
 		}
 	}
 
@@ -130,29 +127,27 @@ func (c *char) c2Init() {
 		c.Core.Events.Subscribe(event, makeBuff(elements), fmt.Sprintf("durin-c2-hook-%v", event))
 	}
 
-	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		t, ok := args[0].(*enemy.Enemy)
 		atk := args[1].(*info.AttackEvent)
 		if !ok {
-			return false
+			return
 		}
 		if !t.IsBurning() {
-			return false
+			return
 		}
 		switch atk.Info.Element {
 		case attributes.Dendro:
 		case attributes.Pyro:
 		default:
-			return false
+			return
 		}
 
 		if !c.StatusIsActive(burstKeyWhite) && !c.StatusIsActive(burstKeyBlack) {
-			return false
+			return
 		}
 
 		c.c2MakeBuff([]attributes.Element{attributes.Pyro, attributes.Dendro})
-
-		return false
 	}, "durin-c2-hook-on-dmg")
 }
 
@@ -163,12 +158,12 @@ func (c *char) c2MakeBuff(elements []attributes.Element) {
 			char.AddStatMod(character.StatMod{
 				Base:         modifier.NewBaseWithHitlag("durin-c2-"+elem.String(), 6*60),
 				AffectedStat: attributes.EleToDmgP(elem),
-				Amount: func() ([]float64, bool) {
+				Amount: func() []float64 {
 					for i := range c.c2Buff {
 						c.c2Buff[i] = 0
 					}
 					c.c2Buff[stat] = 0.5
-					return c.c2Buff, true
+					return c.c2Buff
 				},
 			})
 		}
@@ -190,11 +185,11 @@ func (c *char) c4OnBurst() {
 
 	c.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBaseWithHitlag("durin-c4", 20*60),
-		Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 			if atk.Info.AttackTag != attacks.AttackTagElementalBurst {
-				return nil, false
+				return nil
 			}
-			return c.c4Buff, true
+			return c.c4Buff
 		},
 	})
 }

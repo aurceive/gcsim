@@ -35,25 +35,25 @@ func (c *char) c1Init() {
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBase(c1Key+"-buff", -1),
 			AffectedStat: attributes.EM,
-			Amount: func() ([]float64, bool) {
+			Amount: func() []float64 {
 				if c.Core.Player.Active() != char.Index() {
-					return nil, false
+					return nil
 				}
 				if !c.StatusIsActive(c1Key) {
-					return nil, false
+					return nil
 				}
-				return c.c1Buff, true
+				return c.c1Buff
 			},
 		})
 	}
 	c.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase(c1Key+"-buff", -1),
 		AffectedStat: attributes.EM,
-		Amount: func() ([]float64, bool) {
+		Amount: func() []float64 {
 			if !c.StatusIsActive(c1Key) {
-				return nil, false
+				return nil
 			}
-			return c.c1Buff, true
+			return c.c1Buff
 		},
 	})
 }
@@ -71,24 +71,24 @@ func (c *char) c2Init() {
 		return
 	}
 
-	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
 		e, ok := args[0].(*enemy.Enemy)
 		if !ok {
-			return false
+			return
 		}
 
 		atk := args[1].(*info.AttackEvent)
 		if c.Core.Player.Active() == c.Index() {
-			return false
+			return
 		}
 		if atk.Info.ActorIndex == c.Index() {
-			return false
+			return
 		}
 		if !c.StatusIsActive(burstKey) {
-			return false
+			return
 		}
 		if c.StatusIsActive(c2IcdKey) {
-			return false
+			return
 		}
 		c.AddStatus(c2IcdKey, 5*60, true)
 
@@ -107,8 +107,6 @@ func (c *char) c2Init() {
 		}
 
 		c.Core.QueueAttack(ai, combat.NewCircleHitOnTarget(e, nil, 2.5), 0, 10)
-
-		return false
 	}, c2Key)
 }
 
@@ -135,9 +133,9 @@ func (c *char) c6Init() {
 	for _, char := range c.Core.Player.Chars() {
 		char.AddReactBonusMod(character.ReactBonusMod{
 			Base: modifier.NewBase(c6Key+"-buff", -1),
-			Amount: func(ai info.AttackInfo) (float64, bool) {
+			Amount: func(ai info.AttackInfo) float64 {
 				if !c.StatusIsActive(c6Key) {
-					return 0, false
+					return 0
 				}
 				buff := 0.15
 				if c.getMoonsignLevel() >= 2 {
@@ -148,10 +146,10 @@ func (c *char) c6Init() {
 					ai.AttackTag != attacks.AttackTagECDamage &&
 					ai.AttackTag != attacks.AttackTagBloom &&
 					ai.AttackTag != attacks.AttackTagBountifulCore {
-					return 0, false
+					return 0
 				}
 
-				return buff, false
+				return buff
 			},
 		})
 	}

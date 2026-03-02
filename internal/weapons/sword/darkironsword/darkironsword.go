@@ -32,29 +32,26 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	m := make([]float64, attributes.EndStatType)
 	m[attributes.ATKP] = 0.15 + float64(r)*0.05
 
-	//nolint:unparam // ignoring for now, event refactor should get rid of bool return of event sub
-	buff := func(args ...any) bool {
+	buff := func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag("darkironsword", 720),
 			AffectedStat: attributes.ATKP,
-			Amount: func() ([]float64, bool) {
-				return m, true
+			Amount: func() []float64 {
+				return m
 			},
 		})
-		return false
 	}
-	buffNoGadget := func(args ...any) bool {
-		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
+	buffNoGadget := func(args ...any) {
+		if _, ok := args[0].(*enemy.Enemy); ok {
+			buff(args...)
 		}
-		return buff(args...)
 	}
 	c.Events.Subscribe(event.OnOverload, buffNoGadget, fmt.Sprintf("darkironsword-%v", char.Base.Key.String()))
 	c.Events.Subscribe(event.OnSuperconduct, buffNoGadget, fmt.Sprintf("darkironsword-%v", char.Base.Key.String()))

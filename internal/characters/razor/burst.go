@@ -42,8 +42,8 @@ func (c *char) Burst(p map[string]int) (action.Info, error) {
 		c.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag(burstBuffKey, 15*60),
 			AffectedStat: attributes.AtkSpd,
-			Amount: func() ([]float64, bool) {
-				return val, true
+			Amount: func() []float64 {
+				return val
 			},
 		})
 	}, burstHitmark)
@@ -96,7 +96,7 @@ func (c *char) wolfBurst(normalCounter int) func(info.AttackCB) {
 			StrikeType: attacks.StrikeTypeSlash,
 			Element:    attributes.Electro,
 			Durability: 25,
-			Mult:       wolfDmg[c.TalentLvlBurst()]*a.AttackEvent.Info.Mult + c.hexereiWolfMult(),
+			Mult:       wolfDmg[c.TalentLvlBurst()] * a.AttackEvent.Info.Mult,
 		}
 
 		ap := combat.NewCircleHitOnTarget(
@@ -119,15 +119,14 @@ func (c *char) wolfBurst(normalCounter int) func(info.AttackCB) {
 }
 
 func (c *char) onSwapClearBurst() {
-	c.Core.Events.Subscribe(event.OnCharacterSwap, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnCharacterSwap, func(args ...any) {
 		if !c.StatusIsActive(burstBuffKey) {
-			return false
+			return
 		}
 		// i prob don't need to check for who prev is here
 		prev := args[0].(int)
 		if prev == c.Index() {
 			c.DeleteStatus(burstBuffKey)
 		}
-		return false
 	}, "razor-burst-clear")
 }

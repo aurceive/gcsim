@@ -21,11 +21,10 @@ func (c *char) a1Init() {
 	if c.Base.Ascension < 1 {
 		return
 	}
-	c.Core.Events.Subscribe(event.OnMoondriftHarmony, func(args ...any) bool {
-		if c.Core.Player.GetMoonsignCount() >= 2 {
+	c.Core.Events.Subscribe(event.OnMoondriftHarmony, func(args ...any) {
+		if c.Core.Player.GetMoonsignLevel() >= 2 {
 			c.AddStatus(a1Key, 4*60, true)
 		}
-		return false
 	}, "zibai-a1")
 }
 
@@ -70,24 +69,24 @@ func (c *char) a4Init() {
 	c.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase(a4Key, -1),
 		AffectedStat: attributes.NoStat,
-		Amount: func() ([]float64, bool) {
+		Amount: func() []float64 {
 			m[attributes.DEFP] = 0.15 * float64(geos)
 			m[attributes.EM] = 60.0 * float64(hydros)
-			return m, true
+			return m
 		},
 	})
 }
 
 func (c *char) moonsignInit() {
 	c.Core.Flags.Custom[reactable.LunarCrystallizeEnableKey] = 1
-	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 
 		switch atk.Info.AttackTag {
 		case attacks.AttackTagDirectLunarCrystallize:
 		case attacks.AttackTagReactionLunarCrystallize:
 		default:
-			return false
+			return
 		}
 
 		bonus := min(c.TotalDef(true)/100.0*0.007, 0.14)
@@ -97,6 +96,5 @@ func (c *char) moonsignInit() {
 		}
 
 		atk.Info.BaseDmgBonus += bonus
-		return false
 	}, lunarBonusKey)
 }

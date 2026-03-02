@@ -17,8 +17,8 @@ func (c *char) passive() {
 	c.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("kokomi-passive", -1),
 		AffectedStat: attributes.NoStat,
-		Amount: func() ([]float64, bool) {
-			return m, true
+		Amount: func() []float64 {
+			return m
 		},
 	})
 }
@@ -40,21 +40,19 @@ func (c *char) a4() {
 	if c.Base.Ascension < 4 {
 		return
 	}
-	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != c.Index() {
-			return false
+			return
 		}
 		if atk.Info.AttackTag != attacks.AttackTagNormal && atk.Info.AttackTag != attacks.AttackTagExtra {
-			return false
+			return
 		}
 		if c.Core.Status.Duration("kokomiburst") == 0 {
-			return false
+			return
 		}
 
 		a4Bonus := c.Stat(attributes.Heal) * 0.15 * c.MaxHP()
 		atk.Info.FlatDmg += a4Bonus
-
-		return false
 	}, "kokomi-a4")
 }

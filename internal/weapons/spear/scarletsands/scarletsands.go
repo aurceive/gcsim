@@ -39,10 +39,10 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		Base:         modifier.NewBase("scarletsands", -1),
 		AffectedStat: attributes.ATK,
 		Extra:        true,
-		Amount: func() ([]float64, bool) {
+		Amount: func() []float64 {
 			em := char.NonExtraStat(attributes.EM)
 			mATK[attributes.ATK] = atkBuff * em
-			return mATK, true
+			return mATK
 		},
 	})
 
@@ -60,21 +60,21 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 			Write("counter", icdCounter)
 	}
 
-	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 
 		if atk.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 		if atk.Info.AttackTag != attacks.AttackTagElementalArt && atk.Info.AttackTag != attacks.AttackTagElementalArtHold {
-			return false
+			return
 		}
 		if icdCounter >= 3 {
 			c.Log.NewEvent("scarletsands did not gain stacks due to icd", glog.LogWeaponEvent, char.Index())
-			return false
+			return
 		}
 		icdCounterAdd()
 
@@ -90,15 +90,14 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 			Base:         modifier.NewBaseWithHitlag(skillBuff, 10*60),
 			AffectedStat: attributes.ATK,
 			Extra:        true,
-			Amount: func() ([]float64, bool) {
+			Amount: func() []float64 {
 				em := char.NonExtraStat(attributes.EM)
 				mATK[attributes.ATK] = atkSkillBuff * em * float64(w.stacks)
-				return mATK, true
+				return mATK
 			},
 		})
 
 		c.Log.NewEvent("scarletsands adding stack", glog.LogWeaponEvent, char.Index()).Write("stacks", w.stacks)
-		return false
 	}, fmt.Sprintf("scarletsands-%v", char.Base.Key.String()))
 
 	return w, nil

@@ -26,16 +26,15 @@ func (c *char) c1Init() {
 		return
 	}
 
-	hook := func(args ...any) bool {
+	hook := func(args ...any) {
 		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
+			return
 		}
 		if c.StatusIsActive(c1IcdKey) {
-			return false
+			return
 		}
 		c.AddStatus(c1IcdKey, 15*60, true)
 		c.AddEnergy(c1Key, 12)
-		return false
 	}
 
 	c.Core.Events.Subscribe(event.OnCrystallizeCryo, hook, c1Key+"-cryo")
@@ -88,15 +87,15 @@ func (c *char) c4Init() {
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBase(c4Key, -1),
 			AffectedStat: attributes.DEF,
-			Amount: func() ([]float64, bool) {
+			Amount: func() []float64 {
 				if c.Core.Player.Active() != char.Index() {
-					return nil, false
+					return nil
 				}
 
 				if !c.StatusIsActive(burstKey) {
-					return nil, false
+					return nil
 				}
-				return m, true
+				return m
 			},
 		})
 	}

@@ -18,17 +18,17 @@ func (c *char) a1() {
 		return
 	}
 	const a1IcdKey = "heizou-a1-icd"
-	swirlCB := func() func(args ...any) bool {
-		return func(args ...any) bool {
+	swirlCB := func() func(args ...any) {
+		return func(args ...any) {
 			if c.StatusIsActive(a1IcdKey) {
-				return false
+				return
 			}
 			atk := args[1].(*info.AttackEvent)
 			if atk.Info.ActorIndex != c.Index() {
-				return false
+				return
 			}
 			if c.Core.Player.Active() != c.Index() {
-				return false
+				return
 			}
 			switch atk.Info.AttackTag {
 			case attacks.AttackTagSwirlPyro:
@@ -36,12 +36,11 @@ func (c *char) a1() {
 			case attacks.AttackTagSwirlElectro:
 			case attacks.AttackTagSwirlCryo:
 			default:
-				return false
+				return
 			}
 			// icd is triggered regardless if stacks are maxed or not
 			c.AddStatus(a1IcdKey, 6, true)
 			c.addDecStack()
-			return false
 		}
 	}
 
@@ -63,8 +62,8 @@ func (c *char) a4() {
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag("heizou-a4", dur),
 			AffectedStat: attributes.EM,
-			Amount: func() ([]float64, bool) {
-				return c.a4Buff, true
+			Amount: func() []float64 {
+				return c.a4Buff
 			},
 		})
 	}

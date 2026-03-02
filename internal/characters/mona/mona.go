@@ -19,17 +19,12 @@ func init() {
 
 type char struct {
 	*tmpl.Character
-	a4Stats                []float64
-	phantasmalBubbleStacks int
-	omenStartingBonusDur   int
-	hexereiOmenExtension   int
-	c2AfterBurst           bool
-	c2Buff                 []float64
-	c6Src                  int
-	c6Stacks               int
+	a4Stats  []float64
+	c6Src    int
+	c6Stacks int
 }
 
-func NewChar(s *core.Core, w *character.CharWrapper, p info.CharacterProfile) error {
+func NewChar(s *core.Core, w *character.CharWrapper, _ info.CharacterProfile) error {
 	c := char{}
 	c.Character = tmpl.NewWithWrapper(s, w)
 
@@ -37,14 +32,8 @@ func NewChar(s *core.Core, w *character.CharWrapper, p info.CharacterProfile) er
 	c.NormalHitNum = normalHitNum
 	c.BurstCon = 3
 	c.SkillCon = 5
-	c.c6Src = -1
-	w.Character = &c
 
-	hexerei, ok := p.Params["hexerei"]
-	if !ok {
-		hexerei = 1
-	}
-	c.IsHexerei = hexerei > 0
+	w.Character = &c
 
 	return nil
 }
@@ -53,21 +42,14 @@ func (c *char) Init() error {
 	c.burstHook()
 	c.burstDamageBonus()
 	c.a4()
-
-	c.hexereiInit()
-
 	if c.Base.Cons >= 1 {
 		c.c1()
 	}
 	if c.Base.Cons >= 2 {
-		c.c2Init()
 		c.c2()
 	}
 	if c.Base.Cons >= 4 {
 		c.c4()
-	}
-	if c.Base.Cons >= 6 {
-		c.c6Init()
 	}
 	return nil
 }

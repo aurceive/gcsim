@@ -118,7 +118,7 @@ func (c *char) SkillPress(burstActive int) action.Info {
 		skillPressHitmarks[burstActive],
 		particleCB,
 		c4cb,
-		c.addSigil(),
+		c.addSigil(false),
 	)
 
 	c.SetCDWithDelay(action.ActionSkill, c.a1CDReduction(6*60), skillPressCDStarts[burstActive])
@@ -192,8 +192,7 @@ func (c *char) holdParticleCB(a info.AttackCB) {
 	c.Core.QueueParticle(c.Base.Key.String(), 4, attributes.Electro, c.ParticleDelay)
 }
 
-func (c *char) addSigil() info.AttackCBFunc {
-	done := false
+func (c *char) addSigil(done bool) info.AttackCBFunc {
 	return func(a info.AttackCB) {
 		if a.Target.Type() != info.TargettableEnemy {
 			return
@@ -205,11 +204,9 @@ func (c *char) addSigil() info.AttackCBFunc {
 		if !c.StatusIsActive(skillSigilKey) {
 			c.sigils = 0
 		}
-		c.sigils += c.c6Sigil()
 
-		if c.sigils > 3 {
-			c.hexereiOnSigilOverflow()
-			c.sigils = 3
+		if c.sigils < 3 {
+			c.sigils++
 		}
 
 		// add sigil er buff
@@ -218,8 +215,8 @@ func (c *char) addSigil() info.AttackCBFunc {
 		c.AddStatMod(character.StatMod{
 			Base:         modifier.NewBase(skillSigilKey, 18*60),
 			AffectedStat: attributes.ER,
-			Amount: func() ([]float64, bool) {
-				return m, true
+			Amount: func() []float64 {
+				return m
 			},
 		})
 	}
@@ -234,7 +231,6 @@ func (c *char) clearSigil() {
 	if c.sigils > 0 {
 		c.AddEnergy("razor", float64(c.sigils)*5)
 		c.sigils = 0
-		c.c6OnSiglConsume()
 		c.DeleteStatus(skillSigilKey)
 	}
 }

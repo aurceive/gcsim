@@ -44,56 +44,53 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("beacon-of-the-reed-sea-hp", -1),
 		AffectedStat: attributes.HPP,
-		Amount: func() ([]float64, bool) {
+		Amount: func() []float64 {
 			if c.Player.Shields.CharacterIsShielded(char.Index(), c.Player.Active()) {
-				return nil, false
+				return nil
 			}
-			return mHP, true
+			return mHP
 		},
 	})
 
 	mATK := make([]float64, attributes.EndStatType)
 	mATK[attributes.ATKP] = stackAtk
-	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		if atk.Info.AttackTag != attacks.AttackTagElementalArt && atk.Info.AttackTag != attacks.AttackTagElementalArtHold {
-			return false
+			return
 		}
 
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag(skillKey, stackDuration),
 			AffectedStat: attributes.ATKP,
-			Amount: func() ([]float64, bool) {
-				return mATK, true
+			Amount: func() []float64 {
+				return mATK
 			},
 		})
-
-		return false
 	}, fmt.Sprintf("beacon-of-the-reed-sea-enemy-%v", char.Base.Key.String()))
 
-	c.Events.Subscribe(event.OnPlayerHPDrain, func(args ...any) bool {
+	c.Events.Subscribe(event.OnPlayerHPDrain, func(args ...any) {
 		di := args[0].(*info.DrainInfo)
 		if di.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		if di.Amount <= 0 {
-			return false
+			return
 		}
 		if !di.External {
-			return false
+			return
 		}
 
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag(damagedKey, stackDuration),
 			AffectedStat: attributes.ATKP,
-			Amount: func() ([]float64, bool) {
-				return mATK, true
+			Amount: func() []float64 {
+				return mATK
 			},
 		})
-		return false
 	}, fmt.Sprintf("beacon-of-the-reed-sea-player-%v", char.Base.Key.String()))
 
 	return w, nil

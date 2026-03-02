@@ -163,11 +163,11 @@ func (c *char) rushingIce() {
 	val[attributes.DmgP] = skillRushingIceNABonus[c.TalentLvlSkill()]
 	c.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBaseWithHitlag("aloy-rushing-ice", rushingIceDuration),
-		Amount: func(atk *info.AttackEvent, _ info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, _ info.Target) []float64 {
 			if atk.Info.AttackTag == attacks.AttackTagNormal {
-				return val, true
+				return val
 			}
-			return nil, false
+			return nil
 		},
 	})
 
@@ -180,22 +180,22 @@ func (c *char) coilMod() {
 	val := make([]float64, attributes.EndStatType)
 	c.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBase("aloy-coil-stacks", -1),
-		Amount: func(atk *info.AttackEvent, _ info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, _ info.Target) []float64 {
 			if atk.Info.AttackTag == attacks.AttackTagNormal && c.coils > 0 {
 				val[attributes.DmgP] = skillCoilNABonus[c.coils-1][c.TalentLvlSkill()]
-				return val, true
+				return val
 			}
-			return nil, false
+			return nil
 		},
 	})
 }
 
 // Exit Field Hook to start timer to clear coil stacks
 func (c *char) onExitField() {
-	c.Core.Events.Subscribe(event.OnCharacterSwap, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnCharacterSwap, func(args ...any) {
 		prev := args[0].(int)
 		if prev != c.Index() {
-			return false
+			return
 		}
 		c.lastFieldExit = c.Core.F
 
@@ -205,7 +205,5 @@ func (c *char) onExitField() {
 			}
 			c.coils = 0
 		}, 30*60)
-
-		return false
 	}, "aloy-exit")
 }

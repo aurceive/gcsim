@@ -36,24 +36,21 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	m := make([]float64, attributes.EndStatType)
 	m[attributes.DmgP] = amt
 
-	buffSkill := func(...any) bool {
+	buffSkill := func(...any) {
 		char.AddAttackMod(character.AttackMod{
 			Base: modifier.NewBaseWithHitlag("earth-shaker", 8*60),
-			Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+			Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 				if atk.Info.AttackTag != attacks.AttackTagElementalArt && atk.Info.AttackTag != attacks.AttackTagElementalArtHold {
-					return nil, false
+					return nil
 				}
-				return m, true
+				return m
 			},
 		})
-		return false
 	}
-
-	buffSkillNoGadget := func(args ...any) bool {
-		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
+	buffSkillNoGadget := func(args ...any) {
+		if _, ok := args[0].(*enemy.Enemy); ok {
+			buffSkill(args...)
 		}
-		return buffSkill(args...)
 	}
 
 	charKey := char.Base.Key.String()

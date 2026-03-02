@@ -35,17 +35,14 @@ func (c *char) c6Init() {
 	c.c6buff[attributes.CD] = 0.6
 
 	// workaround for giving lunarcharge the 60% CD
-	c.Core.Events.Subscribe(event.OnLunarChargedReactionAttack, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnLunarChargedReactionAttack, func(args ...any) {
 		ae, ok := args[1].(*info.AttackEvent)
 		if !ok {
-			return false
-		}
-		if ae.Info.Element != attributes.Electro {
-			return false
+			return
 		}
 
 		if !c.Core.Player.ByIndex(ae.Info.ActorIndex).StatModIsActive(c6Key) {
-			return false
+			return
 		}
 		if c.Core.Flags.LogDebug {
 			c.Core.Log.NewEvent("Sara C6 CD added to Lunarcharged", glog.LogPreDamageMod, ae.Info.ActorIndex).
@@ -54,7 +51,6 @@ func (c *char) c6Init() {
 		}
 
 		ae.Snapshot.Stats[attributes.CD] += 0.6
-		return false
 	}, c6Key+"-lunarcharged")
 }
 
@@ -62,11 +58,11 @@ func (c *char) c6Init() {
 func (c *char) c6(char *character.CharWrapper) {
 	char.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBaseWithHitlag(c6Key, 360),
-		Amount: func(atk *info.AttackEvent, _ info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, _ info.Target) []float64 {
 			if atk.Info.Element != attributes.Electro {
-				return nil, false
+				return nil
 			}
-			return c.c6buff, true
+			return c.c6buff
 		},
 	})
 }

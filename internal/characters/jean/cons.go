@@ -23,22 +23,21 @@ func (c *char) c1(snap *info.Snapshot) {
 func (c *char) c2() {
 	c.c2buff = make([]float64, attributes.EndStatType)
 	c.c2buff[attributes.AtkSpd] = 0.15
-	c.Core.Events.Subscribe(event.OnParticleReceived, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnParticleReceived, func(args ...any) {
 		// only trigger if Jean catches the particle
 		if c.Core.Player.Active() != c.Index() {
-			return false
+			return
 		}
 		// apply C2 to all characters
 		for _, this := range c.Core.Player.Chars() {
 			this.AddStatMod(character.StatMod{
 				Base:         modifier.NewBaseWithHitlag("jean-c2", 900),
 				AffectedStat: attributes.AtkSpd,
-				Amount: func() ([]float64, bool) {
-					return c.c2buff, true
+				Amount: func() []float64 {
+					return c.c2buff
 				},
 			})
 		}
-		return false
 	}, "jean-c2")
 }
 

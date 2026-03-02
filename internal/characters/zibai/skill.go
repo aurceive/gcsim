@@ -39,19 +39,18 @@ func init() {
 }
 
 func (c *char) onExitField() {
-	c.Core.Events.Subscribe(event.OnCharacterSwap, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnCharacterSwap, func(args ...any) {
 		// do nothing if previous char wasn't zibai
 		prev := args[0].(int)
 		if prev != c.Index() {
-			return false
+			return
 		}
 		if !c.StatusIsActive(skillKey) {
-			return false
+			return
 		}
 
 		c.DeleteStatus(skillKey)
 
-		return false
 	}, "zibai-exit")
 }
 
@@ -180,19 +179,18 @@ func (c *char) radianceCB(ac info.AttackCB) {
 }
 
 func (c *char) skillInit() {
-	c.Core.Events.Subscribe(event.OnLunarCrystallize, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnLunarCrystallize, func(args ...any) {
 		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
+			return
 		}
 		if !c.StatusIsActive(skillKey) {
-			return false
+			return
 		}
 		if c.StatusIsActive(radianceLCrICDKey) {
-			return false
+			return
 		}
 		c.AddStatus(radianceLCrICDKey, 4*60, true)
 		c.addRadiance(35)
-		return false
 	}, "zibai-radiance-lcr")
 }
 

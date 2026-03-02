@@ -29,43 +29,41 @@ func init() {
 }
 
 func (c *char) skillInit() {
-	c.Core.Events.Subscribe(event.OnLunarCharged, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnLunarCharged, func(args ...any) {
 		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
+			return
 		}
 		if !c.StatusIsActive(skillKey) {
-			return false
+			return
 		}
 		c.gravityLastReaction = info.ReactionTypeLunarCharged
 		c.AddStatus(gravityKey, 2*60, false)
 		if !c.gravityTask {
 			c.gravityAccum()
 		}
-		return false
 	}, "columbina-gravity-lc")
 
-	c.Core.Events.Subscribe(event.OnLunarCrystallize, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnLunarCrystallize, func(args ...any) {
 		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
+			return
 		}
 		if !c.StatusIsActive(skillKey) {
-			return false
+			return
 		}
 		c.gravityLastReaction = info.ReactionTypeLunarCrystallize
 		c.AddStatus(gravityKey, 2*60, false)
 		if !c.gravityTask {
 			c.gravityAccum()
 		}
-		return false
 	}, "columbina-gravity-lcr")
 
-	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if !attacks.AttackTagIsLunar(atk.Info.AttackTag) {
-			return false
+			return
 		}
 		if !c.StatusIsActive(skillKey) {
-			return false
+			return
 		}
 		c.AddStatus(gravityKey, 2*60, false)
 		if !c.gravityTask {
@@ -77,7 +75,6 @@ func (c *char) skillInit() {
 		case attacks.AttackTagDirectLunarCrystallize | attacks.AttackTagReactionLunarCrystallize:
 			c.gravityLastReaction = info.ReactionTypeLunarCrystallize
 		}
-		return false
 	}, "columbina-gravity-on-dmg")
 }
 

@@ -34,17 +34,17 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	atkp := 0.18 + 0.06*float64(refine)
 	cd := 0.30 + 0.10*float64(refine)
 
-	c.Events.Subscribe(event.OnSkill, func(args ...any) bool {
+	c.Events.Subscribe(event.OnSkill, func(args ...any) {
 		// don't proc if someone else used a skill
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 
 		// add buff
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag(buffKey, 12*60),
 			AffectedStat: attributes.NoStat,
-			Amount: func() ([]float64, bool) {
+			Amount: func() []float64 {
 				if char.Energy == 0 {
 					m[attributes.ATKP] = atkp * 2
 					m[attributes.CD] = cd
@@ -52,11 +52,9 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 					m[attributes.ATKP] = atkp
 					m[attributes.CD] = 0
 				}
-				return m, true
+				return m
 			},
 		})
-
-		return false
 	}, fmt.Sprintf("azurelight-%v", char.Base.Key))
 
 	return &w, nil

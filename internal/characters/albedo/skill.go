@@ -7,6 +7,7 @@ import (
 	"github.com/genshinsim/gcsim/pkg/core/attributes"
 	"github.com/genshinsim/gcsim/pkg/core/combat"
 	"github.com/genshinsim/gcsim/pkg/core/event"
+	"github.com/genshinsim/gcsim/pkg/core/glog"
 	"github.com/genshinsim/gcsim/pkg/core/info"
 )
 
@@ -59,6 +60,7 @@ func (c *char) Skill(p map[string]int) (action.Info, error) {
 	ai.Mult = skillTick[c.TalentLvlSkill()]
 	ai.UseDef = true
 	c.skillAttackInfo = ai
+	c.skillSnapshot = c.Snapshot(&c.skillAttackInfo)
 
 	// create a construct
 	// Construct is not fully formed until after the hit lands (exact timing unknown)
@@ -68,7 +70,6 @@ func (c *char) Skill(p map[string]int) (action.Info, error) {
 		c.skillActive = true
 		// Reset ICD after construct is created
 		c.DeleteStatus(skillICDKey)
-		c.hexereiOnIsotoma()
 		// add C4 and C6 checks
 		if c.Base.Cons >= 4 {
 			c.Core.Tasks.Add(c.c4(c.Core.F), 18) // start checking in 0.3s
@@ -79,7 +80,7 @@ func (c *char) Skill(p map[string]int) (action.Info, error) {
 	}, skillHitmark)
 
 	c.SetCDWithDelay(action.ActionSkill, 240, 23)
-	c.hexereiOnSkill()
+
 	return action.Info{
 		Frames:          frames.NewAbilFunc(skillFrames),
 		AnimationLength: skillFrames[action.InvalidAction],
@@ -102,45 +103,55 @@ func (c *char) particleCB(a info.AttackCB) {
 }
 
 func (c *char) skillHook() {
-	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		trg := args[0].(info.Target)
 		atk := args[1].(*info.AttackEvent)
 		dmg := args[2].(float64)
 		if !c.skillActive {
-			return false
+			return
 		}
 		if c.StatusIsActive(skillICDKey) {
-			return false
+			return
 		}
 		// Can't be triggered by itself when refreshing
 		if atk.Info.Abil == skillAbilInitial {
-			return false
+			return
 		}
 		if dmg == 0 {
-			return false
+			return
 		}
 		// don't proc if target hit is outside of the skill area
 		if !trg.IsWithinArea(c.skillArea) {
-			return false
+			return
 		}
 
 		// this ICD is most likely tied to the construct, so it's not hitlag extendable
 		c.AddStatus(skillICDKey, 120, false) // proc every 2s
 
-		c.Core.QueueAttack(
+		c.Core.QueueAttackWithSnap(
 			c.skillAttackInfo,
+			c.skillSnapshot,
 			combat.NewCircleHitOnTarget(trg, nil, 3.4),
-			1,
 			1,
 			c.particleCB,
 		)
 
 		// c1: skill tick regen 1.2 energy
-		c.c1OnSkillTick()
+		if c.Base.Cons >= 1 {
+			c.AddEnergy("albedo-c1", 1.2)
+			c.Core.Log.NewEvent("c1 restoring energy", glog.LogCharacterEvent, c.Index())
+		}
 
 		// c2: skill tick grant stacks, lasts 30s; each stack increase burst dmg by 30% of def, stack up to 4 times
-		c.c2OnSkillTick()
-
-		return false
+		if c.Base.Cons >= 2 {
+			if !c.StatusIsActive(c2key) {
+				c.c2stacks = 0
+			}
+			c.AddStatus(c2key, 1800, true) // lasts 30 sec
+			c.c2stacks++
+			if c.c2stacks > 4 {
+				c.c2stacks = 4
+			}
+		}
 	}, "albedo-skill")
 }

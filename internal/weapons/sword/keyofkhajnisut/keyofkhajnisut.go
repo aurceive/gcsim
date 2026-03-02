@@ -49,24 +49,24 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("khaj-nisut", -1),
 		AffectedStat: attributes.HPP,
-		Amount: func() ([]float64, bool) {
-			return m, true
+		Amount: func() []float64 {
+			return m
 		},
 	})
 
-	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 		if char.StatusIsActive(icdKey) {
-			return false
+			return
 		}
 		if atk.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		if atk.Info.AttackTag != attacks.AttackTagElementalArt && atk.Info.AttackTag != attacks.AttackTagElementalArtHold {
-			return false
+			return
 		}
 
 		if !char.StatModIsActive(buffKey) {
@@ -82,8 +82,8 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 			Base:         modifier.NewBaseWithHitlag(buffKey, duration),
 			AffectedStat: attributes.EM,
 			Extra:        true,
-			Amount: func() ([]float64, bool) {
-				return val, true
+			Amount: func() []float64 {
+				return val
 			},
 		})
 
@@ -95,15 +95,14 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 					Base:         modifier.NewBaseWithHitlag(teamBuffKey, duration),
 					AffectedStat: attributes.EM,
 					Extra:        true,
-					Amount: func() ([]float64, bool) {
-						return val, true
+					Amount: func() []float64 {
+						return val
 					},
 				})
 			}
 		}
 
 		char.AddStatus(icdKey, cd, true)
-		return false
 	}, "khaj-nisut")
 
 	return w, nil

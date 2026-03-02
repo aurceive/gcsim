@@ -42,8 +42,8 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("risingwinds-2pc", -1),
 		AffectedStat: attributes.ATKP,
-		Amount: func() ([]float64, bool) {
-			return m, true
+		Amount: func() []float64 {
+			return m
 		},
 	})
 
@@ -56,10 +56,10 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 	if char.IsHexerei {
 		m2[attributes.CR] = 0.2
 	}
-	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		switch atk.Info.AttackTag {
 		case attacks.AttackTagExtra:
@@ -68,18 +68,16 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 		case attacks.AttackTagElementalArtHold:
 		case attacks.AttackTagElementalBurst:
 		default:
-			return false
+			return
 		}
 
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag("risingwinds-4pc-buff", 6*60),
 			AffectedStat: attributes.NoStat,
-			Amount: func() ([]float64, bool) {
-				return m2, true
+			Amount: func() []float64 {
+				return m2
 			},
 		})
-
-		return false
 	}, "breeze-4pc")
 
 	return &s, nil

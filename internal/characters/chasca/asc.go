@@ -26,12 +26,12 @@ func (c *char) a1DMGBuff() {
 	// since it would be active for all E-CAs anyways
 	c.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBase("chasca-a1", -1),
-		Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 			if atk.Info.ICDTag != attacks.ICDTagChascaShining {
-				return nil, false
+				return nil
 			}
 			m[attributes.DmgP] = a1DMGBuff[len(c.partyPHECTypesUnique)+c.c2A1Stack()]
-			return m, true
+			return m
 		},
 	})
 }
@@ -68,7 +68,7 @@ func (c *char) a4() {
 		Mult:           1.5 * skillShadowhunt[c.TalentLvlSkill()],
 		IsDeployable:   true,
 	}
-	c.Core.Events.Subscribe(event.OnNightsoulBurst, func(_ ...any) bool {
+	c.Core.Events.Subscribe(event.OnNightsoulBurst, func(_ ...any) {
 		bulletElem := attributes.Anemo
 		if len(c.partyPHECTypesUnique) > 0 {
 			bulletElem = c.partyPHECTypesUnique[c.Core.Rand.Intn(len(c.partyPHECTypesUnique))]
@@ -85,6 +85,5 @@ func (c *char) a4() {
 		}
 		ap := combat.NewSingleTargetHit(c.Core.Combat.PrimaryTarget().Key())
 		c.Core.QueueAttack(ai, ap, 0, 60)
-		return false
 	}, "chasca-a4")
 }

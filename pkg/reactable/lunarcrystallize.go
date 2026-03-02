@@ -179,7 +179,8 @@ func (r *Reactable) doSingleLCrAttack(owner int) {
 		cr := ae.Snapshot.Stats[attributes.CR]
 		cd := ae.Snapshot.Stats[attributes.CD]
 
-		flatdmg := 0.96 * combat.CalcLunarDmg(char.Base.Level, char, ae.Info, em)
+		react := char.ReactBonus(ae.Info)
+		flatdmg := 0.96 * combat.CalcLunarChargedDmg(char.Base.Level, react, ae.Info, em)
 		isCrit := false
 
 		if r.core.Rand.Float64() <= cr {

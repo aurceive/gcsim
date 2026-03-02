@@ -68,33 +68,31 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		c.QueueAttack(ai, combat.NewCircleHitOnTarget(pos, nil, 1.6), 0, 1)
 	}
 
-	f := func(args ...any) bool {
+	f := func(args ...any) {
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 		if char.StatusIsActive(icdKey) {
-			return false
+			return
 		}
 		char.AddStatus(icdKey, 20*60, true)
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag(buffKey, 12*60),
 			AffectedStat: attributes.NoStat,
-			Amount: func() ([]float64, bool) {
-				return m, true
+			Amount: func() []float64 {
+				return m
 			},
 		})
 		char.QueueCharTask(triggerAttack, 12*60)
-		return false
 	}
 
 	c.Events.Subscribe(event.OnSkill, f, fmt.Sprintf("kingssquire-%v", char.Base.Key.String()))
 	c.Events.Subscribe(event.OnBurst, f, fmt.Sprintf("kingssquire-%v", char.Base.Key.String()))
-	c.Events.Subscribe(event.OnCharacterSwap, func(args ...any) bool {
+	c.Events.Subscribe(event.OnCharacterSwap, func(args ...any) {
 		prev := args[0].(int)
 		if prev == char.Index() {
 			triggerAttack()
 		}
-		return false
 	}, fmt.Sprintf("kingssquire-%v", char.Base.Key.String()))
 
 	return w, nil

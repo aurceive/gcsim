@@ -80,8 +80,8 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("calamity-dmg", -1),
 		AffectedStat: attributes.NoStat,
-		Amount: func() ([]float64, bool) {
-			return m, true
+		Amount: func() []float64 {
+			return m
 		},
 	})
 
@@ -93,9 +93,9 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	// double bonus if not on field
 	atkbonus := .024 + float64(r)*.008
 	skillPressBonus := make([]float64, attributes.EndStatType)
-	c.Events.Subscribe(event.OnSkill, func(args ...any) bool {
+	c.Events.Subscribe(event.OnSkill, func(args ...any) {
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 
 		// asummes that stacks are not reset on refreshing calamity buff
@@ -106,18 +106,16 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag(buffKey, buffDuration),
 			AffectedStat: attributes.NoStat,
-			Amount: func() ([]float64, bool) {
+			Amount: func() []float64 {
 				atk := atkbonus * float64(w.stacks)
 				if c.Player.Active() != char.Index() {
 					atk *= 2
 				}
 				skillPressBonus[attributes.ATKP] = atk
 
-				return skillPressBonus, true
+				return skillPressBonus
 			},
 		})
-
-		return false
 	}, fmt.Sprintf("calamity-queller-%v", char.Base.Key.String()))
 
 	return w, nil

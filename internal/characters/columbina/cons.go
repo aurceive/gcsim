@@ -32,20 +32,18 @@ func (c *char) consElevationInit() {
 		return
 	}
 	amt := elevation[c.Base.Cons]
-	c.Core.Events.Subscribe(event.OnApplyAttack, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnApplyAttack, func(args ...any) {
 		atk := args[0].(*info.AttackEvent)
 		if attacks.DirectLunarReactionStartDelim < atk.Info.AttackTag && atk.Info.AttackTag < attacks.DirectLunarReactionEndDelim {
 			atk.Info.Elevation += amt
 		}
-		return false
 	}, elevationKey+"-direct")
 
-	c.Core.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if attacks.LunarReactionStartDelim < atk.Info.AttackTag && atk.Info.AttackTag < attacks.LunarReactionEndDelim {
 			atk.Info.Elevation += amt
 		}
-		return false
 	}, elevationKey+"-reaction")
 }
 
@@ -110,12 +108,12 @@ func (c *char) c2OnGravityTick(maxReaction int) {
 	c.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase(c2Key, 8*60),
 		AffectedStat: attributes.HPP,
-		Amount: func() ([]float64, bool) {
-			return c.c2Buff, true
+		Amount: func() []float64 {
+			return c.c2Buff
 		},
 	})
 
-	if c.Core.Player.GetMoonsignCount() < 2 {
+	if c.Core.Player.GetMoonsignLevel() < 2 {
 		return
 	}
 
@@ -127,12 +125,12 @@ func (c *char) c2OnGravityTick(maxReaction int) {
 				Base:         modifier.NewBase(c2LCKey, 8*60),
 				Extra:        true,
 				AffectedStat: attributes.ATK,
-				Amount: func() ([]float64, bool) {
+				Amount: func() []float64 {
 					if c.Core.Player.Active() != char.Index() {
-						return nil, false
+						return nil
 					}
 					c.c2LCBuff[attributes.ATK] = 0.01 * c.MaxHP()
-					return c.c2LCBuff, true
+					return c.c2LCBuff
 				},
 			})
 		}
@@ -143,12 +141,12 @@ func (c *char) c2OnGravityTick(maxReaction int) {
 				Base:         modifier.NewBase(c2LCrKey, 8*60),
 				Extra:        true,
 				AffectedStat: attributes.DEF,
-				Amount: func() ([]float64, bool) {
+				Amount: func() []float64 {
 					if c.Core.Player.Active() != char.Index() {
-						return nil, false
+						return nil
 					}
 					c.c2LCrBuff[attributes.DEF] = 0.01 * c.MaxHP()
-					return c.c2LCrBuff, true
+					return c.c2LCrBuff
 				},
 			})
 		}
@@ -177,10 +175,10 @@ func (c *char) c6Init() {
 	c.c6Buff = make([]float64, attributes.EndStatType)
 	c.c6Buff[attributes.CD] = 0.8
 
-	c.Core.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) {
 		ae, ok := args[1].(*info.AttackEvent)
 		if !ok {
-			return false
+			return
 		}
 
 		atk := args[1].(*info.AttackEvent)
@@ -197,74 +195,68 @@ func (c *char) c6Init() {
 		}
 
 		if !addBuff {
-			return false
+			return
 		}
 
 		ae.Snapshot.Stats[attributes.CD] += 0.8
-
-		return false
 	}, c6Key+"-reaction-attack")
 
-	c.Core.Events.Subscribe(event.OnLunarCharged, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnLunarCharged, func(args ...any) {
 		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
+			return
 		}
 
 		if !c.ReactBonusModIsActive(burstBuffKey) {
-			return false
+			return
 		}
 
 		if !c.Core.Combat.Player().IsWithinArea(c.burstArea) {
-			return false
+			return
 		}
 
 		for _, char := range c.Core.Player.Chars() {
 			char.AddAttackMod(character.AttackMod{
 				Base: modifier.NewBaseWithHitlag(c6LCKey, 8*60),
-				Amount: func(atk *info.AttackEvent, _ info.Target) ([]float64, bool) {
+				Amount: func(atk *info.AttackEvent, _ info.Target) []float64 {
 					switch atk.Info.Element {
 					case attributes.Electro:
 					case attributes.Hydro:
 					default:
-						return nil, false
+						return nil
 					}
-					return c.c6Buff, true
+					return c.c6Buff
 				},
 			})
 		}
-
-		return false
 	}, c6LCKey)
 
-	c.Core.Events.Subscribe(event.OnLunarCrystallize, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnLunarCrystallize, func(args ...any) {
 		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
+			return
 		}
 
 		if !c.ReactBonusModIsActive(burstBuffKey) {
-			return false
+			return
 		}
 
 		if !c.Core.Combat.Player().IsWithinArea(c.burstArea) {
-			return false
+			return
 		}
 
 		for _, char := range c.Core.Player.Chars() {
 			char.AddAttackMod(character.AttackMod{
 				Base: modifier.NewBaseWithHitlag(c6LCrKey, 8*60),
-				Amount: func(atk *info.AttackEvent, _ info.Target) ([]float64, bool) {
+				Amount: func(atk *info.AttackEvent, _ info.Target) []float64 {
 					switch atk.Info.Element {
 					case attributes.Geo:
 					case attributes.Hydro:
 					default:
-						return nil, false
+						return nil
 					}
-					return c.c6Buff, true
+					return c.c6Buff
 				},
 			})
 		}
-
-		return false
 	}, c6LCrKey)
 }
 

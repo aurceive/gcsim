@@ -62,8 +62,11 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase(prayerModKey, -1),
 		AffectedStat: attributes.EM,
-		Amount: func() ([]float64, bool) {
-			return mPrayer, char.StatusIsActive(prayerStatus)
+		Amount: func() []float64 {
+			if !char.StatusIsActive(prayerStatus) {
+				return nil
+			}
+			return mPrayer
 		},
 	})
 
@@ -72,39 +75,40 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase(verseModKey, -1),
 		AffectedStat: attributes.EM,
-		Amount: func() ([]float64, bool) {
-			return mVerse, char.StatusIsActive(verseStatus)
+		Amount: func() []float64 {
+			if !char.StatusIsActive(verseStatus) {
+				return nil
+			}
+			return mVerse
 		},
 	})
 
 	// When the equipping character's Elemental Skill deals Hydro or Dendro DMG, gain Prayer.
-	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		switch atk.Info.AttackTag {
 		case attacks.AttackTagElementalArt, attacks.AttackTagElementalArtHold:
 			// ok
 		default:
-			return false
+			return
 		}
 		if atk.Info.Element != attributes.Hydro && atk.Info.Element != attributes.Dendro {
-			return false
+			return
 		}
 
 		char.AddStatus(prayerStatus, 270, true) // 4.5s
-		return false
 	}, fmt.Sprintf("nightweaverslookingglass-skill-dmg-%v", char.Base.Key.String()))
 
 	// When any party member triggers Lunar-Bloom, the equipping character gains New Moon Verse.
-	c.Events.Subscribe(event.OnLunarBloom, func(args ...any) bool {
+	c.Events.Subscribe(event.OnLunarBloom, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex < 0 || atk.Info.ActorIndex >= len(c.Player.Chars()) {
-			return false
+			return
 		}
 		char.AddStatus(verseStatus, 10*60, true)
-		return false
 	}, fmt.Sprintf("nightweaverslookingglass-lunarbloom-%v", char.Base.Key.String()))
 
 	// Shared non-stacking team reaction bonus when both Prayer and Verse are active.
@@ -122,8 +126,8 @@ func installNightweaversLookingGlassTeamBonus(c *core.Core) {
 	for _, dst := range c.Player.Chars() {
 		dst.AddReactBonusMod(character.ReactBonusMod{
 			Base: modifier.NewBase(teamModKey, -1),
-			Amount: func(ai info.AttackInfo) (float64, bool) {
-				return nightweaversLookingGlassBestReactBonus(c, ai), false
+			Amount: func(ai info.AttackInfo) float64 {
+				return nightweaversLookingGlassBestReactBonus(c, ai)
 			},
 		})
 	}

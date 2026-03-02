@@ -18,30 +18,29 @@ func (c *char) c1() {
 	c.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("collei-c1", -1),
 		AffectedStat: attributes.ER,
-		Amount: func() ([]float64, bool) {
+		Amount: func() []float64 {
 			if c.Core.Player.Active() != c.Index() {
-				return m, true
+				return m
 			}
-			return nil, false
+			return nil
 		},
 	})
 }
 
 func (c *char) c2() {
 	//nolint:unparam // ignoring for now, event refactor should get rid of bool return of event sub
-	f := func(args ...any) bool {
+	f := func(args ...any) {
 		if c.sproutShouldExtend {
-			return false
+			return
 		}
 		if !c.StatusIsActive(sproutKey) && !c.StatusIsActive(skillKey) {
-			return false
+			return
 		}
 		c.sproutShouldExtend = true
 		if c.StatusIsActive(sproutKey) {
 			c.ExtendStatus(sproutKey, 180)
 		}
 		c.Core.Log.NewEvent("collei c2 proc", glog.LogCharacterEvent, c.Index())
-		return false
 	}
 
 	for _, evt := range dendroEvents {
@@ -49,11 +48,10 @@ func (c *char) c2() {
 		case event.OnHyperbloom, event.OnBurgeon:
 			c.Core.Events.Subscribe(evt, f, "collei-c2")
 		default:
-			c.Core.Events.Subscribe(evt, func(args ...any) bool {
-				if _, ok := args[0].(*enemy.Enemy); !ok {
-					return false
+			c.Core.Events.Subscribe(evt, func(args ...any) {
+				if _, ok := args[0].(*enemy.Enemy); ok {
+					f(args...)
 				}
-				return f(args...)
 			}, "collei-c2")
 		}
 	}
@@ -70,8 +68,8 @@ func (c *char) c4() {
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag("collei-c4", 720),
 			AffectedStat: attributes.EM,
-			Amount: func() ([]float64, bool) {
-				return amts, true
+			Amount: func() []float64 {
+				return amts
 			},
 		})
 	}

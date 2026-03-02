@@ -12,26 +12,24 @@ import (
 func (c *char) c1() {
 	m := make([]float64, attributes.EndStatType)
 	m[attributes.ATKP] = 0.2
-	c.Core.Events.Subscribe(event.OnTargetDied, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnTargetDied, func(args ...any) {
 		trg, ok := args[0].(*enemy.Enemy)
 		// ignore if not an enemy
 		if !ok {
-			return false
+			return
 		}
 		// ignore if debuff not on enemy
 		if !trg.StatusIsActive(abDebuff) {
-			return false
+			return
 		}
 
 		c.AddStatMod(character.StatMod{
 			Base:         modifier.NewBase("yoimiya-c1", 1200),
 			AffectedStat: attributes.ATKP,
-			Amount: func() ([]float64, bool) {
-				return m, true
+			Amount: func() []float64 {
+				return m
 			},
 		})
-
-		return false
 	}, "yoimiya-c1")
 }
 
@@ -57,8 +55,8 @@ func (c *char) makeC2CB() info.AttackCBFunc {
 		c.AddStatMod(character.StatMod{
 			Base:         modifier.NewBase("yoimiya-c2", 360),
 			AffectedStat: attributes.PyroP,
-			Amount: func() ([]float64, bool) {
-				return m, true
+			Amount: func() []float64 {
+				return m
 			},
 		})
 	}

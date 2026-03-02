@@ -55,47 +55,45 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	char.AddStatMod(character.StatMod{
 		Base:         modifier.NewBase("eternalflow-hpp", -1),
 		AffectedStat: attributes.HPP,
-		Amount: func() ([]float64, bool) {
-			return val, true
+		Amount: func() []float64 {
+			return val
 		},
 	})
 
-	c.Events.Subscribe(event.OnPlayerHPDrain, func(args ...any) bool {
+	c.Events.Subscribe(event.OnPlayerHPDrain, func(args ...any) {
 		di := args[0].(*info.DrainInfo)
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 		if di.ActorIndex != char.Index() {
-			return false
+			return
 		}
 		if di.Amount <= 0 {
-			return false
+			return
 		}
 
 		w.onChangeHP()
-		return false
 	}, fmt.Sprintf("eternalflow-drain-%v", char.Base.Key.String()))
 
-	c.Events.Subscribe(event.OnHeal, func(args ...any) bool {
+	c.Events.Subscribe(event.OnHeal, func(args ...any) {
 		index := args[1].(int)
 		amount := args[2].(float64)
 		overheal := args[3].(float64)
 		if c.Player.Active() != char.Index() {
-			return false
+			return
 		}
 		if index != char.Index() {
-			return false
+			return
 		}
 		if amount <= 0 {
-			return false
+			return
 		}
 		// do not trigger if at max hp already
 		if math.Abs(amount-overheal) <= 1e-9 {
-			return false
+			return
 		}
 
 		w.onChangeHP()
-		return false
 	}, fmt.Sprintf("eternalflow-heal-%v", char.Base.Key.String()))
 	return w, nil
 }
@@ -114,13 +112,13 @@ func (w *Weapon) onChangeHP() {
 	w.char.AddStatus(buffIcd, 0.3*60, true)
 	w.char.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBaseWithHitlag(buffKey, 4*60),
-		Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 			w.buffCA[attributes.DmgP] = (0.10 + 0.04*float64(w.refine)) * float64(w.stacks)
 			switch atk.Info.AttackTag {
 			case attacks.AttackTagExtra:
-				return w.buffCA, true
+				return w.buffCA
 			default:
-				return nil, false
+				return nil
 			}
 		},
 	})

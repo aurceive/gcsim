@@ -4,7 +4,6 @@ import (
 	"github.com/genshinsim/gcsim/pkg/core/attacks"
 	"github.com/genshinsim/gcsim/pkg/core/attributes"
 	"github.com/genshinsim/gcsim/pkg/core/event"
-	"github.com/genshinsim/gcsim/pkg/core/glog"
 	"github.com/genshinsim/gcsim/pkg/core/info"
 	"github.com/genshinsim/gcsim/pkg/core/player/character"
 	"github.com/genshinsim/gcsim/pkg/modifier"
@@ -24,18 +23,18 @@ func (c *char) a1Init() {
 
 	c.AddReactBonusMod(character.ReactBonusMod{
 		Base: modifier.NewBase(a1Key, -1),
-		Amount: func(ai info.AttackInfo) (float64, bool) {
-			if c.getMoonsignLevel() < 2 {
-				return 0, false
+		Amount: func(ai info.AttackInfo) float64 {
+			if c.Core.Player.GetMoonsignLevel() < 2 {
+				return 0
 			}
 
 			switch ai.AttackTag {
 			case attacks.AttackTagDirectLunarCharged:
 			case attacks.AttackTagReactionLunarCharge:
 			default:
-				return 0, false
+				return 0
 			}
-			return 0.2, false
+			return 0.2
 		},
 	})
 }
@@ -48,13 +47,13 @@ func (c *char) a4Init() {
 
 	m := make([]float64, attributes.EndStatType)
 	c.AddStatMod(character.StatMod{
-		Base:         modifier.NewBaseWithHitlag(a4Key, -1),
+		Base:         modifier.NewBase(a4Key, -1),
 		Extra:        true,
 		AffectedStat: attributes.EM,
-		Amount: func() ([]float64, bool) {
+		Amount: func() []float64 {
 			stats := c.SelectStat(true, attributes.BaseATK, attributes.ATKP, attributes.ATK)
 			m[attributes.EM] = min(stats.TotalATK()*scale, maxBuff)
-			return m, true
+			return m
 		},
 	})
 }
@@ -62,25 +61,31 @@ func (c *char) a4Init() {
 func (c *char) lunarchargeInit() {
 	c.Core.Flags.Custom[reactable.LunarChargeEnableKey] = 1
 
-	// TODO: every 100 ATK that Ineffa has increasing Lunar-Charged's Base DMG by 0.7%, up to a maximum of 14%.
-	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) bool {
+	// TODO: every 100 ATK that Flins has increasing Lunar-Charged's Base DMG by 0.7%, up to a maximum of 14%.
+	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 
 		switch atk.Info.AttackTag {
 		case attacks.AttackTagDirectLunarCharged:
-		case attacks.AttackTagReactionLunarCharge:
 		default:
-			return false
+			return
 		}
 
 		stats := c.SelectStat(true, attributes.BaseATK, attributes.ATKP, attributes.ATK)
 		bonus := min(stats.TotalATK()/100.0*0.007, 0.14)
 
-		if c.Core.Flags.LogDebug {
-			c.Core.Log.NewEvent("flins adding lunarcharged base damage", glog.LogCharacterEvent, c.Index()).Write("bonus", bonus)
+		atk.Info.BaseDmgBonus += bonus
+	}, lunarchargeBonusKey)
+
+	c.Core.Events.Subscribe(event.OnLunarChargedReactionAttack, func(args ...any) {
+		atk := args[1].(*info.AttackEvent)
+		if atk.Info.AttackTag != attacks.AttackTagReactionLunarCharge {
+			return
 		}
 
+		stats := c.SelectStat(true, attributes.BaseATK, attributes.ATKP, attributes.ATK)
+		bonus := min(stats.TotalATK()/100.0*0.007, 0.14)
+
 		atk.Info.BaseDmgBonus += bonus
-		return false
-	}, lunarchargeBonusKey)
+	}, lunarchargeBonusKey+"-lc-atk")
 }

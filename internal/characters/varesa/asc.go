@@ -63,15 +63,14 @@ func (c *char) a4() {
 	m := make([]float64, attributes.EndStatType)
 	c.AddStatMod(character.StatMod{
 		Base: modifier.NewBase("varesa-a4", -1),
-		Amount: func() ([]float64, bool) {
+		Amount: func() []float64 {
 			m[attributes.ATKP] = 0.35 * float64(c.a4Stacks.Count())
-			return m, true
+			return m
 		},
 	})
 
 	c.a4Stacks = stacks.NewMultipleRefreshNoRemove(2, c.QueueCharTask, &c.Core.F)
-	c.Core.Events.Subscribe(event.OnNightsoulBurst, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnNightsoulBurst, func(args ...any) {
 		c.a4Stacks.Add(12 * 60)
-		return false
 	}, "varesa-a4")
 }

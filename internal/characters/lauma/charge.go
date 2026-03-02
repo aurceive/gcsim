@@ -21,6 +21,7 @@ const (
 	chargeReleaseFrame      = 67
 	deerTransformationFrame = 49
 	deerStatusKey           = "lauma-spirit-envoy"
+	deerDur                 = 10 * 60
 )
 
 func init() {
@@ -68,7 +69,7 @@ func (c *char) ChargeAttack(p map[string]int) (action.Info, error) {
 		combat.NewBoxHit(
 			c.Core.Combat.Player(),
 			c.Core.Combat.PrimaryTarget(),
-			info.Point{Y: 0},
+			nil,
 			2.8,
 			8,
 		),
@@ -90,10 +91,22 @@ func (c *char) ChargeAttack(p map[string]int) (action.Info, error) {
 }
 
 func (c *char) enterDeerState() (action.Info, error) {
+	dur := deerDur + c.c1DeerDurMod()
+
+	c.deerSrc = c.Core.F
+	src := c.Core.F
+
 	c.QueueCharTask(func() {
-		c.deerStateStaminaBleed()
-		c.AddStatus(deerStatusKey, 10*60, true)
+		c.deerStateStaminaBleed(src)
+		c.AddStatus(deerStatusKey, dur, true)
 	}, deerTransformationFrame)
+
+	c.QueueCharTask(func() {
+		if c.deerSrc != src {
+			return
+		}
+		c.endDeerState()
+	}, deerTransformationFrame+dur)
 
 	return action.Info{
 		Frames:          frames.NewAbilFunc(deerFrames),
@@ -104,50 +117,64 @@ func (c *char) enterDeerState() (action.Info, error) {
 }
 
 func (c *char) chargeInit() {
-	c.Core.Events.Subscribe(event.OnActionExec, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnActionExec, func(args ...any) {
 		if !c.StatusIsActive(deerStatusKey) {
-			return false
+			return
+		}
+
+		if c.Core.Player.Active() != c.Index() {
+			return
 		}
 
 		a := args[1].(action.Action)
 		if a == action.ActionJump || a == action.ActionWalk {
-			return false
+			return
 		}
 		c.endDeerState()
-		return false
 	}, "lauma-exit-deer-state")
 
-	c.Core.Events.Subscribe(event.OnCharacterSwap, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnCharacterSwap, func(args ...any) {
 		if !c.StatusIsActive(deerStatusKey) {
-			return false
+			return
 		}
 
 		prev := args[0].(int)
 		if prev != c.Index() {
-			return false
+			return
 		}
 		c.endDeerState()
-
-		return false
-	}, "lauma-exit-deer-state")
+	}, "lauma-exit-deer-state-swap")
 }
 
-func (c *char) deerStateStaminaBleed() {
-	if !c.StatusIsActive(deerStatusKey) {
-		return
+func (c *char) deerStateStaminaBleed(src int) func() {
+	return func() {
+		if c.deerSrc != src {
+			return
+		}
+		staminaCost := 25.0 / 60.0 * c.c1DeerStamMod()
+		if c.Core.Player.Stam < staminaCost {
+			c.endDeerState()
+		}
+		c.Core.Player.UseStam(staminaCost, action.ActionWait)
+		c.Core.Tasks.Add(c.deerStateStaminaBleed(src), 1)
 	}
-	staminaCost := 25.0 / 60.0
-	if c.Core.Player.Stam < staminaCost {
-		c.endDeerState()
-	}
-	c.Core.Player.UseStam(staminaCost, action.ActionWait)
-	c.Core.Tasks.Add(c.deerStateStaminaBleed, 1)
 }
 
 func (c *char) endDeerState() {
 	c.DeleteStatus(deerStatusKey)
+	cd := int(4 * 60 * c.a4SpiritEnvoyCooldownReduction())
+	if c.Core.Flags.LogDebug {
+		c.Core.Log.NewEventBuildMsg(glog.LogCooldownEvent, c.Index(), "spirit envoy cooldown triggered").
+			Write("type", "charge").
+			Write("expiry", c.Core.F+cd).
+			Write("original_cd", c.Core.F+cd)
+	}
+
 	c.Core.Tasks.Add(func() {
 		c.deerStateReady = true
-		c.Core.Log.NewEventBuildMsg(glog.LogCooldownEvent, c.Index(), "spirit envoy cooldown ready")
-	}, int(4*60*c.a4SpiritEnvoyCooldownReduction()))
+		if c.Core.Flags.LogDebug {
+			c.Core.Log.NewEventBuildMsg(glog.LogCooldownEvent, c.Index(), "spirit envoy cooldown ready").
+				Write("type", "charge")
+		}
+	}, cd)
 }

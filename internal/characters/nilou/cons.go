@@ -19,11 +19,11 @@ func (c *char) c1() {
 
 	c.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBase("nilou-c1", -1),
-		Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 			if atk.Info.Abil != skillIllusionAbil {
-				return nil, false
+				return nil
 			}
-			return m, true
+			return m
 		},
 	})
 }
@@ -32,20 +32,20 @@ func (c *char) c1() {
 // After a triggered Bloom reaction deals DMG to opponents, their Dendro RES will be decreased by 35% for 10s.
 // You need to have unlocked the “Court of Dancing Petals” Talent.
 func (c *char) c2() {
-	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		dmg := args[2].(float64)
 		t, ok := args[0].(*enemy.Enemy)
 		if !ok {
-			return false
+			return
 		}
 		if dmg == 0 {
-			return false
+			return
 		}
 
 		char := c.Core.Player.ByIndex(atk.Info.ActorIndex)
 		if !char.StatusIsActive(a1Status) {
-			return false
+			return
 		}
 
 		if atk.Info.Element == attributes.Hydro {
@@ -54,15 +54,13 @@ func (c *char) c2() {
 				Ele:   attributes.Hydro,
 				Value: -0.35,
 			})
-		} else if atk.Info.AttackTag == attacks.AttackTagBloom {
+		} else if atk.Info.AttackTag == attacks.AttackTagBloom || atk.Info.AttackTag == attacks.AttackTagDirectLunarBloom {
 			t.AddResistMod(info.ResistMod{
 				Base:  modifier.NewBaseWithHitlag("nilou-c2-dendro", 10*60),
 				Ele:   attributes.Dendro,
 				Value: -0.35,
 			})
 		}
-
-		return false
 	}, "nilou-c2")
 }
 
@@ -75,11 +73,11 @@ func (c *char) c4() {
 	m[attributes.DmgP] = 0.5
 	c.AddAttackMod(character.AttackMod{
 		Base: modifier.NewBaseWithHitlag("nilou-c4", 8*60),
-		Amount: func(atk *info.AttackEvent, t info.Target) ([]float64, bool) {
+		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 			if atk.Info.AttackTag != attacks.AttackTagElementalBurst {
-				return nil, false
+				return nil
 			}
-			return m, true
+			return m
 		},
 	})
 }
@@ -114,13 +112,13 @@ func (c *char) c6() {
 		Base:         modifier.NewBase("nilou-c6-cr", -1),
 		AffectedStat: attributes.CR,
 		Extra:        true,
-		Amount: func() ([]float64, bool) {
+		Amount: func() []float64 {
 			cr := c.MaxHP() * 0.001 * 0.006
 			if cr > 0.3 {
 				cr = 0.3
 			}
 			mCR[attributes.CR] = cr
-			return mCR, true
+			return mCR
 		},
 	})
 
@@ -129,13 +127,13 @@ func (c *char) c6() {
 		Base:         modifier.NewBase("nilou-c6-cd", -1),
 		AffectedStat: attributes.CD,
 		Extra:        true,
-		Amount: func() ([]float64, bool) {
+		Amount: func() []float64 {
 			cd := c.MaxHP() * 0.001 * 0.012
 			if cd > 0.6 {
 				cd = 0.6
 			}
 			mCD[attributes.CD] = cd
-			return mCD, true
+			return mCD
 		},
 	})
 

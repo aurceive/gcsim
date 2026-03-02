@@ -20,11 +20,11 @@ const (
 func (c *char) moonsignInit() {
 	c.Core.Flags.Custom[reactable.LunarChargeEnableKey] = 1
 	c.Core.Flags.Custom[reactable.LunarCrystallizeEnableKey] = 1
-	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 
 		if !attacks.AttackTagIsLunar(atk.Info.AttackTag) {
-			return false
+			return
 		}
 
 		bonus := min(c.MaxHP()/1000.0*0.002, 0.07)
@@ -34,7 +34,6 @@ func (c *char) moonsignInit() {
 		}
 
 		atk.Info.BaseDmgBonus += bonus
-		return false
 	}, lunarBonusKey)
 }
 
@@ -58,29 +57,28 @@ func (c *char) a1OGravityTick() {
 	c.AddStatMod(character.StatMod{
 		Base:         modifier.NewBaseWithHitlag(a1Key, 10*60),
 		AffectedStat: attributes.CR,
-		Amount: func() ([]float64, bool) {
+		Amount: func() []float64 {
 			c.a1Buff[attributes.CR] = 0.05 * float64(c.a1Stacks)
-			return c.a1Buff, true
+			return c.a1Buff
 		},
 	})
 }
 
 func (c *char) a4Init() {
-	a4Hook := func(args ...any) bool {
+	a4Hook := func(args ...any) {
 		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
+			return
 		}
 
 		if c.StatusIsActive(burstBuffKey) && c.Core.Combat.Player().IsWithinArea(c.burstArea) {
 			c.Core.Flags.Custom[reactable.LcIcdOverrideKey] = 1.5 * 60
 			c.Core.Flags.Custom[reactable.LcrExtraHitOverride] = 0.33
-			return false
+			return
 		}
 
 		// player is outside of lunar domain, reset buffs
 		delete(c.Core.Flags.Custom, reactable.LcIcdOverrideKey)
 		delete(c.Core.Flags.Custom, reactable.LcrExtraHitOverride)
-		return false
 	}
 
 	c.Core.Events.Subscribe(event.OnLunarCharged, a4Hook, "columbina-gravity-lc")
