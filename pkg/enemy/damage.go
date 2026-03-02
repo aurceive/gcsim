@@ -11,7 +11,8 @@ func (e *Enemy) calc(atk *info.AttackEvent, evt glog.Event, grpMult float64) (fl
 	var isCrit bool
 
 	if atk.Info.AttackTag == attacks.AttackTagDirectLunarCharged ||
-		atk.Info.AttackTag == attacks.AttackTagDirectLunarBloom {
+		atk.Info.AttackTag == attacks.AttackTagDirectLunarBloom ||
+		atk.Info.AttackTag == attacks.AttackTagDirectLunarCrystallize {
 		return e.calcDirectLunar(atk, evt, grpMult)
 	}
 
@@ -205,6 +206,9 @@ func (e *Enemy) calcDirectLunar(atk *info.AttackEvent, evt glog.Event, grpMult f
 	// special 3x mult for direct lunarcharged
 	if atk.Info.AttackTag == attacks.AttackTagDirectLunarCharged {
 		mult = 3
+	}
+	if atk.Info.AttackTag == attacks.AttackTagDirectLunarCrystallize {
+		mult = 1.6
 	}
 	damage *= mult
 

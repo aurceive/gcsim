@@ -84,7 +84,6 @@ func (c *char) moonsignInit() {
 
 		switch atk.Info.AttackTag {
 		case attacks.AttackTagDirectLunarCrystallize:
-		case attacks.AttackTagReactionLunarCrystallize:
 		default:
 			return
 		}
@@ -97,4 +96,14 @@ func (c *char) moonsignInit() {
 
 		atk.Info.BaseDmgBonus += bonus
 	}, lunarBonusKey)
+
+	c.Core.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) {
+		atk := args[1].(*info.AttackEvent)
+		if atk.Info.AttackTag != attacks.AttackTagReactionLunarCrystallize {
+			return
+		}
+
+		bonus := min(c.TotalDef(true)/100.0*0.007, 0.14)
+		atk.Info.BaseDmgBonus += bonus
+	}, lunarBonusKey+"-lcr-atk")
 }
