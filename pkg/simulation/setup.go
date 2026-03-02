@@ -364,6 +364,29 @@ func setupAscendantGleam(core *core.Core) {
 	buff := 0.0
 	src := -1
 
+	calcGleamBuff := func(char *character.CharWrapper) {
+		// Ascendant gleam uses nonExtraStats
+		switch char.Base.Element {
+		case attributes.Electro, attributes.Pyro, attributes.Cryo:
+			stats := char.SelectStat(true, attributes.BaseATK, attributes.ATKP, attributes.ATK)
+			atk := stats.TotalATK()
+			buff = min(atk*0.009/100, 0.36)
+		case attributes.Hydro:
+			stats := char.SelectStat(true, attributes.BaseHP, attributes.HPP, attributes.HP)
+			hp := stats.MaxHP()
+			buff = min(hp*0.006/1000, 0.36)
+		case attributes.Dendro, attributes.Anemo:
+			buff = min(char.NonExtraStat(attributes.EM)*0.0225/100, 0.36)
+		case attributes.Geo:
+			buff = min(char.TotalDef(true)*0.01/100, 0.36)
+		default:
+			return
+		}
+		if core.Flags.LogDebug {
+			core.Log.NewEvent("Updating ascendant gleam react bonus", glog.LogDebugEvent, char.Index()).Write("amt", buff)
+		}
+	}
+
 	var gleamBuffUpdateGen func(*character.CharWrapper, int) func()
 	gleamBuffUpdateGen = func(char *character.CharWrapper, s int) func() {
 		return func() {
@@ -375,38 +398,21 @@ func setupAscendantGleam(core *core.Core) {
 				return
 			}
 
-			// Ascendant gleam uses nonExtraStats
-			switch char.Base.Element {
-			case attributes.Electro, attributes.Pyro, attributes.Cryo:
-				stats := char.SelectStat(true, attributes.BaseATK, attributes.ATKP, attributes.ATK)
-				atk := stats.TotalATK()
-				buff = min(atk*0.009/100, 0.36)
-			case attributes.Hydro:
-				stats := char.SelectStat(true, attributes.BaseHP, attributes.HPP, attributes.HP)
-				hp := stats.MaxHP()
-				buff = min(hp*0.006/1000, 0.36)
-			case attributes.Dendro, attributes.Anemo:
-				buff = min(char.NonExtraStat(attributes.EM)*0.0225/100, 0.36)
-			case attributes.Geo:
-				buff = min(char.TotalDef(true)*0.01/100, 0.36)
-			default:
-				return
-			}
-			if core.Flags.LogDebug {
-				core.Log.NewEvent("Updating ascendant gleam react bonus", glog.LogDebugEvent, char.Index()).Write("amt", buff)
-			}
+			calcGleamBuff(char)
 			core.Tasks.Add(gleamBuffUpdateGen(char, s), 60)
 		}
 	}
 
 	hook := func(args ...any) {
-		src = core.F
 		char := core.Player.ActiveChar()
 		if char.Moonsign != 0 {
 			return
 		}
 
-		gleamBuffUpdateGen(char, src)()
+		src = core.F
+		calcGleamBuff(char)
+
+		core.Tasks.Add(gleamBuffUpdateGen(char, src), 60)
 
 		for _, c := range core.Player.Chars() {
 			c.AddReactBonusMod(character.ReactBonusMod{
