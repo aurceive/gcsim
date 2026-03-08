@@ -8,7 +8,14 @@ import (
 	"github.com/genshinsim/gcsim/pkg/core/glog"
 	"github.com/genshinsim/gcsim/pkg/core/info"
 	"github.com/genshinsim/gcsim/pkg/core/player/character"
+	"github.com/genshinsim/gcsim/pkg/enemy"
 	"github.com/genshinsim/gcsim/pkg/modifier"
+)
+
+const (
+	phantasmalBubbleKey        = "phantasmal-bubble"
+	phantasmalBubbleIcdKey     = "phantasmal-bubble-icd"
+	hexereiOmenExtensionIcdKey = "hexerei-omen-extend-icd"
 )
 
 // After she has used Illusory Torrent for 2s, if there are any opponents nearby,
@@ -70,4 +77,86 @@ func (c *char) a4() {
 	}
 	c.a4Stats[attributes.HydroP] = 0.2 * c.NonExtraStat(attributes.ER)
 	c.QueueCharTask(c.a4, 60)
+}
+
+func (c *char) hexereiInit() {
+	if !c.IsHexerei {
+		return
+	}
+
+	if c.Core.Player.GetHexereiCount() < 2 {
+		return
+	}
+
+	for _, char := range c.Core.Player.Chars() {
+		if char.Index() == c.Index() {
+			continue
+		}
+		char.AddReactBonusMod(character.ReactBonusMod{
+			Base: modifier.NewBase("mona-hexerei-on-vaporize", -1),
+			Amount: func(ai info.AttackInfo) float64 {
+				if !ai.Amped || ai.AmpType != info.ReactionTypeVaporize {
+					return 0
+				}
+				if !c.StatusIsActive(phantasmalBubbleKey) {
+					return 0
+				}
+
+				stacks := c.phantasmalBubbleStacks
+				if stacks == 0 {
+					return 0
+				}
+				c.phantasmalBubbleStacks = 0
+				return 0.05 * float64(stacks)
+			},
+		})
+	}
+}
+
+func (c *char) makeHexereiCB() info.AttackCBFunc {
+	if !c.IsHexerei {
+		return nil
+	}
+	if c.Core.Player.GetHexereiCount() < 2 {
+		return nil
+	}
+
+	return func(a info.AttackCB) {
+		e, ok := a.Target.(*enemy.Enemy)
+		if !ok {
+			return
+		}
+		if !c.StatusIsActive(phantasmalBubbleIcdKey) {
+			c.AddStatus(phantasmalBubbleIcdKey, 0.1*60, true)
+			c.AddStatus(phantasmalBubbleKey, 8*60, true)
+			c.phantasmalBubbleStacks = min(c.phantasmalBubbleStacks+1, 3)
+		}
+
+		omenExp := e.StatusExpiry(omenKey)
+		if omenExp > c.Core.F && c.hexereiOmenExtension < 8*60 && !e.StatusIsActive(hexereiOmenExtensionIcdKey) {
+			e.AddStatus(hexereiOmenExtensionIcdKey, 0.5*60, true)
+			newDur := omenExp - c.Core.F + 2*60
+			e.AddStatus(omenKey, newDur, true)
+			c.hexereiOmenExtension += 2 * 60
+		}
+
+		if e.StatusIsActive(bubbleKey) && !e.StatusIsActive(hexereiOmenExtensionIcdKey) {
+			e.AddStatus(hexereiOmenExtensionIcdKey, 0.5*60, true)
+			c.hexereiOmenExtension += 2 * 60
+			c.omenStartingBonusDur = 2 * 60
+		}
+	}
+}
+
+func (c *char) hexereiOnBurst() {
+	if !c.IsHexerei {
+		return
+	}
+
+	if c.Core.Player.GetHexereiCount() < 2 {
+		return
+	}
+
+	c.hexereiOmenExtension = 0
+	c.omenStartingBonusDur = 0
 }

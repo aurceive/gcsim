@@ -1,12 +1,18 @@
 package klee
 
 import (
+	"github.com/genshinsim/gcsim/pkg/core/attacks"
+	"github.com/genshinsim/gcsim/pkg/core/event"
+	"github.com/genshinsim/gcsim/pkg/core/glog"
 	"github.com/genshinsim/gcsim/pkg/core/info"
 )
 
 const (
-	a1IcdKey   = "a1-icd"
-	a1SparkKey = "a1-spark"
+	a1IcdKey           = "a1-icd"
+	a1SparkKey         = "a1-spark"
+	boomBadgeBurstKey  = "boombadge-burst"
+	boomBadgeNormalKey = "boombadge-normal"
+	boomBadgeSkillKey  = "boombadge-skill"
 )
 
 // When Jumpy Dumpty and Normal Attacks deal DMG, Klee has a 50% chance to obtain an Explosive Spark.
@@ -23,11 +29,25 @@ func (c *char) makeA1CB() info.AttackCBFunc {
 			return
 		}
 		c.AddStatus(a1IcdKey, 60*5, true)
-
-		if !c.StatusIsActive(a1SparkKey) {
-			c.AddStatus(a1SparkKey, 60*30, true)
-		}
+		c.addSpark()
 	}
+}
+
+func (c *char) addSpark() {
+	if c.Base.Ascension < 1 {
+		return
+	}
+
+	previous := c.a1CurrentStack
+	c.a1CurrentStack++
+	if c.a1CurrentStack > c.a1MaxStack {
+		c.a1CurrentStack = c.a1MaxStack
+		return
+	}
+	c.AddStatus(a1SparkKey, 60*30, true)
+	c.Core.Log.NewEvent("adding spark stack", glog.LogCharacterEvent, c.Index()).
+		Write("previous", previous).
+		Write("new", c.a1CurrentStack)
 }
 
 const a4ICDKey = "klee-a4-icd"
@@ -52,4 +72,34 @@ func (c *char) makeA4CB() info.AttackCBFunc {
 			x.AddEnergy("klee-a4", 2)
 		}
 	}
+}
+
+func (c *char) hexereiInit() {
+	if !c.IsHexerei {
+		return
+	}
+	if c.Core.Player.GetHexereiCount() < 2 {
+		return
+	}
+	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
+		if c.Core.Player.Active() != c.Index() {
+			return
+		}
+
+		atk := args[1].(*info.AttackEvent)
+		if atk.Info.ActorIndex != c.Index() {
+			return
+		}
+
+		switch atk.Info.AttackTag {
+		case attacks.AttackTagNormal:
+			c.AddStatus(boomBadgeNormalKey, 60*20, true)
+		case attacks.AttackTagElementalArt:
+			c.AddStatus(boomBadgeSkillKey, 60*20, true)
+		case attacks.AttackTagElementalBurst:
+			c.AddStatus(boomBadgeBurstKey, 60*20, true)
+		default:
+			return
+		}
+	}, "klee-boombadge")
 }

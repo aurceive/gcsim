@@ -6,7 +6,9 @@ import (
 	"github.com/genshinsim/gcsim/pkg/core/combat"
 	"github.com/genshinsim/gcsim/pkg/core/event"
 	"github.com/genshinsim/gcsim/pkg/core/info"
+	"github.com/genshinsim/gcsim/pkg/core/player/character"
 	"github.com/genshinsim/gcsim/pkg/enemy"
+	"github.com/genshinsim/gcsim/pkg/modifier"
 )
 
 const a4IcdKey = "fischl-a4-icd"
@@ -73,4 +75,97 @@ func (c *char) a4() {
 	c.Core.Events.Subscribe(event.OnHyperbloom, a4cb, "fischl-a4")
 	c.Core.Events.Subscribe(event.OnQuicken, a4cbNoGadget, "fischl-a4")
 	c.Core.Events.Subscribe(event.OnAggravate, a4cbNoGadget, "fischl-a4")
+}
+
+func (c *char) hexereiInit() {
+	if !c.IsHexerei {
+		return
+	}
+
+	if c.Core.Player.GetHexereiCount() < 2 {
+		return
+	}
+
+	applyAtkP := func() {
+		for _, target := range c.Core.Player.Chars() {
+			bonus := make([]float64, attributes.EndStatType)
+			if target.Index() == c.Index() {
+				target.AddStatMod(character.StatMod{
+					Base:         modifier.NewBase("fischl-hexerei-atkp", 10*60),
+					AffectedStat: attributes.ATKP,
+					Amount: func() []float64 {
+						bonus[attributes.ATKP] = 0.225 * c.c6HexereiBonus()
+						return bonus
+					},
+				})
+				continue
+			}
+
+			currentTarget := target
+			target.AddStatMod(character.StatMod{
+				Base:         modifier.NewBase("fischl-hexerei-atkp", 10*60),
+				AffectedStat: attributes.ATKP,
+				Amount: func() []float64 {
+					if c.Core.Player.Active() != currentTarget.Index() {
+						return nil
+					}
+					bonus[attributes.ATKP] = 0.225 * c.c6HexereiBonus()
+					return bonus
+				},
+			})
+		}
+	}
+
+	applyEM := func() {
+		for _, target := range c.Core.Player.Chars() {
+			bonus := make([]float64, attributes.EndStatType)
+			if target.Index() == c.Index() {
+				target.AddStatMod(character.StatMod{
+					Base:         modifier.NewBase("fischl-hexerei-em", 10*60),
+					AffectedStat: attributes.EM,
+					Amount: func() []float64 {
+						bonus[attributes.EM] = 90 * c.c6HexereiBonus()
+						return bonus
+					},
+				})
+				continue
+			}
+
+			currentTarget := target
+			target.AddStatMod(character.StatMod{
+				Base:         modifier.NewBase("fischl-hexerei-em", 10*60),
+				AffectedStat: attributes.EM,
+				Amount: func() []float64 {
+					if c.Core.Player.Active() != currentTarget.Index() {
+						return nil
+					}
+					bonus[attributes.EM] = 90 * c.c6HexereiBonus()
+					return bonus
+				},
+			})
+		}
+	}
+
+	c.Core.Events.Subscribe(event.OnOverload, func(args ...any) {
+		if _, ok := args[0].(*enemy.Enemy); !ok {
+			return
+		}
+		if !c.StatusIsActive(ozActiveKey) {
+			return
+		}
+		applyAtkP()
+	}, "fischl-hexerei-ol")
+
+	emStatMod := func(args ...any) {
+		if _, ok := args[0].(*enemy.Enemy); !ok {
+			return
+		}
+		if !c.StatusIsActive(ozActiveKey) {
+			return
+		}
+		applyEM()
+	}
+
+	c.Core.Events.Subscribe(event.OnElectroCharged, emStatMod, "fischl-hexerei-ec")
+	c.Core.Events.Subscribe(event.OnLunarCharged, emStatMod, "fischl-hexerei-lc")
 }

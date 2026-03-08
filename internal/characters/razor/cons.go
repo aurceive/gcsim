@@ -67,6 +67,8 @@ func (c *char) c4cb(a info.AttackCB) {
 
 const c6ICDKey = "razor-c6-icd"
 
+const c6BuffKey = "razor-c6-buff"
+
 // Every 10s, Razor's sword charges up, causing the next Normal Attack to release lightning that deals 100% of Razor's ATK as Electro DMG.
 // When Razor is not using Lightning Fang, a lightning strike on an opponent will grant Razor an Electro Sigil for Claw and Thunder.
 func (c *char) c6cb(a info.AttackCB) {
@@ -97,7 +99,7 @@ func (c *char) c6cb(a info.AttackCB) {
 		if c.StatusIsActive(burstBuffKey) {
 			return
 		}
-		c.addSigil(false)(a)
+		c.addSigil()(a)
 	}
 
 	c.Core.QueueAttack(
@@ -107,4 +109,46 @@ func (c *char) c6cb(a info.AttackCB) {
 		1,
 		sigilcb,
 	)
+}
+
+func (c *char) c1Init() {
+	if c.Base.Cons < 1 {
+		return
+	}
+	c.c1()
+}
+
+func (c *char) c2Init() {
+	if c.Base.Cons < 2 {
+		return
+	}
+	c.c2()
+}
+
+func (c *char) c6Init() {
+	if c.Base.Cons < 6 {
+		return
+	}
+	c.c6buff = make([]float64, attributes.EndStatType)
+	c.c6buff[attributes.CR] = 0.1
+	c.c6buff[attributes.CD] = 0.5
+}
+
+func (c *char) c6Sigil() int {
+	if c.Base.Cons < 6 {
+		return 1
+	}
+	return 3
+}
+
+func (c *char) c6OnSiglConsume() {
+	if c.Base.Cons < 6 {
+		return
+	}
+	c.AddStatMod(character.StatMod{
+		Base: modifier.NewBaseWithHitlag(c6BuffKey, 15*60),
+		Amount: func() []float64 {
+			return c.c6buff
+		},
+	})
 }

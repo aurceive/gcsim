@@ -17,7 +17,11 @@ var (
 	waveHitmarks = []int{186, 294, 401, 503, 610, 718}
 )
 
-const burstStart = 146
+const (
+	burstKey      = "klee-burst"
+	burstSnapshot = 100
+	burstStart    = 146
+)
 
 func init() {
 	burstFrames = frames.InitAbilSlice(139) // Q -> N1/CA/E
@@ -42,8 +46,12 @@ func (c *char) Burst(p map[string]int) (action.Info, error) {
 		CanBeDefenseHalted: true,
 		IsDeployable:       true,
 	}
-	// lasts 10 seconds, starts after 2.2 seconds maybe?
-	c.Core.Status.Add("kleeq", 600+burstStart)
+
+	if c.IsHexerei && c.Core.Player.GetHexereiCount() > 1 {
+		c.savedNormalCounter = 0
+	}
+
+	c.Core.Status.Add(burstKey, 600+burstStart)
 
 	// every 1.8 second +on added shoots between 3 to 5, ignore the queue thing.. space it out .2 between each wave i guess
 
@@ -51,12 +59,12 @@ func (c *char) Burst(p map[string]int) (action.Info, error) {
 	var snap info.Snapshot
 	c.Core.Tasks.Add(func() {
 		snap = c.Snapshot(&ai)
-	}, 100)
+	}, burstSnapshot)
 
 	for _, start := range waveHitmarks {
 		c.Core.Tasks.Add(func() {
 			// no more if burst has ended early
-			if c.Core.Status.Duration("kleeq") <= 0 {
+			if c.Core.Status.Duration(burstKey) <= 0 {
 				return
 			}
 			// wave 1 = 1
@@ -74,6 +82,14 @@ func (c *char) Burst(p map[string]int) (action.Info, error) {
 		}, start)
 	}
 
+	if c.Base.Cons >= 4 && c.IsHexerei {
+		c.Core.Tasks.Add(func() {
+			if c.Core.Player.Active() == c.Index() {
+				c.triggerC4()
+			}
+		}, 600+burstStart)
+	}
+
 	// every 3 seconds add energy if c6
 	if c.Base.Cons >= 6 {
 		// TODO: this should eventually use hitlag affected queue and duration
@@ -81,7 +97,7 @@ func (c *char) Burst(p map[string]int) (action.Info, error) {
 		for i := burstStart + 180; i < burstStart+600; i += 180 {
 			c.Core.Tasks.Add(func() {
 				// no more if burst has ended early
-				if c.Core.Status.Duration("kleeq") <= 0 {
+				if c.Core.Status.Duration(burstKey) <= 0 {
 					return
 				}
 
@@ -96,19 +112,27 @@ func (c *char) Burst(p map[string]int) (action.Info, error) {
 
 		// add 10% pyro for 25s
 		m := make([]float64, attributes.EndStatType)
-		m[attributes.PyroP] = .1
 		for _, x := range c.Core.Player.Chars() {
+			char := x
 			x.AddStatMod(character.StatMod{
 				Base:         modifier.NewBaseWithHitlag("klee-c6", 1500),
 				AffectedStat: attributes.PyroP,
 				Amount: func() []float64 {
+					m[attributes.PyroP] = .1
+					if c.Core.Player.Active() == char.Index() && c.IsHexerei && c.Core.Player.GetHexereiCount() > 1 {
+						m[attributes.PyroP] = .5
+					}
 					return m
 				},
 			})
 		}
 	}
 
-	c.c1(waveHitmarks[0])
+	if c.IsHexerei {
+		c.addSpark()
+	}
+
+	c.c1(burstSnapshot - 1)
 
 	c.SetCDWithDelay(action.ActionBurst, 15*60, 9)
 	c.ConsumeEnergy(12)
@@ -125,27 +149,10 @@ func (c *char) Burst(p map[string]int) (action.Info, error) {
 func (c *char) onExitField() {
 	c.Core.Events.Subscribe(event.OnCharacterSwap, func(_ ...any) {
 		// check if burst is active
-		if c.Core.Status.Duration("kleeq") <= 0 {
+		if c.Core.Status.Duration(burstKey) <= 0 {
 			return
 		}
-		c.Core.Status.Delete("kleeq")
-
-		if c.Base.Cons >= 4 {
-			// blow up
-			ai := info.AttackInfo{
-				ActorIndex:         c.Index(),
-				Abil:               "Sparkly Explosion (C4)",
-				AttackTag:          attacks.AttackTagNone,
-				ICDTag:             attacks.ICDTagNone,
-				ICDGroup:           attacks.ICDGroupDefault,
-				StrikeType:         attacks.StrikeTypeDefault,
-				Element:            attributes.Pyro,
-				Durability:         50,
-				Mult:               5.55,
-				CanBeDefenseHalted: true,
-				IsDeployable:       true,
-			}
-			c.Core.QueueAttack(ai, combat.NewCircleHitOnTarget(c.Core.Combat.Player(), nil, 5), 0, 0)
-		}
+		c.Core.Status.Delete(burstKey)
+		c.triggerC4()
 	}, "klee-exit")
 }

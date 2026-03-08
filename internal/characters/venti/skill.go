@@ -71,9 +71,11 @@ func (c *char) Skill(p map[string]int) (action.Info, error) {
 			CanQueueAfter:   skillHoldFrames[action.ActionHighPlunge], // earliest cancel
 			State:           action.SkillState,
 		}
+	} else {
+		ai.Mult *= c.c2OnSkillTap()
 	}
 
-	c.Core.QueueAttack(ai, combat.NewCircleHitOnTarget(trg, nil, radius), 0, hitmark, c.c2, c.makeParticleCB(count))
+	c.Core.QueueAttack(ai, combat.NewCircleHitOnTarget(trg, nil, radius), 0, hitmark, c.c2SkillCB, c.makeParticleCB(count))
 
 	c.SetCDWithDelay(action.ActionSkill, cd, cdstart)
 

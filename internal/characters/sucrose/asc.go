@@ -1,6 +1,7 @@
 package sucrose
 
 import (
+	"github.com/genshinsim/gcsim/pkg/core/attacks"
 	"github.com/genshinsim/gcsim/pkg/core/attributes"
 	"github.com/genshinsim/gcsim/pkg/core/event"
 	"github.com/genshinsim/gcsim/pkg/core/glog"
@@ -90,4 +91,83 @@ func (c *char) a4() {
 	c.Core.Log.NewEvent("sucrose a4 triggered", glog.LogCharacterEvent, c.Index()).
 		Write("em snapshot", c.a4Buff[attributes.EM]).
 		Write("expiry", c.Core.F+480)
+}
+
+func (c *char) hexereiInit() {
+	if !c.IsHexerei {
+		return
+	}
+
+	if c.Core.Player.GetHexereiCount() < 2 {
+		return
+	}
+
+	c.hexereiBuffSkill = make([]float64, attributes.EndStatType)
+	c.hexereiBuffSkill[attributes.DmgP] = 0.0571428
+
+	c.hexereiBuffBurst = make([]float64, attributes.EndStatType)
+	c.hexereiBuffBurst[attributes.DmgP] = 0.0714285
+}
+
+func (c *char) hexereiOnSkill() {
+	if !c.IsHexerei {
+		return
+	}
+
+	if c.Core.Player.GetHexereiCount() < 2 {
+		return
+	}
+
+	for _, char := range c.Core.Player.Chars() {
+		char.AddAttackMod(character.AttackMod{
+			Base: modifier.NewBase("sucrose-hexerei-skill", -1),
+			Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
+				switch atk.Info.AttackTag {
+				case attacks.AttackTagNormal,
+					attacks.AttackTagExtra,
+					attacks.AttackTagPlunge,
+					attacks.AttackTagElementalArt,
+					attacks.AttackTagElementalArtHold,
+					attacks.AttackTagElementalBurst:
+				default:
+					return nil
+				}
+
+				return c.hexereiBuffSkill
+			},
+		})
+	}
+}
+
+func (c *char) hexereiOnBurst() {
+	if !c.IsHexerei {
+		return
+	}
+
+	if c.Core.Player.GetHexereiCount() < 2 {
+		return
+	}
+
+	for _, char := range c.Core.Player.Chars() {
+		if !char.IsHexerei {
+			continue
+		}
+		char.AddAttackMod(character.AttackMod{
+			Base: modifier.NewBase("sucrose-hexerei-burst", -1),
+			Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
+				switch atk.Info.AttackTag {
+				case attacks.AttackTagNormal,
+					attacks.AttackTagExtra,
+					attacks.AttackTagPlunge,
+					attacks.AttackTagElementalArt,
+					attacks.AttackTagElementalArtHold,
+					attacks.AttackTagElementalBurst:
+				default:
+					return nil
+				}
+
+				return c.hexereiBuffBurst
+			},
+		})
+	}
 }

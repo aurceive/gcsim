@@ -46,6 +46,12 @@ func NewChar(s *core.Core, w *character.CharWrapper, p info.CharacterProfile) er
 		c.ozTravel = travel
 	}
 
+	hexerei, ok := p.Params["hexerei"]
+	if !ok {
+		hexerei = 1
+	}
+	c.IsHexerei = hexerei > 0
+
 	w.Character = &c
 
 	return nil
@@ -53,6 +59,7 @@ func NewChar(s *core.Core, w *character.CharWrapper, p info.CharacterProfile) er
 
 func (c *char) Init() error {
 	c.a4()
+	c.hexereiInit()
 
 	if c.Base.Cons >= 6 {
 		w, err := minazuki.New(

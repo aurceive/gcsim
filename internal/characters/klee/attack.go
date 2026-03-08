@@ -9,6 +9,7 @@ import (
 	"github.com/genshinsim/gcsim/pkg/core/attacks"
 	"github.com/genshinsim/gcsim/pkg/core/attributes"
 	"github.com/genshinsim/gcsim/pkg/core/combat"
+	"github.com/genshinsim/gcsim/pkg/core/glog"
 	"github.com/genshinsim/gcsim/pkg/core/info"
 )
 
@@ -119,7 +120,16 @@ func (c *char) Attack(p map[string]int) (action.Info, error) {
 		done = true
 	}
 
-	defer c.AdvanceNormalIndex()
+	if c.IsHexerei && c.Core.Player.GetHexereiCount() > 1 && c.StatusIsActive(a1SparkKey) {
+		if c.NormalCounter == 2 || c.Base.Cons == 6 && c.NormalCounter < 2 && c.Core.Rand.Float64() < 0.4 {
+			c.queueCoordinatedCharge()
+		}
+	}
+
+	defer func() {
+		c.AdvanceNormalIndex()
+		c.savedNormalCounter = c.NormalCounter
+	}()
 
 	adjustedFrames := attackFrames
 	adjustedHitmarks := attackHitmarks
@@ -154,4 +164,27 @@ func (c *char) Attack(p map[string]int) (action.Info, error) {
 	}
 	actionInfo.QueueAction(tryPerformAttack, adjustedHitmarks[c.NormalCounter])
 	return actionInfo, nil
+}
+
+func (c *char) queueCoordinatedCharge() {
+	delay := 30
+	travel := 10
+
+	c.Core.Tasks.Add(func() {
+		ai := c.getChargeAttackInfo()
+		snap := c.applySpark(&ai)
+		ai.Abil += " (Coordinated)"
+		c.Core.QueueAttackWithSnap(
+			ai,
+			snap,
+			combat.NewCircleHit(c.Core.Combat.Player(), c.Core.Combat.PrimaryTarget(), nil, 3),
+			travel,
+			c.makeA4CB(),
+		)
+	}, delay)
+
+	c.Core.Log.NewEvent("coordinated CA triggered", glog.LogCharacterEvent, c.Index()).
+		Write("expected hit", c.Core.F+delay+travel)
+
+	c.c1(delay - travel)
 }

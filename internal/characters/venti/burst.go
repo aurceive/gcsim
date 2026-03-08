@@ -11,7 +11,10 @@ import (
 
 var burstFrames []int
 
-const burstStart = 94
+const (
+	burstKey   = "stormeye"
+	burstStart = 94
+)
 
 func init() {
 	burstFrames = frames.InitAbilSlice(95) // Q -> N1/CA/E/D
@@ -45,25 +48,21 @@ func (c *char) Burst(p map[string]int) (action.Info, error) {
 	c.aiAbsorb.Mult = burstAbsorbDot[c.TalentLvlBurst()]
 	c.aiAbsorb.Element = attributes.NoElement
 
-	// snapshot is around cd frame and 1st tick?
 	var snap info.Snapshot
 	c.Core.Tasks.Add(func() {
 		snap = c.Snapshot(&ai)
 		c.snapAbsorb = c.Snapshot(&c.aiAbsorb)
+		c.qAbsorbBonusTicks = 0
+		c.c2OnBurst()
+		c.c4OnSkillBurst()
 	}, 104)
 
-	var cb info.AttackCBFunc
-	if c.Base.Cons >= 6 {
-		cb = c.c6(attributes.Anemo)
-	}
+	cb := c.c6(attributes.Anemo)
 
-	// starts at 106 with 24f interval between ticks. 20 total
-	for i := range 20 {
-		c.Core.Tasks.Add(func() {
-			c.Core.QueueAttackWithSnap(ai, snap, ap, 0, cb)
-		}, 106+24*i)
-	}
-	// Infusion usually occurs after 4 ticks of anemo according to KQM library
+	c.qSrc = c.Core.F
+	c.Core.Tasks.Add(c.burstTicks(c.Core.F, ai, &snap, ap, cb), 106)
+	c.Core.Tasks.Add(func() { c.AddStatus(burstKey, 8*60, false) }, 93)
+
 	c.Core.Tasks.Add(c.absorbCheckQ(c.Core.F, 0, int((480-24*4)/18)), 106+24*3)
 
 	if c.Base.Ascension >= 4 {
@@ -82,15 +81,35 @@ func (c *char) Burst(p map[string]int) (action.Info, error) {
 }
 
 func (c *char) burstAbsorbedTicks() {
-	var cb info.AttackCBFunc
-	if c.Base.Cons >= 6 {
-		cb = c.c6(c.qAbsorb)
-	}
-
+	cb := c.c6(c.qAbsorb)
 	ap := combat.NewCircleHitOnTarget(c.qPos, nil, 6)
-	// ticks at 24f. 15 total
-	for i := range 15 {
-		c.Core.QueueAttackWithSnap(c.aiAbsorb, c.snapAbsorb, ap, i*24, cb)
+	c.Core.Tasks.Add(c.burstAbsorbedTicksRecursive(15, c.aiAbsorb, c.snapAbsorb, ap, cb), 0)
+}
+
+func (c *char) burstTicks(src int, ai info.AttackInfo, snap *info.Snapshot, ap info.AttackPattern, cb info.AttackCBFunc) func() {
+	return func() {
+		if c.qSrc != src {
+			return
+		}
+		if !c.StatusIsActive(burstKey) {
+			return
+		}
+		c.Core.QueueAttackWithSnap(ai, *snap, ap, 0, cb)
+		ai.Mult = burstDot[c.TalentLvlBurst()] * c.hexereiBurstBuff()
+		c.Core.Tasks.Add(c.burstTicks(src, ai, snap, ap, cb), 24)
+	}
+}
+
+func (c *char) burstAbsorbedTicksRecursive(count int, ai info.AttackInfo, snap info.Snapshot, ap info.AttackPattern, cb info.AttackCBFunc) func() {
+	return func() {
+		ai.Mult = burstDot[c.TalentLvlBurst()] * c.hexereiBurstBuff()
+		c.Core.QueueAttackWithSnap(c.aiAbsorb, c.snapAbsorb, ap, 0, cb)
+		if count+c.qAbsorbBonusTicks <= 0 {
+			c.aiAbsorb.Element = attributes.NoElement
+			return
+		}
+
+		c.Core.Tasks.Add(c.burstAbsorbedTicksRecursive(count-1, ai, snap, ap, cb), 24)
 	}
 }
 
@@ -112,7 +131,6 @@ func (c *char) absorbCheckQ(src, count, maxcount int) func() {
 			case attributes.Cryo:
 				c.aiAbsorb.ICDTag = attacks.ICDTagElementalBurstCryo
 			}
-			// trigger dmg ticks here
 			c.burstAbsorbedTicks()
 			return
 		}
