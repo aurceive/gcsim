@@ -30,9 +30,9 @@ func (c *char) c1Init() {
 	if c.Base.Cons < 1 {
 		return
 	}
-	c.Core.Events.Subscribe(event.OnMoondriftHarmony, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnMoondriftHarmony, func(args ...any) {
 		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
+			return
 		}
 		if !c.StatusIsActive(c1Key) {
 			c.c1Stacks = 0
@@ -40,21 +40,20 @@ func (c *char) c1Init() {
 		c.AddStatus(c1Key, 10*60, true)
 		stacks := c.c6C1Stacks()
 		c.c1Stacks = min(c.c1Stacks+stacks, 18)
-		return false
 	}, "linnea-c1")
 
-	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 
 		switch atk.Info.AttackTag {
 		case attacks.AttackTagReactionLunarCrystallize:
 		case attacks.AttackTagDirectLunarCrystallize:
 		default:
-			return false
+			return
 		}
 
 		if !c.StatusIsActive(c1Key) {
-			return false
+			return
 		}
 
 		maxStacks := 1
@@ -81,7 +80,6 @@ func (c *char) c1Init() {
 			atk.Info.FlatDmg += amt
 			c.c1Stacks -= stacks
 		}
-		return false
 	}, "linnea-c1-dmg")
 }
 
@@ -102,9 +100,9 @@ func (c *char) c2Init() {
 	}
 	m := make([]float64, attributes.EndStatType)
 	m[attributes.CD] = 0.4
-	c.Core.Events.Subscribe(event.OnMoondriftHarmony, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnMoondriftHarmony, func(args ...any) {
 		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
+			return
 		}
 		if !c.StatusIsActive(c1Key) {
 			c.c1Stacks = 0
@@ -114,17 +112,16 @@ func (c *char) c2Init() {
 			case attributes.Geo:
 			case attributes.Hydro:
 			default:
-				return false
+				return
 			}
 			char.AddStatMod(character.StatMod{
 				Base:         modifier.NewBaseWithHitlag(c2Key, 8*60),
 				AffectedStat: attributes.CD,
-				Amount: func() ([]float64, bool) {
-					return m, true
+				Amount: func() []float64 {
+					return m
 				},
 			})
 		}
-		return false
 	}, "linnea-c2")
 }
 
@@ -139,7 +136,7 @@ func (c *char) c2TriggerMoonDrift(ae *info.AttackEvent) {
 	if c.Base.Cons < 2 {
 		return
 	}
-	if c.Core.Player.GetMoonsignCount() < 2 {
+	if c.Core.Player.GetMoonsignLevel() < 2 {
 		return
 	}
 	c.Core.Events.Emit(event.OnMoondriftHarmony, c.Core.Combat.PrimaryTarget(), ae)
@@ -158,19 +155,19 @@ func (c *char) c4Init() {
 	}
 	m := make([]float64, attributes.EndStatType)
 	m[attributes.DEFP] = 0.25
-	c.Core.Events.Subscribe(event.OnMoondriftHarmony, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnMoondriftHarmony, func(args ...any) {
 		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
+			return
 		}
 		for _, char := range c.Core.Player.Chars() {
 			char.AddStatMod(character.StatMod{
 				Base:         modifier.NewBaseWithHitlag(c4Key, 5*60),
 				AffectedStat: attributes.DEFP,
-				Amount: func() ([]float64, bool) {
+				Amount: func() []float64 {
 					if c.Core.Player.Active() == char.Index() {
-						return m, true
+						return m
 					}
-					return nil, false
+					return nil
 				},
 			})
 		}
@@ -178,11 +175,10 @@ func (c *char) c4Init() {
 		c.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag(c4KeySelf, 5*60),
 			AffectedStat: attributes.DEFP,
-			Amount: func() ([]float64, bool) {
-				return m, true
+			Amount: func() []float64 {
+				return m
 			},
 		})
-		return false
 	}, "linnea-c4")
 }
 
@@ -205,25 +201,23 @@ func (c *char) c6Init() {
 		return
 	}
 
-	if c.Core.Player.GetMoonsignCount() < 2 {
+	if c.Core.Player.GetMoonsignLevel() < 2 {
 		return
 	}
 
 	amt := 0.25
-	c.Core.Events.Subscribe(event.OnApplyAttack, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnApplyAttack, func(args ...any) {
 		atk := args[0].(*info.AttackEvent)
 		if atk.Info.AttackTag == attacks.AttackTagDirectLunarCrystallize {
 			atk.Info.Elevation += amt
 		}
-		return false
 	}, c6Key+"-direct")
 
-	c.Core.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.AttackTag == attacks.AttackTagReactionLunarCrystallize {
 			atk.Info.Elevation += amt
 		}
-		return false
 	}, c6Key+"-reaction")
 }
 
@@ -270,7 +264,8 @@ func (c *char) doSingleLCrAttack() {
 		cr := ae.Snapshot.Stats[attributes.CR]
 		cd := ae.Snapshot.Stats[attributes.CD]
 
-		flatdmg := 0.96 * combat.CalcLunarDmg(char.Base.Level, char, ae.Info, em)
+		react := char.ReactBonus(ae.Info)
+		flatdmg := 0.96 * combat.CalcLunarChargedDmg(char.Base.Level, react, ae.Info, em)
 		isCrit := false
 
 		if c.Core.Rand.Float64() <= cr {

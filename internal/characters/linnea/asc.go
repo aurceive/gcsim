@@ -31,7 +31,7 @@ func (c *char) a1Ticker(src int) {
 		return
 	}
 	res := -0.15
-	if c.Core.Player.GetMoonsignCount() >= 2 {
+	if c.Core.Player.GetMoonsignLevel() >= 2 {
 		res -= 0.15
 	}
 	ap := combat.NewCircleHitOnTarget(c.Core.Combat.Player(), nil, 5)
@@ -63,13 +63,13 @@ func (c *char) a4Init() {
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag(a4Key, -1),
 			AffectedStat: attributes.EM,
-			Amount: func() ([]float64, bool) {
+			Amount: func() []float64 {
 				if c.Core.Player.Active() != char.Index() {
-					return nil, false
+					return nil
 				}
 
 				m[attributes.EM] = c.TotalDef(true) * 0.05
-				return m, true
+				return m
 			},
 		})
 	}
@@ -78,27 +78,27 @@ func (c *char) a4Init() {
 	c.AddStatMod(character.StatMod{
 		Base:         modifier.NewBaseWithHitlag(a4Key, -1),
 		AffectedStat: attributes.EM,
-		Amount: func() ([]float64, bool) {
+		Amount: func() []float64 {
 			if c.Core.Player.ActiveChar().Moonsign > 0 && c.Core.Player.Active() != c.Index() {
-				return nil, false
+				return nil
 			}
 
 			m[attributes.EM] = c.TotalDef(true) * 0.05
-			return m, true
+			return m
 		},
 	})
 }
 
 func (c *char) moonsignInit() {
 	c.Core.Flags.Custom[reactable.LunarCrystallizeEnableKey] = 1
-	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 
 		switch atk.Info.AttackTag {
 		case attacks.AttackTagDirectLunarCrystallize:
 		case attacks.AttackTagReactionLunarCrystallize:
 		default:
-			return false
+			return
 		}
 
 		bonus := min(c.TotalDef(true)/100.0*0.007, 0.14)
@@ -108,6 +108,5 @@ func (c *char) moonsignInit() {
 		}
 
 		atk.Info.BaseDmgBonus += bonus
-		return false
 	}, lunarBonusKey)
 }

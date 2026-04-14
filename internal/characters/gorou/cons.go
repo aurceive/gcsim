@@ -103,18 +103,18 @@ func (c *char) c6() {
 	}
 
 	// workaround for giving lunarcrystallize the CR/CD
-	c.Core.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) {
 		ae, ok := args[1].(*info.AttackEvent)
 		if !ok {
-			return false
+			return
 		}
 
 		if ae.Info.Element != attributes.Geo {
-			return false
+			return
 		}
 
 		if !c.Core.Player.ByIndex(ae.Info.ActorIndex).StatModIsActive(c6key) {
-			return false
+			return
 		}
 
 		if c.Core.Flags.LogDebug {
@@ -123,6 +123,5 @@ func (c *char) c6() {
 				Write("cd addition", c.c6Buff[attributes.CD])
 		}
 		ae.Snapshot.Stats[attributes.CD] += c.c6Buff[attributes.CD]
-		return false
 	}, c6key+"-lcr")
 }
