@@ -409,8 +409,8 @@ func (h *Handler) GetMoonsignLevel() int {
 
 func (h *Handler) GetHexereiCount() int {
 	count := 0
-	for _, c := range h.Chars() {
-		if c.IsHexerei {
+	for _, char := range h.chars {
+		if char.IsHexerei {
 			count++
 		}
 	}
