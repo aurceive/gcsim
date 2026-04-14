@@ -265,7 +265,7 @@ func (c *char) doSingleLCrAttack() {
 		cd := ae.Snapshot.Stats[attributes.CD]
 
 		react := char.ReactBonus(ae.Info)
-		flatdmg := 0.96 * combat.CalcLunarChargedDmg(char.Base.Level, react, ae.Info, em)
+		flatdmg := combat.CalcLunarCrystallizeDmg(char.Base.Level, react, ae.Info, em)
 		isCrit := false
 
 		if c.Core.Rand.Float64() <= cr {

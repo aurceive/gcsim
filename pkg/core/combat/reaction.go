@@ -16,8 +16,16 @@ func CalcReactionBaseDmg(lvl int) float64 {
 	return reactionLvlBase[idx]
 }
 
-func CalcLunarChargedDmg(lvl int, reactBonus float64, atk info.AttackInfo, em float64) float64 {
+func calcLunarReactionContributorDmg(lvl int, reactBonus float64, atk info.AttackInfo, em float64) float64 {
 	return ((1+((6*em)/(2000+em))+reactBonus)*CalcReactionBaseDmg(lvl) + atk.FlatDmg) * (1 + atk.Elevation) * (1 + atk.BaseDmgBonus)
+}
+
+func CalcLunarChargedDmg(lvl int, reactBonus float64, atk info.AttackInfo, em float64) float64 {
+	return 1.8 * calcLunarReactionContributorDmg(lvl, reactBonus, atk, em)
+}
+
+func CalcLunarCrystallizeDmg(lvl int, reactBonus float64, atk info.AttackInfo, em float64) float64 {
+	return 0.96 * calcLunarReactionContributorDmg(lvl, reactBonus, atk, em)
 }
 
 func CalcReactionDmg(lvl int, src reactionBonusSrc, atk info.AttackInfo, em float64) (float64, info.Snapshot) {
