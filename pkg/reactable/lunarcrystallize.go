@@ -173,7 +173,7 @@ func (r *Reactable) doSingleLCrAttack(owner int) {
 
 		// Emit even so PreDamageMods can be applied to the individual LC contributions
 		// Is there a way to collect these attackMods to show in logs?
-		r.core.Events.Emit(event.OnLunarReactionAttack, r.self, &ae)
+		r.core.Events.Emit(event.OnLunarCrystallizeReactionAttack, r.self, &ae)
 
 		em := ae.Snapshot.Stats[attributes.EM]
 		cr := ae.Snapshot.Stats[attributes.CR]

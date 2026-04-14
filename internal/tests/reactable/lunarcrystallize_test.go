@@ -127,8 +127,8 @@ func TestReactionLunarCrystallizeBaseDmgBonusUsesReactionHook(t *testing.T) {
 			atk.Info.BaseDmgBonus += 1
 		}, "test-reaction-lcr-enemy-hit")
 	})
-	reactionHookDamage := runReactionLunarCrystallizeDamage(t, func(c *core.Core) {
-		c.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) {
+		reactionHookDamage := runReactionLunarCrystallizeDamage(t, func(c *core.Core) {
+			c.Events.Subscribe(event.OnLunarCrystallizeReactionAttack, func(args ...any) {
 			atk := args[1].(*info.AttackEvent)
 			if atk.Info.AttackTag != attacks.AttackTagReactionLunarCrystallize {
 				return
@@ -144,6 +144,6 @@ func TestReactionLunarCrystallizeBaseDmgBonusUsesReactionHook(t *testing.T) {
 		t.Fatalf("expected OnEnemyHit base damage bonus to be ineffective for reaction LCr, baseline=%v enemyHit=%v", baseline, enemyHitDamage)
 	}
 	if reactionHookDamage <= baseline {
-		t.Fatalf("expected OnLunarReactionAttack base damage bonus to increase reaction LCr damage, baseline=%v reaction=%v", baseline, reactionHookDamage)
+		t.Fatalf("expected OnLunarCrystallizeReactionAttack base damage bonus to increase reaction LCr damage, baseline=%v reaction=%v", baseline, reactionHookDamage)
 	}
 }

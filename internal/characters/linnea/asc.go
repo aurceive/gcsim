@@ -109,7 +109,7 @@ func (c *char) moonsignInit() {
 		atk.Info.BaseDmgBonus += bonus
 	}, lunarBonusKey)
 
-	c.Core.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) {
+	c.Core.Events.Subscribe(event.OnLunarCrystallizeReactionAttack, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.AttackTag != attacks.AttackTagReactionLunarCrystallize {
 			return

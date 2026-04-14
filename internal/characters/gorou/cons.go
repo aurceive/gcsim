@@ -103,7 +103,7 @@ func (c *char) c6() {
 	}
 
 	// workaround for giving lunarcrystallize the CR/CD
-	c.Core.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) {
+	c.Core.Events.Subscribe(event.OnLunarCrystallizeReactionAttack, func(args ...any) {
 		ae, ok := args[1].(*info.AttackEvent)
 		if !ok {
 			return

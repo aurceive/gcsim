@@ -163,7 +163,7 @@ func (c *char) c6Init() {
 	}
 
 	c.Core.Events.Subscribe(event.OnApplyAttack, hook(0, attacks.AttackTagDirectLunarCrystallize), c6Key+"-direct")
-	c.Core.Events.Subscribe(event.OnLunarReactionAttack, hook(1, attacks.AttackTagReactionLunarCrystallize), c6Key+"-reaction")
+	c.Core.Events.Subscribe(event.OnLunarCrystallizeReactionAttack, hook(1, attacks.AttackTagReactionLunarCrystallize), c6Key+"-reaction")
 }
 
 func (c *char) c6RadianceEff() float64 {
