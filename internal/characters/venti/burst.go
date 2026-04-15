@@ -83,12 +83,6 @@ func (c *char) Burst(p map[string]int) (action.Info, error) {
 	}, nil
 }
 
-func (c *char) burstAbsorbedTicks() {
-	cb := c.c6(c.qAbsorb)
-	ap := combat.NewCircleHitOnTarget(c.qPos, nil, 6)
-	c.Core.Tasks.Add(c.burstAbsorbedTicksRecursive(15, c.aiAbsorb, c.snapAbsorb, ap, cb), 0)
-}
-
 func (c *char) burstTicks(src int, ai info.AttackInfo, snap *info.Snapshot, ap info.AttackPattern, cb info.AttackCBFunc) func() {
 	return func() {
 		if c.qSrc != src {
@@ -103,7 +97,7 @@ func (c *char) burstTicks(src int, ai info.AttackInfo, snap *info.Snapshot, ap i
 	}
 }
 
-func (c *char) burstAbsorbedTicksRecursive(count int, ai info.AttackInfo, snap info.Snapshot, ap info.AttackPattern, cb info.AttackCBFunc) func() {
+func (c *char) burstAbsorbedTicks(count int, ai info.AttackInfo, snap info.Snapshot, ap info.AttackPattern, cb info.AttackCBFunc) func() {
 	return func() {
 		ai.Mult = burstDot[c.TalentLvlBurst()] * c.hexereiBurstBuff()
 		c.Core.QueueAttackWithSnap(c.aiAbsorb, c.snapAbsorb, ap, 0, cb)
@@ -112,7 +106,7 @@ func (c *char) burstAbsorbedTicksRecursive(count int, ai info.AttackInfo, snap i
 			return
 		}
 
-		c.Core.Tasks.Add(c.burstAbsorbedTicksRecursive(count-1, ai, snap, ap, cb), 24)
+		c.Core.Tasks.Add(c.burstAbsorbedTicks(count-1, ai, snap, ap, cb), 24)
 	}
 }
 
@@ -134,7 +128,9 @@ func (c *char) absorbCheckQ(src, count, maxcount int) func() {
 			case attributes.Cryo:
 				c.aiAbsorb.ICDTag = attacks.ICDTagElementalBurstCryo
 			}
-			c.burstAbsorbedTicks()
+			cb := c.c6(c.qAbsorb)
+			ap := combat.NewCircleHitOnTarget(c.qPos, nil, 6)
+			c.Core.Tasks.Add(c.burstAbsorbedTicks(15, c.aiAbsorb, c.snapAbsorb, ap, cb), 0)
 			return
 		}
 		// otherwise queue up

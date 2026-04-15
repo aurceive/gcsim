@@ -23,11 +23,7 @@ func (c *char) moonsignInit() {
 	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 
-		switch atk.Info.AttackTag {
-		case attacks.AttackTagDirectLunarCharged:
-		case attacks.AttackTagDirectLunarBloom:
-		case attacks.AttackTagDirectLunarCrystallize:
-		default:
+		if !attacks.AttackTagIsLunar(atk.Info.AttackTag) {
 			return
 		}
 
@@ -40,25 +36,12 @@ func (c *char) moonsignInit() {
 		atk.Info.BaseDmgBonus += bonus
 	}, lunarBonusKey)
 
-	c.Core.Events.Subscribe(event.OnLunarChargedReactionAttack, func(args ...any) {
+	c.Core.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
-		if atk.Info.AttackTag != attacks.AttackTagReactionLunarCharge {
-			return
-		}
 
 		bonus := min(c.MaxHP()/1000.0*0.002, 0.07)
 		atk.Info.BaseDmgBonus += bonus
-	}, lunarBonusKey+"-lc-atk")
-
-	c.Core.Events.Subscribe(event.OnLunarCrystallizeReactionAttack, func(args ...any) {
-		atk := args[1].(*info.AttackEvent)
-		if atk.Info.AttackTag != attacks.AttackTagReactionLunarCrystallize {
-			return
-		}
-
-		bonus := min(c.MaxHP()/1000.0*0.002, 0.07)
-		atk.Info.BaseDmgBonus += bonus
-	}, lunarBonusKey+"-lcr-atk")
+	}, lunarBonusKey+"-reaction")
 }
 
 func (c *char) a1Init() {

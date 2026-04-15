@@ -14,7 +14,10 @@ const c2BuffKey = "c2-skill-dmg"
 
 // C1:
 // Fires 2 additional arrows per Aimed Shot, each dealing 33% of the original arrow's DMG.
-func (c *char) c1(ai info.AttackInfo, hitmark, travel int) {
+func (c *char) c1Charge(ai info.AttackInfo, hitmark, travel int) {
+	if c.Base.Cons < 1 {
+		return
+	}
 	ai.Abil += " (C1)"
 	ai.Mult /= 3.0
 	for range 2 {

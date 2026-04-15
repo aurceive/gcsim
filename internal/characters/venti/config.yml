@@ -10,6 +10,7 @@ action_param_keys:
     - param: "weakspot"
   skill:
     - param: "hold"
+    - param: "short_hold"
 icd_groups:
   - group_name: ICDGroupVenti
     reset_timer: 60
