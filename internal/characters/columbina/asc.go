@@ -107,4 +107,15 @@ func (c *char) a4Init() {
 
 	c.Core.Events.Subscribe(event.OnLunarCharged, a4Hook, "columbina-gravity-lc")
 	c.Core.Events.Subscribe(event.OnMoondriftHarmony, a4Hook, "columbina-gravity-lcr")
+
+	// Lunar-Bloom: gain a Moonridge Dew when Lunar-Bloom is triggered within the Lunar Domain
+	c.Core.Events.Subscribe(event.OnLunarBloom, func(args ...any) {
+		if !c.StatusIsActive(burstBuffKey) {
+			return
+		}
+		if !c.Core.Combat.Player().IsWithinArea(c.burstArea) {
+			return
+		}
+		c.Core.Player.AddMoonridgeDew()
+	}, "columbina-a4-lb-moonridge")
 }

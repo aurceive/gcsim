@@ -107,7 +107,7 @@ func (c *char) skillPress() (action.Info, error) {
 }
 
 func (c *char) skillHold() (action.Info, error) {
-	if c.Core.Player.VerdantDew() <= 0 {
+	if c.Core.Player.AvailableDew() <= 0 {
 		return action.Info{}, fmt.Errorf("%v: Cannot use Skill Hold without Verdant Dew", c.Base.Key)
 	}
 
@@ -150,7 +150,7 @@ func (c *char) skillHold() (action.Info, error) {
 	)
 
 	c.QueueCharTask(func() {
-		dewCount := min(c.Core.Player.VerdantDew(), 3)
+		dewCount := min(c.Core.Player.AvailableDew(), 3)
 		c.Core.Player.ConsumeVerdantDew(dewCount)
 
 		aiDirectLB.Mult = skillHold2[c.TalentLvlSkill()] * float64(dewCount)

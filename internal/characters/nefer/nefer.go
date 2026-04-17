@@ -86,7 +86,7 @@ func (c *char) hasPhantasmCharge() bool {
 }
 
 func (c *char) canTriggerPhantasm() bool {
-	return c.StatusIsActive(shadowDanceKey) && c.hasPhantasmCharge() && c.Core.Player.VerdantDew() > 0
+	return c.StatusIsActive(shadowDanceKey) && c.hasPhantasmCharge() && c.Core.Player.AvailableDew() > 0
 }
 
 func (c *char) phantasmActive() bool {

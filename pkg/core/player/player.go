@@ -30,6 +30,10 @@ const (
 	MaxVerdantDew      = 3
 	verdantDewEndFrame = 149
 	maxPartialDew      = 146
+
+	MaxMoonridgeDew        = 3
+	moonridgeDewGainWindow = 18 * 60 // 18s ICD window for gaining moonridge dew
+	moonridgeDewGainMax    = 3       // max gains per window
 )
 
 type Handler struct {
@@ -72,6 +76,11 @@ type Handler struct {
 	verdantDewExpiryFrame int
 	verdantDew            int
 	partialDewCount       float64
+
+	// moonridge dew (Columbina A4)
+	moonridgeDew               int
+	moonridgeDewGainCount      int
+	moonridgeDewGainResetFrame int
 }
 
 type Opt struct {
@@ -404,8 +413,59 @@ func (h *Handler) VerdantDew() int {
 }
 
 func (h *Handler) ConsumeVerdantDew(amt int) {
-	h.verdantDew = max(h.verdantDew-amt, 0)
-	h.Log.NewEvent(fmt.Sprintf("%v verdant dew consumed: %v", amt, h.verdantDew), glog.LogElementEvent, -1).Write("max", MaxVerdantDew)
+	remaining := amt
+	// consume verdant dew first
+	if h.verdantDew > 0 && remaining > 0 {
+		fromVerdant := min(h.verdantDew, remaining)
+		h.verdantDew -= fromVerdant
+		remaining -= fromVerdant
+	}
+	// when verdant dew is expended, consume moonridge dew instead
+	if remaining > 0 {
+		h.moonridgeDew = max(h.moonridgeDew-remaining, 0)
+	}
+	h.Log.NewEvent(
+		fmt.Sprintf("%v dew consumed: verdant=%v moonridge=%v", amt, h.verdantDew, h.moonridgeDew),
+		glog.LogElementEvent, -1,
+	).Write("verdant", h.verdantDew).Write("moonridge", h.moonridgeDew)
+}
+
+// AvailableDew returns the total dew available (verdant + moonridge).
+func (h *Handler) AvailableDew() int {
+	return h.verdantDew + h.moonridgeDew
+}
+
+// MoonridgeDew returns the current moonridge dew count.
+func (h *Handler) MoonridgeDew() int {
+	return h.moonridgeDew
+}
+
+// AddMoonridgeDew adds one moonridge dew, respecting the per-window ICD and max cap.
+// Returns true if a dew was actually added.
+func (h *Handler) AddMoonridgeDew() bool {
+	if h.moonridgeDew >= MaxMoonridgeDew {
+		return false
+	}
+	// reset gain counter if window expired
+	if *h.F >= h.moonridgeDewGainResetFrame {
+		h.moonridgeDewGainCount = 0
+		h.moonridgeDewGainResetFrame = *h.F + moonridgeDewGainWindow
+	}
+	if h.moonridgeDewGainCount >= moonridgeDewGainMax {
+		return false
+	}
+	h.moonridgeDew++
+	h.moonridgeDewGainCount++
+	h.Log.NewEvent(
+		fmt.Sprintf("moonridge dew gained: %v (gain %v/%v in window)", h.moonridgeDew, h.moonridgeDewGainCount, moonridgeDewGainMax),
+		glog.LogElementEvent, -1,
+	).Write("moonridge", h.moonridgeDew).Write("gain_count", h.moonridgeDewGainCount)
+	return true
+}
+
+// SetMoonridgeDew sets moonridge dew to an amt between 0 and MaxMoonridgeDew.
+func (h *Handler) SetMoonridgeDew(amt int) {
+	h.moonridgeDew = max(min(amt, MaxMoonridgeDew), 0)
 }
 
 type AirborneSource int

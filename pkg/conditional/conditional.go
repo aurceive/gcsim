@@ -41,6 +41,8 @@ func Eval(c *core.Core, fields []string) (any, error) {
 		return evalGadgets(c, fields)
 	case "verdant-dew":
 		return c.Player.VerdantDew(), nil
+	case "moonridge-dew":
+		return c.Player.MoonridgeDew(), nil
 	case "keys":
 		return evalKeys(fields)
 	case "state":
