@@ -15,7 +15,7 @@ func init() {
 type char struct {
 	*tmpl.Character
 	skillSrc            int
-	gravity             [2]float64
+	gravity             [3]float64
 	gravityTask         bool
 	gravityLastReaction info.ReactionType
 	burstArea           info.AttackPattern
@@ -24,6 +24,7 @@ type char struct {
 	c2Buff              []float64
 	c2LCBuff            []float64
 	c2LCrBuff           []float64
+	c2LBBuff            []float64
 	c6Buff              []float64
 }
 

@@ -19,9 +19,9 @@ const (
 	skillKey       = "columbina-skill"
 	gravityKey     = "columbina-gravity"
 	gravityMax     = 60
-	LCInd          = 0
-	LCrInd         = 1
-	// LBInd          = 1
+	LCInd  = 0
+	LCrInd = 1
+	LBInd  = 2
 )
 
 func init() {
@@ -57,6 +57,20 @@ func (c *char) skillInit() {
 		}
 	}, "columbina-gravity-lcr")
 
+	c.Core.Events.Subscribe(event.OnLunarBloom, func(args ...any) {
+		if _, ok := args[0].(*enemy.Enemy); !ok {
+			return
+		}
+		if !c.StatusIsActive(skillKey) {
+			return
+		}
+		c.gravityLastReaction = info.ReactionTypeLunarBloom
+		c.AddStatus(gravityKey, 2*60, false)
+		if !c.gravityTask {
+			c.gravityAccum()
+		}
+	}, "columbina-gravity-lb")
+
 	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if !attacks.AttackTagIsLunar(atk.Info.AttackTag) {
@@ -74,6 +88,8 @@ func (c *char) skillInit() {
 			c.gravityLastReaction = info.ReactionTypeLunarCharged
 		case attacks.AttackTagDirectLunarCrystallize | attacks.AttackTagReactionLunarCrystallize:
 			c.gravityLastReaction = info.ReactionTypeLunarCrystallize
+		case attacks.AttackTagDirectLunarBloom:
+			c.gravityLastReaction = info.ReactionTypeLunarBloom
 		}
 	}, "columbina-gravity-on-dmg")
 }
@@ -95,6 +111,8 @@ func (c *char) gravityAccum() {
 		c.gravity[LCInd] += amt
 	case info.ReactionTypeLunarCrystallize:
 		c.gravity[LCrInd] += amt
+	case info.ReactionTypeLunarBloom:
+		c.gravity[LBInd] += amt
 	}
 
 	if c.totalGravity() >= gravityMax {
@@ -134,17 +152,26 @@ func (c *char) gravityTick(clearGravity bool) {
 	var atkTag attacks.AttackTag
 	var elem attributes.Element
 	var abil string
+	var hitCount int
 	switch maxReaction {
 	case LCInd:
 		mult = skillLC[c.TalentLvlSkill()]
 		atkTag = attacks.AttackTagDirectLunarCharged
 		elem = attributes.Electro
 		abil = "Skill Gravity (Lunar-Charged)"
+		hitCount = 1
 	case LCrInd:
 		mult = skillLCr[c.TalentLvlSkill()]
 		atkTag = attacks.AttackTagDirectLunarCrystallize
 		elem = attributes.Geo
 		abil = "Skill Gravity (Lunar-Crystallize)"
+		hitCount = 1
+	case LBInd:
+		mult = skillLB[c.TalentLvlSkill()]
+		atkTag = attacks.AttackTagDirectLunarBloom
+		elem = attributes.Dendro
+		abil = "Skill Gravity (Lunar-Bloom)"
+		hitCount = 5
 	default:
 		return
 	}
@@ -167,7 +194,9 @@ func (c *char) gravityTick(clearGravity bool) {
 	c.c1OnGravityTick(maxReaction)
 	c.c2OnGravityTick(maxReaction)
 	ai.FlatDmg += c.c4OnGravityTickFlatDMG(maxReaction)
-	c.Core.QueueAttack(ai, ap, 1, 1)
+	for i := 0; i < hitCount; i++ {
+		c.Core.QueueAttack(ai, ap, 1, 1)
+	}
 }
 
 func (c *char) Skill(p map[string]int) (action.Info, error) {
