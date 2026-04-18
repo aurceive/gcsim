@@ -355,13 +355,16 @@ func (c *char) queueBasicChargeRelease() {
 }
 
 func (c *char) queuePhantasmPerformance(src int) {
+	// Absorb seeds before computing damage so that veil stacks and the EM
+	// buff they grant are reflected in Phantasm multipliers.
+	c.absorbSeedsOfDeceit()
+
 	consumeFrame := phantasmConsumeDewFrame
 	c.QueueCharTask(func() {
 		if c.chargeRoute.src != src {
 			return
 		}
 		c.Core.Player.ConsumeVerdantDew(1)
-		c.absorbSeedsOfDeceit()
 	}, consumeFrame)
 
 	shadeScaleBonus := c.c1ShadeScaleBonus()
