@@ -84,9 +84,9 @@ func (c *char) skillInit() {
 			c.gravityAccum()
 		}
 		switch atk.Info.AttackTag {
-		case attacks.AttackTagDirectLunarCharged | attacks.AttackTagReactionLunarCharge:
+		case attacks.AttackTagDirectLunarCharged, attacks.AttackTagReactionLunarCharge:
 			c.gravityLastReaction = info.ReactionTypeLunarCharged
-		case attacks.AttackTagDirectLunarCrystallize | attacks.AttackTagReactionLunarCrystallize:
+		case attacks.AttackTagDirectLunarCrystallize, attacks.AttackTagReactionLunarCrystallize:
 			c.gravityLastReaction = info.ReactionTypeLunarCrystallize
 		case attacks.AttackTagDirectLunarBloom:
 			c.gravityLastReaction = info.ReactionTypeLunarBloom
@@ -219,7 +219,7 @@ func (c *char) Skill(p map[string]int) (action.Info, error) {
 		if !c.StatusIsActive(skillKey) {
 			c.clearGravity()
 		}
-		c.AddStatus(skillKey, 25*60+1, true)
+		c.AddStatus(skillKey, 25*60+1, true) // +1 to avoid off-by-one with last DoT tick at 25s
 		c.QueueCharTask(c.skillTickTask(c.skillSrc), 126)
 		c.SetCDWithDelay(action.ActionSkill, 17*60, 0)
 		c.c1OnSkill()

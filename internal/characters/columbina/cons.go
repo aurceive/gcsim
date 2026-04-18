@@ -56,8 +56,31 @@ func (c *char) c1OnSkill() {
 	if c.StatusIsActive(c1IcdKey) {
 		return
 	}
-	// What's the default tick when you first cast this?
-	c.gravityTick(false)
+	// Determine initial gravity reaction based on party element composition.
+	// Priority: LC (Electro) > LB (Dendro) > LCr (Geo). Fallback: LC.
+	// NOTE: This priority is an assumption and has not been rigorously verified in-game.
+	reaction := LCInd // fallback
+	hasElectro, hasDendro, hasGeo := false, false, false
+	for _, char := range c.Core.Player.Chars() {
+		switch char.Base.Element {
+		case attributes.Electro:
+			hasElectro = true
+		case attributes.Dendro:
+			hasDendro = true
+		case attributes.Geo:
+			hasGeo = true
+		}
+	}
+	switch {
+	case hasElectro:
+		reaction = LCInd
+	case hasDendro:
+		reaction = LBInd
+	case hasGeo:
+		reaction = LCrInd
+	}
+	c.gravity[reaction] = gravityMax
+	c.gravityTick(true)
 	c.AddStatus(c1IcdKey, 15*60, true)
 }
 
@@ -207,12 +230,10 @@ func (c *char) c6Init() {
 	c.c6Buff[attributes.CD] = 0.8
 
 	c.Core.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) {
-		ae, ok := args[1].(*info.AttackEvent)
+		atk, ok := args[1].(*info.AttackEvent)
 		if !ok {
 			return
 		}
-
-		atk := args[1].(*info.AttackEvent)
 
 		char := c.Core.Player.Chars()[atk.Info.ActorIndex]
 		addBuff := false
@@ -231,7 +252,7 @@ func (c *char) c6Init() {
 			return
 		}
 
-		ae.Snapshot.Stats[attributes.CD] += 0.8
+		atk.Snapshot.Stats[attributes.CD] += 0.8
 	}, c6Key+"-reaction-attack")
 
 	c.Core.Events.Subscribe(event.OnLunarCharged, func(args ...any) {
@@ -321,11 +342,3 @@ func (c *char) c6Init() {
 		}
 	}, c6LBKey)
 }
-
-// func (h *Handler) GetMoonsignCount() int {
-//     count := 0
-//     for _, c := range h.Chars() {
-//         count += c.Moonsign
-//     }
-//     return count
-// }

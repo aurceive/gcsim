@@ -60,11 +60,3 @@ func (c *char) AnimationStartDelay(k info.AnimationDelayKey) int {
 	}
 	return c.Character.AnimationStartDelay(k)
 }
-
-// func (c *char) getMoonsignLevel() int {
-// 	count := 0
-// 	for _, c := range c.Core.Player.Chars() {
-// 		count += c.Moonsign
-// 	}
-// 	return count
-// }

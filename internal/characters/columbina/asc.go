@@ -20,6 +20,7 @@ const (
 func (c *char) moonsignInit() {
 	c.Core.Flags.Custom[reactable.LunarChargeEnableKey] = 1
 	c.Core.Flags.Custom[reactable.LunarCrystallizeEnableKey] = 1
+	c.Core.Flags.Custom[reactable.LunarBloomEnableKey] = 1
 	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 
@@ -105,8 +106,8 @@ func (c *char) a4Init() {
 		delete(c.Core.Flags.Custom, reactable.LcrExtraHitOverride)
 	}
 
-	c.Core.Events.Subscribe(event.OnLunarCharged, a4Hook, "columbina-gravity-lc")
-	c.Core.Events.Subscribe(event.OnMoondriftHarmony, a4Hook, "columbina-gravity-lcr")
+	c.Core.Events.Subscribe(event.OnLunarCharged, a4Hook, "columbina-a4-lc")
+	c.Core.Events.Subscribe(event.OnMoondriftHarmony, a4Hook, "columbina-a4-lcr")
 
 	// Lunar-Bloom: gain a Moonridge Dew when Lunar-Bloom is triggered within the Lunar Domain
 	c.Core.Events.Subscribe(event.OnLunarBloom, func(args ...any) {
