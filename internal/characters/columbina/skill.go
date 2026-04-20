@@ -26,6 +26,7 @@ const (
 
 func init() {
 	skillFrames = frames.InitAbilSlice(26)
+	skillFrames[action.ActionCharge] = 43 // E→C source: https://www.youtube.com/watch?v=fw4ll8DuwlU
 }
 
 func (c *char) skillInit() {

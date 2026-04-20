@@ -17,6 +17,7 @@ var burstFrames []int
 func init() {
 	burstFrames = frames.InitAbilSlice(120)
 	burstFrames[action.ActionSwap] = 120
+	burstFrames[action.ActionCharge] = 131 // Q→C source: https://www.youtube.com/watch?v=fw4ll8DuwlU
 }
 
 const (
