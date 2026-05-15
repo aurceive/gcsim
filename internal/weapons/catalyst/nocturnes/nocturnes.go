@@ -10,6 +10,7 @@ import (
 	"github.com/genshinsim/gcsim/pkg/core/info"
 	"github.com/genshinsim/gcsim/pkg/core/keys"
 	"github.com/genshinsim/gcsim/pkg/core/player/character"
+	"github.com/genshinsim/gcsim/pkg/enemy"
 	"github.com/genshinsim/gcsim/pkg/modifier"
 )
 
@@ -18,8 +19,10 @@ func init() {
 }
 
 const (
-	ICDKey  = "nocturnes-curtain-call-icd"
+	// Buff is refreshed on every trigger.
 	buffKey = "nocturnes-curtain-call-buff"
+	// Energy restore is limited by an 18s ICD.
+	energyIcdKey = "nocturnes-curtain-call-energy-icd"
 )
 
 type Weapon struct {
@@ -29,6 +32,10 @@ type Weapon struct {
 func (w *Weapon) SetIndex(idx int) { w.Index = idx }
 func (w *Weapon) Init() error      { return nil }
 
+// When the character triggers a Lunar reaction or deals Lunar Reaction DMG:
+// - gain a 12s buff (refreshable with no cooldown): additional HP% and Lunar Reaction DMG CRIT DMG bonus
+// - restore Energy (can only happen once every 18s)
+// Can trigger off-field.
 func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) (info.Weapon, error) {
 	w := &Weapon{}
 	r := p.Refine
@@ -50,7 +57,54 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 
 	energy := 13.0 + float64(r)
 
-	onDmgF := func(args ...any) {
+	proc := func() {
+		// Buff can be refreshed with no cooldown.
+		char.AddStatus(buffKey, 12*60, true)
+
+		char.AddStatMod(character.StatMod{
+			Base: modifier.NewBaseWithHitlag(fmt.Sprintf("%v-hp", buffKey), 12*60),
+			Amount: func() []float64 {
+				return hpBuff
+			},
+		})
+
+		// Applies to direct lunar reaction damage (AttackMods skip non-direct reaction damage).
+		char.AddAttackMod(character.AttackMod{
+			Base: modifier.NewBaseWithHitlag(fmt.Sprintf("%v-cd", buffKey), 12*60),
+			Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
+				if !attacks.AttackTagIsLunar(atk.Info.AttackTag) {
+					return nil
+				}
+				return critBuff
+			},
+		})
+
+		// Energy restore can only happen once every 18s.
+		if char.StatusIsActive(energyIcdKey) {
+			return
+		}
+		char.AddStatus(energyIcdKey, 18*60, true)
+		char.AddEnergy("nocturnes-curtain-call", energy)
+	}
+
+	// Triggered a Lunar reaction.
+	triggerReaction := func(args ...any) {
+		atk := args[1].(*info.AttackEvent)
+		if atk.Info.ActorIndex != char.Index() {
+			return
+		}
+		proc()
+	}
+
+	c.Events.Subscribe(event.OnLunarCharged, triggerReaction, fmt.Sprintf("nocturnes-curtain-call-lc-%v", char.Base.Key.String()))
+	c.Events.Subscribe(event.OnLunarCrystallize, triggerReaction, fmt.Sprintf("nocturnes-curtain-call-lcr-%v", char.Base.Key.String()))
+	c.Events.Subscribe(event.OnLunarBloom, triggerReaction, fmt.Sprintf("nocturnes-curtain-call-lb-%v", char.Base.Key.String()))
+
+	// Deals Lunar Reaction DMG.
+	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
+		if _, ok := args[0].(*enemy.Enemy); !ok {
+			return
+		}
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != char.Index() {
 			return
@@ -58,59 +112,20 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		if !attacks.AttackTagIsLunar(atk.Info.AttackTag) {
 			return
 		}
-		nocturneBuff(char, energy, hpBuff, critBuff)
-	}
+		proc()
+	}, fmt.Sprintf("nocturnes-curtain-call-lunar-dmg-%v", char.Base.Key.String()))
 
-	onReactF := func(args ...any) {
+	// Apply CRIT DMG bonus to non-direct lunar reaction damage contributions (LC/LCr).
+	c.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.ActorIndex != char.Index() {
 			return
 		}
-
-		nocturneBuff(char, energy, hpBuff, critBuff)
-	}
-
-	onLunarReactionAttackF := func(args ...any) {
-		atk := args[1].(*info.AttackEvent)
-		if atk.Info.ActorIndex != char.Index() {
+		if !char.StatusIsActive(buffKey) {
 			return
 		}
-
-		if char.StatusIsActive(buffKey) {
-			atk.Snapshot.Stats[attributes.CD] += 0.4 + float64(r)*0.2
-		}
-	}
-
-	c.Events.Subscribe(event.OnLunarChargedReactionAttack, onLunarReactionAttackF, buffKey)
-	// c.Events.Subscribe(event.OnLunarCrystallizeReactionAttack, onLunarReactionAttackF, buffKey)
-	c.Events.Subscribe(event.OnEnemyDamage, onDmgF, buffKey)
-	c.Events.Subscribe(event.OnLunarCharged, onReactF, buffKey)
-	c.Events.Subscribe(event.OnLunarBloom, onReactF, buffKey)
-	// c.Events.Subscribe(event.OnLunarCrystallize, onReactF, buffKey)
+		atk.Snapshot.Stats[attributes.CD] += 0.4 + float64(r)*0.2
+	}, fmt.Sprintf("nocturnes-curtain-call-lunar-react-atk-%v", char.Base.Key.String()))
 
 	return w, nil
-}
-
-func nocturneBuff(char *character.CharWrapper, energy float64, hpBuff, critBuff []float64) {
-	if !char.StatusIsActive(ICDKey) {
-		char.AddEnergy("nocturnes-curtain-call", energy)
-		char.AddStatus(ICDKey, 18*60, true)
-	}
-
-	char.AddStatMod(character.StatMod{
-		Base: modifier.NewBaseWithHitlag(fmt.Sprintf("%v-hp", buffKey), 12*60),
-		Amount: func() []float64 {
-			return hpBuff
-		},
-	})
-
-	char.AddAttackMod(character.AttackMod{
-		Base: modifier.NewBaseWithHitlag(fmt.Sprintf("%v-cd", buffKey), 12*60),
-		Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
-			if !attacks.AttackTagIsLunar(atk.Info.AttackTag) {
-				return nil
-			}
-			return critBuff
-		},
-	})
 }
