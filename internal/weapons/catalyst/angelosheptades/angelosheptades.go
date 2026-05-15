@@ -27,6 +27,7 @@ func init() {
 type Weapon struct {
 	Index   int
 	tickSrc int
+	bonus   []float64
 }
 
 func (w *Weapon) SetIndex(idx int) { w.Index = idx }
@@ -43,6 +44,7 @@ func (w *Weapon) Init() error      { return nil }
 // The equipping character may trigger this effect even when off-field.
 func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) (info.Weapon, error) {
 	w := &Weapon{}
+	w.bonus = make([]float64, attributes.EndStatType)
 	r := float64(p.Refine)
 
 	// Static ATK% bonus: 9% + 3% * refine (R1→12%, R5→24%)
@@ -75,16 +77,6 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		// Guide's Contentment: restore energy to equipping character
 		char.AddEnergy("angelosheptades-energy", energyRestore)
 
-		// Pathfinder's Light: compute DMG bonus based on holder's ATK at buff application
-		totalATK := char.Stat(attributes.BaseATK)*(1+char.Stat(attributes.ATKP)) + char.Stat(attributes.ATK)
-		dmgBonus := totalATK / 1000.0 * perThousandATK
-		if dmgBonus > maxDMG {
-			dmgBonus = maxDMG
-		}
-
-		bonus := make([]float64, attributes.EndStatType)
-		bonus[attributes.DmgP] = dmgBonus
-
 		src := c.F
 		w.tickSrc = src
 		char.QueueCharTask(func() {
@@ -104,7 +96,13 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 					if c.Player.Active() != this.Index() {
 						return nil
 					}
-					return bonus
+					// Pathfinder's Light: DMG bonus scales with holder's current ATK
+					dmgBonus := char.TotalAtk() / 1000.0 * perThousandATK
+					if dmgBonus > maxDMG {
+						dmgBonus = maxDMG
+					}
+					w.bonus[attributes.DmgP] = dmgBonus
+					return w.bonus
 				},
 			})
 		}
