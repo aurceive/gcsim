@@ -26,8 +26,10 @@ func (w *Weapon) SetIndex(idx int) { w.Index = idx }
 func (w *Weapon) Init() error      { return nil }
 
 const (
-	prayerKey  = "prayer-of-the-far-north"
-	newMoonKey = "new-moon-verse"
+	prayerKey    = "prayer-of-the-far-north"
+	newMoonKey   = "new-moon-verse"
+	teamFlagKey  = "nightweavers-team-installed"
+	refineTagKey = "nightweavers-refine"
 )
 
 // When the equipping character's Elemental Skill deals Hydro or Dendro DMG,
@@ -42,6 +44,7 @@ const (
 func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) (info.Weapon, error) {
 	w := &Weapon{}
 	r := p.Refine
+	char.SetTag(refineTagKey, r)
 
 	m := make([]float64, attributes.EndStatType)
 	m[attributes.EM] = 45 + float64(r)*15
@@ -80,7 +83,8 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	c.Events.Subscribe(event.OnEnemyDamage, prayer, fmt.Sprintf("prayer-of-the-far-north-%v", char.Base.Key.String()))
 
 	newmoon := func(args ...any) {
-		if _, ok := args[0].(*enemy.Enemy); !ok {
+		atk := args[1].(*info.AttackEvent)
+		if atk.Info.ActorIndex < 0 || atk.Info.ActorIndex >= len(c.Player.Chars()) {
 			return
 		}
 		char.AddStatMod(character.StatMod{
@@ -93,29 +97,45 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	}
 	c.Events.Subscribe(event.OnLunarBloom, newmoon, fmt.Sprintf("new-moon-verse-%v", char.Base.Key.String()))
 
-	reactBuff := 0.3 + float64(r)*0.1
-	// add reaction bonus when both of previous bonuses are active
-	for _, otherChar := range c.Player.Chars() {
-		otherChar.AddReactBonusMod(character.ReactBonusMod{
-			Base: modifier.NewBase("nightweavers", -1),
-			Amount: func(ai info.AttackInfo) float64 {
-				if !char.StatusIsActive(prayerKey) || !char.StatusIsActive(newMoonKey) {
-					return 0
-				}
-
-				switch ai.AttackTag {
-				case attacks.AttackTagBloom, attacks.AttackTagBountifulCore:
-					return reactBuff * 3
-				case attacks.AttackTagHyperbloom, attacks.AttackTagBurgeon:
-					return reactBuff * 2
-				case attacks.AttackTagDirectLunarBloom:
-					return reactBuff
-				default:
-					return 0
-				}
-			},
-		})
+	// install team reaction bonus once (non-stacking across multiple copies)
+	if c.Flags.Custom[teamFlagKey] == 0 {
+		c.Flags.Custom[teamFlagKey] = 1
+		for _, otherChar := range c.Player.Chars() {
+			otherChar.AddReactBonusMod(character.ReactBonusMod{
+				Base: modifier.NewBase("nightweavers-team", -1),
+				Amount: func(ai info.AttackInfo) float64 {
+					return nightweaversBestReactBonus(c, ai)
+				},
+			})
+		}
 	}
 
 	return w, nil
+}
+
+func nightweaversBestReactBonus(c *core.Core, ai info.AttackInfo) float64 {
+	best := 0.0
+	for _, src := range c.Player.Chars() {
+		r := src.Tag(refineTagKey)
+		if r == 0 {
+			continue
+		}
+		if !src.StatusIsActive(prayerKey) || !src.StatusIsActive(newMoonKey) {
+			continue
+		}
+		reactBuff := 0.3 + float64(r)*0.1
+		var bonus float64
+		switch ai.AttackTag {
+		case attacks.AttackTagBloom, attacks.AttackTagBountifulCore:
+			bonus = reactBuff * 3
+		case attacks.AttackTagHyperbloom, attacks.AttackTagBurgeon:
+			bonus = reactBuff * 2
+		case attacks.AttackTagDirectLunarBloom:
+			bonus = reactBuff
+		}
+		if bonus > best {
+			best = bonus
+		}
+	}
+	return best
 }
