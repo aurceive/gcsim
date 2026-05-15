@@ -1,6 +1,8 @@
 package columbina
 
 import (
+	"cmp"
+
 	"github.com/genshinsim/gcsim/internal/frames"
 	"github.com/genshinsim/gcsim/pkg/core/action"
 	"github.com/genshinsim/gcsim/pkg/core/attacks"
@@ -11,51 +13,65 @@ import (
 	"github.com/genshinsim/gcsim/pkg/enemy"
 )
 
-var skillFrames []int
+var (
+	skillFrames      []int
+	skillHitmarksLCr = 43
+	skillHitmarksLC  = 43
+	skillHitmarksLB  = []int{51, 51 + 5, 51 + 5 + 6, 51 + 5 + 6 + 9, 51 + 5 + 6 + 9 + 11}
+	skillHitmarks    [3][]int
+)
 
 const (
-	skillHitmark   = 24
+	skillHitmark   = 21
 	particleICDKey = "columbina-particle-icd"
 	skillKey       = "columbina-skill"
 	gravityKey     = "columbina-gravity"
 	gravityMax     = 60
-	LCInd          = 0
-	LCrInd         = 1
-	// LBInd          = 1
+	skillLBTravel  = 20
+)
+
+type lunarReaction int
+
+const (
+	LunarCharge lunarReaction = iota
+	LunarBloom
+	LunarCrystallize
 )
 
 func init() {
-	skillFrames = frames.InitAbilSlice(26)
+	skillFrames = frames.InitAbilSlice(41)
+	skillFrames[action.ActionCharge] = 40
+	skillFrames[action.ActionSkill] = 28
+	skillFrames[action.ActionBurst] = 28
+	skillFrames[action.ActionDash] = 27
+	skillFrames[action.ActionJump] = 32
+	skillFrames[action.ActionSwap] = 26
+
+	skillHitmarks[LunarCharge] = []int{skillHitmarksLC}
+	skillHitmarks[LunarBloom] = skillHitmarksLB
+	skillHitmarks[LunarCrystallize] = []int{skillHitmarksLCr}
 }
 
 func (c *char) skillInit() {
-	c.Core.Events.Subscribe(event.OnLunarCharged, func(args ...any) {
-		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return
+	makeHook := func(reaction info.ReactionType) func(args ...any) {
+		return func(args ...any) {
+			if _, ok := args[0].(*enemy.Enemy); !ok {
+				return
+			}
+			if !c.StatusIsActive(skillKey) {
+				return
+			}
+			c.gravityLastReaction = reaction
+			c.AddStatus(gravityKey, 2*60, false)
+			if !c.gravityTask {
+				c.gravityAccum()
+			}
 		}
-		if !c.StatusIsActive(skillKey) {
-			return
-		}
-		c.gravityLastReaction = info.ReactionTypeLunarCharged
-		c.AddStatus(gravityKey, 2*60, false)
-		if !c.gravityTask {
-			c.gravityAccum()
-		}
-	}, "columbina-gravity-lc")
+	}
 
-	c.Core.Events.Subscribe(event.OnLunarCrystallize, func(args ...any) {
-		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return
-		}
-		if !c.StatusIsActive(skillKey) {
-			return
-		}
-		c.gravityLastReaction = info.ReactionTypeLunarCrystallize
-		c.AddStatus(gravityKey, 2*60, false)
-		if !c.gravityTask {
-			c.gravityAccum()
-		}
-	}, "columbina-gravity-lcr")
+	c.Core.Events.Subscribe(event.OnLunarCharged, makeHook(info.ReactionTypeLunarCharged), "columbina-gravity-lc")
+	c.Core.Events.Subscribe(event.OnLunarBloom, makeHook(info.ReactionTypeLunarBloom), "columbina-gravity-lb")
+	// c.Core.Events.Subscribe(event.OnLunarCrystallize, makeHook(info.ReactionTypeLunarCrystallize), "columbina-gravity-lcr")
 
 	c.Core.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
@@ -70,10 +86,12 @@ func (c *char) skillInit() {
 			c.gravityAccum()
 		}
 		switch atk.Info.AttackTag {
-		case attacks.AttackTagDirectLunarCharged | attacks.AttackTagReactionLunarCharge:
+		case attacks.AttackTagDirectLunarCharged, attacks.AttackTagReactionLunarCharge:
 			c.gravityLastReaction = info.ReactionTypeLunarCharged
-		case attacks.AttackTagDirectLunarCrystallize | attacks.AttackTagReactionLunarCrystallize:
-			c.gravityLastReaction = info.ReactionTypeLunarCrystallize
+		case attacks.AttackTagDirectLunarBloom:
+			c.gravityLastReaction = info.ReactionTypeLunarBloom
+			// case attacks.AttackTagDirectLunarCrystallize, attacks.AttackTagReactionLunarCrystallize:
+			// 	c.gravityLastReaction = info.ReactionTypeLunarCrystallize
 		}
 	}, "columbina-gravity-on-dmg")
 }
@@ -89,18 +107,20 @@ func (c *char) gravityAccum() {
 		return
 	}
 	c.gravityTask = true
-	amt := 1 * c.c2GravityRate() // 10 gravity per 1s
+	amt := 10 * 0.05 * (1 + c.c2GravityRate()) // 10 gravity per 1s
 	switch c.gravityLastReaction {
 	case info.ReactionTypeLunarCharged:
-		c.gravity[LCInd] += amt
-	case info.ReactionTypeLunarCrystallize:
-		c.gravity[LCrInd] += amt
+		c.gravity[LunarCharge] += amt
+	case info.ReactionTypeLunarBloom:
+		c.gravity[LunarBloom] += amt
+		// case info.ReactionTypeLunarCrystallize:
+		// 	c.gravity[LunarCrystallize] += amt
 	}
 
 	if c.totalGravity() >= gravityMax {
 		c.gravityTick(true)
 	}
-	c.QueueCharTask(c.gravityAccum, 6)
+	c.QueueCharTask(c.gravityAccum, 0.05*60)
 }
 
 func (c *char) totalGravity() float64 {
@@ -117,15 +137,54 @@ func (c *char) clearGravity() {
 	}
 }
 
+// returns the index of the maximum value. In case of ties, the earlier index is returned
+func argmax[T cmp.Ordered](x T, y ...T) int {
+	maxInd := 0
+	maxVal := x
+	for i, v := range y {
+		if v > maxVal {
+			maxInd = i + 1
+			maxVal = v
+		}
+	}
+	return maxInd
+}
+
 func (c *char) gravityTick(clearGravity bool) {
-	maxReaction := 0
+	// ties are broken by team member count for c1 for first cast
+	// TODO: ties for non C1 tick is broken randomly by the first two reactions. https://discord.com/channels/763583452762734592/1460819588446163056/1463116888673616014
+	electro := 0
+	dendro := 0
+	geo := 0
+	for _, char := range c.Core.Player.Chars() {
+		switch char.Base.Element {
+		case attributes.Electro:
+			electro += 1
+		case attributes.Dendro:
+			dendro += 1
+		case attributes.Geo:
+			geo += 1
+		}
+	}
+
+	maxReaction := LunarCharge
 	maxGravity := 0.0
+	switch argmax(electro, dendro, geo) {
+	case 0:
+		maxReaction = LunarCharge
+	case 1:
+		maxReaction = LunarBloom
+	case 2:
+		maxReaction = LunarCrystallize
+	}
+
 	for i, g := range c.gravity {
 		if g > maxGravity {
 			maxGravity = g
-			maxReaction = i
+			maxReaction = lunarReaction(i)
 		}
 	}
+
 	if clearGravity {
 		c.clearGravity()
 	}
@@ -134,17 +193,28 @@ func (c *char) gravityTick(clearGravity bool) {
 	var atkTag attacks.AttackTag
 	var elem attributes.Element
 	var abil string
+	radius := 6.0
+	travel := 0
 	switch maxReaction {
-	case LCInd:
+	case LunarCharge:
 		mult = skillLC[c.TalentLvlSkill()]
 		atkTag = attacks.AttackTagDirectLunarCharged
 		elem = attributes.Electro
-		abil = "Skill Gravity (Lunar-Charged)"
-	case LCrInd:
-		mult = skillLCr[c.TalentLvlSkill()]
-		atkTag = attacks.AttackTagDirectLunarCrystallize
-		elem = attributes.Geo
-		abil = "Skill Gravity (Lunar-Crystallize)"
+		abil = "Gravity Interference (Lunar-Charged)"
+
+	case LunarBloom:
+		mult = skillLB[c.TalentLvlSkill()]
+		atkTag = attacks.AttackTagDirectLunarBloom
+		elem = attributes.Dendro
+		abil = "Gravity Interference (Lunar-Bloom)"
+		radius = 0.5
+		travel = skillLBTravel
+	// case LunarCrystallize:
+	// 	mult = skillLCr[c.TalentLvlSkill()]
+	// 	atkTag = attacks.AttackTagDirectLunarCrystallize
+	// 	elem = attributes.Geo
+	// 	abil = "Gravity Interference (Lunar-Crystallize)"
+
 	default:
 		return
 	}
@@ -162,12 +232,17 @@ func (c *char) gravityTick(clearGravity bool) {
 		Mult:             mult,
 	}
 
-	ap := combat.NewCircleHitOnTarget(c.Core.Combat.Player(), nil, 6)
+	ap := combat.NewCircleHitOnTarget(c.Core.Combat.Player(), nil, radius)
 	c.a1OGravityTick()
 	c.c1OnGravityTick(maxReaction)
 	c.c2OnGravityTick(maxReaction)
-	ai.FlatDmg += c.c4OnGravityTickFlatDMG(maxReaction)
-	c.Core.QueueAttack(ai, ap, 1, 1)
+
+	for _, delay := range skillHitmarks[maxReaction] {
+		c.QueueCharTask(func() {
+			ai.FlatDmg = c.c4OnGravityTickFlatDMG(maxReaction)
+			c.Core.QueueAttack(ai, ap, 0, travel)
+		}, delay)
+	}
 }
 
 func (c *char) Skill(p map[string]int) (action.Info, error) {
@@ -190,16 +265,18 @@ func (c *char) Skill(p map[string]int) (action.Info, error) {
 		if !c.StatusIsActive(skillKey) {
 			c.clearGravity()
 		}
-		c.AddStatus(skillKey, 25*60+1, true)
-		c.QueueCharTask(c.skillTickTask(c.skillSrc), 126)
-		c.SetCDWithDelay(action.ActionSkill, 17*60, 0)
+		c.AddStatus(skillKey, 25*60, true)
+		c.QueueCharTask(c.skillTickTask(c.skillSrc), 117)
+
 		c.c1OnSkill()
 	}, skillHitmark)
+
+	c.SetCDWithDelay(action.ActionSkill, 17*60, 20)
 
 	return action.Info{
 		Frames:          frames.NewAbilFunc(skillFrames),
 		AnimationLength: skillFrames[action.InvalidAction],
-		CanQueueAfter:   skillHitmark,
+		CanQueueAfter:   skillFrames[action.ActionSwap],
 		State:           action.SkillState,
 	}, nil
 }
@@ -219,7 +296,7 @@ func (c *char) particleCB(a info.AttackCB) {
 	}
 }
 
-// Helper function that handles damage, healing, and particle components of every tick of her E
+// Helper function that handles damage, particle components of every tick of her E
 func (c *char) skillTick() {
 	ai := info.AttackInfo{
 		ActorIndex: c.Index(),
@@ -233,16 +310,19 @@ func (c *char) skillTick() {
 		UseHP:      true,
 		Mult:       skillDoT[c.TalentLvlSkill()],
 	}
-	ap := combat.NewCircleHitOnTarget(c.Core.Combat.Player(), nil, 6)
+
+	radius := 4.0
+	if c.Core.Player.GetMoonsignLevel() >= 2 {
+		radius = 6
+	}
+	ap := combat.NewCircleHitOnTarget(c.Core.Combat.Player(), nil, radius)
 	c.Core.QueueAttack(ai, ap, 0, 0, c.particleCB)
 }
 
-// Handles repeating skill damage ticks. Split into a separate function as you can only have 1 jellyfish on field at once
-// Skill snapshots, so inputs into the function are the originating snapshot
 func (c *char) skillTickTask(src int) func() {
+	// TODO: skill cast won't interrupt skill ticks if skill already active
 	return func() {
-		// Basically stops "old" casts of E from working, and also stops further ticks from that source
-		if c.skillSrc > src {
+		if c.skillSrc != src {
 			return
 		}
 
@@ -252,6 +332,6 @@ func (c *char) skillTickTask(src int) func() {
 
 		c.skillTick()
 
-		c.Core.Tasks.Add(c.skillTickTask(src), 120)
+		c.Core.Tasks.Add(c.skillTickTask(src), 117)
 	}
 }

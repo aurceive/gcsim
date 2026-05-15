@@ -13,13 +13,16 @@ import (
 )
 
 const (
-	lunarBonusKey = "columbina-lunar-bonus"
-	a1Key         = "columbina-a1"
+	lunarBonusKey        = "columbina-lunar-bonus"
+	a1Key                = "columbina-a1"
+	moonridgeDewICDKey   = "moonridge-dew-icd"
+	moonridgeDewTimerKey = "moonridge-dew-timer"
 )
 
 func (c *char) moonsignInit() {
 	c.Core.Flags.Custom[reactable.LunarChargeEnableKey] = 1
-	c.Core.Flags.Custom[reactable.LunarCrystallizeEnableKey] = 1
+	c.Core.Flags.Custom[reactable.LunarBloomEnableKey] = 1
+	// c.Core.Flags.Custom[reactable.LunarCrystallizeEnableKey] = 1
 	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 
@@ -35,13 +38,6 @@ func (c *char) moonsignInit() {
 
 		atk.Info.BaseDmgBonus += bonus
 	}, lunarBonusKey)
-
-	c.Core.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) {
-		atk := args[1].(*info.AttackEvent)
-
-		bonus := min(c.MaxHP()/1000.0*0.002, 0.07)
-		atk.Info.BaseDmgBonus += bonus
-	}, lunarBonusKey+"-reaction")
 }
 
 func (c *char) a1Init() {
@@ -72,22 +68,68 @@ func (c *char) a1OGravityTick() {
 }
 
 func (c *char) a4Init() {
-	a4Hook := func(args ...any) {
-		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return
-		}
+	if c.Base.Ascension < 4 {
+		return
+	}
+	c.Core.Events.Subscribe(event.OnLunarCharged, c.a4OnLunarCharge, "columbina-a4-lc")
+	c.Core.Events.Subscribe(event.OnLunarBloom, c.a4OnLunarBloom, "columbina-a4-lb")
+	// c.Core.Events.Subscribe(event.OnLunarCrystallize, c.a4OnLunarCrystallize, "columbina-a4-lcr")
+}
 
-		if c.StatusIsActive(burstBuffKey) && c.Core.Combat.Player().IsWithinArea(c.burstArea) {
-			c.Core.Flags.Custom[reactable.LcIcdOverrideKey] = 1.5 * 60
-			c.Core.Flags.Custom[reactable.LcrExtraHitOverride] = 0.33
-			return
-		}
-
-		// player is outside of lunar domain, reset buffs
-		delete(c.Core.Flags.Custom, reactable.LcIcdOverrideKey)
-		delete(c.Core.Flags.Custom, reactable.LcrExtraHitOverride)
+func (c *char) a4OnLunarCharge(args ...any) {
+	if _, ok := args[0].(*enemy.Enemy); !ok {
+		return
 	}
 
-	c.Core.Events.Subscribe(event.OnLunarCharged, a4Hook, "columbina-gravity-lc")
-	c.Core.Events.Subscribe(event.OnMoondriftHarmony, a4Hook, "columbina-gravity-lcr")
+	if c.StatusIsActive(burstBuffKey) {
+		c.Core.Flags.Custom[reactable.LcIcdOverrideKey] = 1.5 * 60
+		return
+	}
+
+	// player is outside of lunar domain, reset buffs
+	delete(c.Core.Flags.Custom, reactable.LcIcdOverrideKey)
+}
+
+// func (c *char) a4OnLunarCrystallize(args ...any) {
+// 	if _, ok := args[0].(*enemy.Enemy); !ok {
+// 		return
+// 	}
+
+// 	if c.StatusIsActive(burstBuffKey) {
+// 		c.Core.Flags.Custom[reactable.LcrExtraHitOverride] = 0.33
+// 		return
+// 	}
+
+// 	// player is outside of lunar domain, reset buffs
+// 	delete(c.Core.Flags.Custom, reactable.LcrExtraHitOverride)
+// }
+
+func (c *char) a4OnLunarBloom(args ...any) {
+	if _, ok := args[0].(*enemy.Enemy); !ok {
+		return
+	}
+
+	if !c.StatusIsActive(burstBuffKey) {
+		return
+	}
+
+	if c.StatusIsActive(moonridgeDewICDKey) {
+		return
+	}
+
+	if c.a4MoondewCount < 3 {
+		c.AddStatus(moonridgeDewICDKey, 0.05*60, true)
+		c.a4MoondewCount += 1
+		c.Core.Player.AddMoonridgeDew()
+
+		if !c.StatusIsActive(moonridgeDewTimerKey) {
+			c.AddStatus(moonridgeDewTimerKey, 18*60, true)
+			c.QueueCharTask(func() {
+				c.a4MoondewCount = 0
+				c.Core.Combat.Log.NewEventBuildMsg(glog.LogCharacterEvent, c.Index(), "moonridge dew timer reset")
+			}, 18*60)
+		}
+	}
+
+	// TODO: Moonridge Dew are removed after 60s of not adding any
 }

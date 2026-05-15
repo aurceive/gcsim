@@ -105,8 +105,8 @@ var (
 		2.6118,
 		2.7569,
 	}
-	// attack: chargeLC = [5]
-	chargeLC = []float64{
+	// attack: chargeLB = [5]
+	chargeLB = []float64{
 		0.015112,
 		0.016245,
 		0.017379,

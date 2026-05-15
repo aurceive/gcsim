@@ -1,5 +1,6 @@
 ---
-title: Columbina
+title: >
+  Columbina
 ---
 
 import HitlagTable from "@site/src/components/Hitlag/HitlagTable";

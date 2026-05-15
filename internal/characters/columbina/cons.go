@@ -20,10 +20,12 @@ const (
 	c2Key        = "columbina-c2"
 	c2LCKey      = c2Key + "-lc"
 	c2LCrKey     = c2Key + "-lcr"
+	c2LBKey      = c2Key + "-lb"
 	c4Key        = "columbina-c4"
 	c4IcdKey     = "columbina-c4-icd"
 	c6Key        = "columbina-c6"
 	c6LCKey      = c6Key + "-lc"
+	c6LBKey      = c6Key + "-lb"
 	c6LCrKey     = c6Key + "-lcr"
 )
 
@@ -34,14 +36,15 @@ func (c *char) consElevationInit() {
 	amt := elevation[c.Base.Cons]
 	c.Core.Events.Subscribe(event.OnApplyAttack, func(args ...any) {
 		atk := args[0].(*info.AttackEvent)
+		// do not apply elevation to Reaction damage here because the elevation is already applied at the contributor level
 		if attacks.DirectLunarReactionStartDelim < atk.Info.AttackTag && atk.Info.AttackTag < attacks.DirectLunarReactionEndDelim {
 			atk.Info.Elevation += amt
 		}
 	}, elevationKey+"-direct")
 
-	c.Core.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) {
+	c.Core.Events.Subscribe(event.OnLunarChargedReactionAttack, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
-		if attacks.LunarReactionStartDelim < atk.Info.AttackTag && atk.Info.AttackTag < attacks.LunarReactionEndDelim {
+		if attacks.AttackTagIsLunar(atk.Info.AttackTag) {
 			atk.Info.Elevation += amt
 		}
 	}, elevationKey+"-reaction")
@@ -54,19 +57,18 @@ func (c *char) c1OnSkill() {
 	if c.StatusIsActive(c1IcdKey) {
 		return
 	}
-	// What's the default tick when you first cast this?
 	c.gravityTick(false)
 	c.AddStatus(c1IcdKey, 15*60, true)
 }
 
-func (c *char) c1OnGravityTick(maxReaction int) {
+func (c *char) c1OnGravityTick(maxReaction lunarReaction) {
 	if c.Base.Cons < 1 {
 		return
 	}
 	switch maxReaction {
-	case LCInd:
+	case LunarCharge:
 		c.Core.Player.ActiveChar().AddEnergy(c1Key, 6.0)
-	case LCrInd:
+	case LunarCrystallize:
 		// add shield
 		c.Core.Player.Shields.Add(&shield.Tmpl{
 			ActorIndex: c.Index(),
@@ -89,18 +91,19 @@ func (c *char) c2Init() {
 	c.c2Buff[attributes.HPP] = 0.4
 
 	c.c2LCBuff = make([]float64, attributes.EndStatType)
+	c.c2LBBuff = make([]float64, attributes.EndStatType)
 	c.c2LCrBuff = make([]float64, attributes.EndStatType)
 }
 
 func (c *char) c2GravityRate() float64 {
 	if c.Base.Cons < 2 {
-		return 1.0
+		return 0.0
 	}
 
-	return 1.34
+	return 0.34
 }
 
-func (c *char) c2OnGravityTick(maxReaction int) {
+func (c *char) c2OnGravityTick(reaction lunarReaction) {
 	if c.Base.Cons < 2 {
 		return
 	}
@@ -117,13 +120,14 @@ func (c *char) c2OnGravityTick(maxReaction int) {
 		return
 	}
 
-	switch maxReaction {
-	case LCInd:
+	// These buffs are NOT extra buffs, despite scaling off Columbina's Max HP.
+	switch reaction {
+	case LunarCharge:
 		for _, char := range c.Core.Player.Chars() {
 			char.DeleteStatMod(c2LCrKey)
+			char.DeleteStatMod(c2LBKey)
 			char.AddStatMod(character.StatMod{
 				Base:         modifier.NewBase(c2LCKey, 8*60),
-				Extra:        true,
 				AffectedStat: attributes.ATK,
 				Amount: func() []float64 {
 					if c.Core.Player.Active() != char.Index() {
@@ -134,12 +138,12 @@ func (c *char) c2OnGravityTick(maxReaction int) {
 				},
 			})
 		}
-	case LCrInd:
+	case LunarCrystallize:
 		for _, char := range c.Core.Player.Chars() {
 			char.DeleteStatMod(c2LCKey)
+			char.DeleteStatMod(c2LBKey)
 			char.AddStatMod(character.StatMod{
 				Base:         modifier.NewBase(c2LCrKey, 8*60),
-				Extra:        true,
 				AffectedStat: attributes.DEF,
 				Amount: func() []float64 {
 					if c.Core.Player.Active() != char.Index() {
@@ -150,10 +154,28 @@ func (c *char) c2OnGravityTick(maxReaction int) {
 				},
 			})
 		}
+	case LunarBloom:
+		for _, char := range c.Core.Player.Chars() {
+			char.DeleteStatMod(c2LCKey)
+			char.DeleteStatMod(c2LCrKey)
+			char.AddStatMod(character.StatMod{
+				Base:         modifier.NewBase(c2LBKey, 8*60),
+				AffectedStat: attributes.EM,
+				Amount: func() []float64 {
+					if c.Core.Player.Active() != char.Index() {
+						return nil
+					}
+					c.c2LBBuff[attributes.EM] = 0.0035 * c.MaxHP()
+					return c.c2LBBuff
+				},
+			})
+		}
+	default:
+		panic("unreachable: columbina c2 called with unknown reaction")
 	}
 }
 
-func (c *char) c4OnGravityTickFlatDMG(_ int) float64 {
+func (c *char) c4OnGravityTickFlatDMG(reaction lunarReaction) float64 {
 	if c.Base.Cons < 4 {
 		return 0.0
 	}
@@ -163,8 +185,14 @@ func (c *char) c4OnGravityTickFlatDMG(_ int) float64 {
 		return 0.0
 	}
 	c.AddStatus(c4IcdKey, 15*60, true)
-	// currently don't have lunar bloom so it is always 0.125
-	return 0.125 * c.MaxHP()
+	switch reaction {
+	case LunarCharge, LunarCrystallize:
+		return 0.125 * c.MaxHP()
+	case LunarBloom:
+		return 0.025 * c.MaxHP()
+	default:
+		panic("unreachable: columbina c4 called with unknown reaction")
+	}
 }
 
 func (c *char) c6Init() {
@@ -175,7 +203,7 @@ func (c *char) c6Init() {
 	c.c6Buff = make([]float64, attributes.EndStatType)
 	c.c6Buff[attributes.CD] = 0.8
 
-	c.Core.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) {
+	c.Core.Events.Subscribe(event.OnLunarChargedReactionAttack, func(args ...any) {
 		ae, ok := args[1].(*info.AttackEvent)
 		if !ok {
 			return
@@ -189,9 +217,11 @@ func (c *char) c6Init() {
 		case attributes.Electro:
 			addBuff = char.StatusIsActive(c6LCKey)
 		case attributes.Hydro:
-			addBuff = char.StatusIsActive(c6LCKey) || char.StatusIsActive(c6LCrKey)
+			addBuff = char.StatusIsActive(c6LCKey) || char.StatusIsActive(c6LCrKey) || char.StatusIsActive(c6LBKey)
 		case attributes.Geo:
 			addBuff = char.StatusIsActive(c6LCrKey)
+		case attributes.Dendro:
+			addBuff = char.StatusIsActive(c6LBKey)
 		}
 
 		if !addBuff {
@@ -210,10 +240,6 @@ func (c *char) c6Init() {
 			return
 		}
 
-		if !c.Core.Combat.Player().IsWithinArea(c.burstArea) {
-			return
-		}
-
 		for _, char := range c.Core.Player.Chars() {
 			char.AddAttackMod(character.AttackMod{
 				Base: modifier.NewBaseWithHitlag(c6LCKey, 8*60),
@@ -229,8 +255,7 @@ func (c *char) c6Init() {
 			})
 		}
 	}, c6LCKey)
-
-	c.Core.Events.Subscribe(event.OnLunarCrystallize, func(args ...any) {
+	c.Core.Events.Subscribe(event.OnLunarBloom, func(args ...any) {
 		if _, ok := args[0].(*enemy.Enemy); !ok {
 			return
 		}
@@ -239,16 +264,12 @@ func (c *char) c6Init() {
 			return
 		}
 
-		if !c.Core.Combat.Player().IsWithinArea(c.burstArea) {
-			return
-		}
-
 		for _, char := range c.Core.Player.Chars() {
 			char.AddAttackMod(character.AttackMod{
-				Base: modifier.NewBaseWithHitlag(c6LCrKey, 8*60),
+				Base: modifier.NewBaseWithHitlag(c6LBKey, 8*60),
 				Amount: func(atk *info.AttackEvent, _ info.Target) []float64 {
 					switch atk.Info.Element {
-					case attributes.Geo:
+					case attributes.Dendro:
 					case attributes.Hydro:
 					default:
 						return nil
@@ -257,13 +278,30 @@ func (c *char) c6Init() {
 				},
 			})
 		}
-	}, c6LCrKey)
-}
+	}, c6LBKey)
 
-// func (h *Handler) GetMoonsignCount() int {
-//     count := 0
-//     for _, c := range h.Chars() {
-//         count += c.Moonsign
-//     }
-//     return count
-// }
+	// c.Core.Events.Subscribe(event.OnLunarCrystallize, func(args ...any) {
+	// 	if _, ok := args[0].(*enemy.Enemy); !ok {
+	// 		return
+	// 	}
+
+	// 	if !c.ReactBonusModIsActive(burstBuffKey) {
+	// 		return
+	// 	}
+
+	// 	for _, char := range c.Core.Player.Chars() {
+	// 		char.AddAttackMod(character.AttackMod{
+	// 			Base: modifier.NewBaseWithHitlag(c6LCrKey, 8*60),
+	// 			Amount: func(atk *info.AttackEvent, _ info.Target) []float64 {
+	// 				switch atk.Info.Element {
+	// 				case attributes.Geo:
+	// 				case attributes.Hydro:
+	// 				default:
+	// 					return nil
+	// 				}
+	// 				return c.c6Buff
+	// 			},
+	// 		})
+	// 	}
+	// }, c6LCrKey)
+}

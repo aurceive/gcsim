@@ -211,6 +211,11 @@ func (r *Reactable) nextLCTick(src int) func() {
 			return
 		}
 
+		icd := 2 * 60
+		if r.core.Flags.Custom[LcIcdOverrideKey] > 0 {
+			icd = int(r.core.Flags.Custom[LcIcdOverrideKey])
+		}
+
 		// check all enemies in area
 		// TODO: should be save the area when the cloud is generated or update when the player moves?
 		for _, e := range r.core.Combat.EnemiesWithinArea(combat.NewCircleHitOnTarget(r.core.Combat.Player(), nil, 8), nil) {
@@ -226,12 +231,7 @@ func (r *Reactable) nextLCTick(src int) func() {
 				continue
 			}
 
-			icd, ok := r.core.Flags.Custom[LcIcdOverrideKey]
-			if !ok {
-				icd = 2 * 60
-			}
-
-			e.AddStatus(lcIcdKey, int(icd), true)
+			e.AddStatus(lcIcdKey, icd, true)
 			enemy.DoLCAttack()
 		}
 		// queue up next tick
