@@ -64,28 +64,28 @@ func (c *char) Burst(_ map[string]int) (action.Info, error) {
 }
 
 func (c *char) burstInit() {
-	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
 		t, ok := args[0].(*enemy.Enemy)
 		if !ok {
-			return false
+			return
 		}
 
 		ae := args[1].(*info.AttackEvent)
 
 		if ae.Info.ActorIndex != c.Core.Player.Active() {
-			return false
+			return
 		}
 
 		if c.burstHits >= 4 {
-			return false
+			return
 		}
 
 		if !c.StatusIsActive(burstKey) {
-			return false
+			return
 		}
 
 		if c.StatusIsActive(burstICDKey) {
-			return false
+			return
 		}
 
 		c.AddStatus(burstICDKey, 3*60, true)
@@ -109,6 +109,5 @@ func (c *char) burstInit() {
 
 		c.Core.QueueAttack(ai, ap, projectionHitmark, projectionHitmark)
 
-		return false
 	}, "nicole-burst-hook")
 }

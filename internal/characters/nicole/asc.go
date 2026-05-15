@@ -25,13 +25,13 @@ func (c *char) a1Init() {
 		Base:         modifier.NewBase(a1Key, 0),
 		AffectedStat: attributes.ATK,
 		Extra:        true,
-		Amount: func() ([]float64, bool) {
+		Amount: func() []float64 {
 			m[attributes.ATK] = 300
-			return m, true
+			return m
 		},
 	}
 
-	c.Core.Events.Subscribe(event.OnCharacterSwap, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnCharacterSwap, func(args ...any) {
 		prev := args[0].(int)
 		if prev != c.Index() && c.c6DeleteA1OnSwap() {
 			char := c.Core.Player.Chars()[prev]
@@ -55,7 +55,6 @@ func (c *char) a1Init() {
 			c.a1UpgradeBuff(char, -1)
 		}, delay)
 
-		return false
 	}, "nicole-a1")
 }
 
@@ -70,24 +69,23 @@ func (c *char) a1OnSkill() {
 }
 
 func (c *char) a4Init() {
-	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
 		if _, ok := args[0].(*enemy.Enemy); !ok {
-			return false
+			return
 		}
 
 		ae := args[1].(*info.AttackEvent)
 
 		if ae.Info.ActorIndex != c.Core.Player.Active() {
-			return false
+			return
 		}
 
 		if ae.Info.Element >= attributes.NoElement {
-			return false
+			return
 		}
 
 		dur := c.c6SelfBuffDur()
 		c.a1UpgradeBuff(c.CharWrapper, dur)
-		return false
 	}, "nicole-a4")
 }
 

@@ -74,10 +74,10 @@ func (c *char) skillInit() {
 		Base:         modifier.NewBase(skillBuffKey, 20*60),
 		AffectedStat: attributes.ATK,
 		Extra:        true,
-		Amount: func() ([]float64, bool) {
+		Amount: func() []float64 {
 			atk := c.SelectStat(true, attributes.BaseATK, attributes.ATKP, attributes.ATK).TotalATK()
 			m[attributes.ATK] = min(atk*skillBuff[c.TalentLvlSkill()], skillBuffCap[c.TalentLvlSkill()]) + c.c2SkillBuff()
-			return m, true
+			return m
 		},
 	}
 }

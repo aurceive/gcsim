@@ -22,20 +22,20 @@ func (c *char) c1Init() {
 	if c.Base.Cons < 1 {
 		return
 	}
-	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
 		t, ok := args[0].(*enemy.Enemy)
 		if !ok {
-			return false
+			return
 		}
 
 		ae := args[1].(*info.AttackEvent)
 
 		if ae.Info.ActorIndex != c.Core.Player.Active() {
-			return false
+			return
 		}
 
 		if c.StatusIsActive(c1ICDKey) {
-			return false
+			return
 		}
 
 		c.AddStatus(c1ICDKey, 6*60, true)
@@ -58,7 +58,6 @@ func (c *char) c1Init() {
 
 		c.Core.QueueAttack(ai, ap, projectionHitmark, projectionHitmark)
 
-		return false
 	}, "nicole-c1")
 }
 
@@ -112,7 +111,7 @@ func (c *char) c4Init() {
 	if c.Base.Cons < 4 {
 		return
 	}
-	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 
 		switch atk.Info.AttackTag {
@@ -123,13 +122,13 @@ func (c *char) c4Init() {
 		case attacks.AttackTagExtra:
 		case attacks.AttackTagPlunge:
 		default:
-			return false
+			return
 		}
 
 		char := c.Core.Player.ByIndex(atk.Info.ActorIndex)
 
 		if !char.StatusIsActive(c4Key) {
-			return false
+			return
 		}
 
 		if char.Tags[c4Key] > 0 {
@@ -147,7 +146,6 @@ func (c *char) c4Init() {
 			atk.Info.FlatDmg += amt
 		}
 
-		return false
 	}, "nicole-c4-hook")
 }
 
@@ -169,15 +167,14 @@ func (c *char) c6Init() {
 		return
 	}
 
-	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) bool {
+	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		char := c.Core.Player.ByIndex(atk.Info.ActorIndex)
 		if !char.StatModIsActive(a1Key) {
-			return false
+			return
 		}
 		atk.Info.IgnoreDefPercent = min(atk.Info.IgnoreDefPercent+0.4, 0.9)
 
-		return false
 	}, "nicole-c6-hook")
 }
 
