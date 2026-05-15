@@ -2,11 +2,12 @@ package_name: aino
 genshin_id: 10000121
 key: aino
 icd_groups:
-  - group_name: ICDGroupAinoBurstEnhanced
-    reset_timer: 108
-    ele_app_sequence:
-      [1, 0, 0, 0, 0, 0, 0, 0]
-    damage_sequence: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    - group_name: ICDGroupAinoBurstMoonHit
+      reset_timer: 108
+      ele_app_sequence: [1, 0, 0, 0]
+      damage_sequence: [1, 1, 1, 1]
+icd_tags:
+    - ICDTagAinoBurstMoonHit
 skill_data_mapping:
     attack: # Bish-Bash-Bosh Repair
         attack_1:

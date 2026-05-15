@@ -18,8 +18,9 @@ const (
 )
 
 func init() {
-	burstFrames = frames.InitAbilSlice(60) // Q -> N1
-	burstFrames[action.ActionCharge] = 55  // Q -> E
+	burstFrames = frames.InitAbilSlice(60) // Q -> W
+	burstFrames[action.ActionAttack] = 55  // Q -> N1
+	burstFrames[action.ActionCharge] = 55  // Q -> CA
 	burstFrames[action.ActionSkill] = 55   // Q -> E
 	burstFrames[action.ActionDash] = 56    // Q -> D
 	burstFrames[action.ActionJump] = 56    // Q -> J
@@ -27,13 +28,12 @@ func init() {
 }
 
 func (c *char) Burst(p map[string]int) (action.Info, error) {
-	tickrate, icdGroup := c.a1BurstEnhance()
-
+	tickrate, radius, icdGroup, icdTag := c.a1BurstEnhance()
 	ai := info.AttackInfo{
 		ActorIndex: c.Index(),
 		Abil:       "Cool Your Jets Ducky",
 		AttackTag:  attacks.AttackTagElementalBurst,
-		ICDTag:     attacks.ICDTagElementalBurst,
+		ICDTag:     icdTag,
 		ICDGroup:   icdGroup,
 		StrikeType: attacks.StrikeTypeDefault,
 		Element:    attributes.Hydro,
@@ -43,7 +43,7 @@ func (c *char) Burst(p map[string]int) (action.Info, error) {
 
 	burstArea := combat.NewCircleHitOnTarget(c.Core.Combat.Player(), nil, 10)
 
-	for i := 0; i < 14*60; i += tickrate {
+	for i := 0; i < 14.2*60; i += tickrate {
 		c.Core.Tasks.Add(func() {
 			// burst tick
 			enemy := c.Core.Combat.RandomEnemyWithinArea(
@@ -55,13 +55,13 @@ func (c *char) Burst(p map[string]int) (action.Info, error) {
 			var pos info.Point
 			if enemy != nil {
 				pos = enemy.Pos()
-				enemy.AddStatus(burstMarkKey, 1*60, true) // same enemy can't be targeted again for 1s
+				enemy.AddStatus(burstMarkKey, 0.8*60, true) // same enemy can't be targeted again for 0.8s
 			} else {
-				pos = info.CalcRandomPointFromCenter(burstArea.Shape.Pos(), 1.5, 9.5, c.Core.Rand)
+				pos = info.CalcRandomPointFromCenter(burstArea.Shape.Pos(), 1.5, 9, c.Core.Rand)
 			}
 			ai.FlatDmg = c.a4Dmg()
-			// deal dmg after a certain delay
-			c.Core.QueueAttack(ai, combat.NewCircleHitOnTarget(pos, nil, 2.5), 0, 10)
+			// TODO: Aino burst travel time
+			c.Core.QueueAttack(ai, combat.NewCircleHitOnTarget(pos, nil, radius), 0, 10)
 		}, i+burstStart)
 	}
 	c.QueueCharTask(func() { c.AddStatus(burstKey, 14*60, false) }, burstStart)

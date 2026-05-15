@@ -3,7 +3,7 @@ package attacks
 
 const (
 	ICDGroupGeneratedStart ICDGroup = iota + EndDefaultICDGroups + 1
-	ICDGroupAinoBurstEnhanced
+	ICDGroupAinoBurstMoonHit
 	ICDGroupAlhaithamProjectionAttack
 	ICDGroupAlhaithamExtraAttack
 	ICDGroupAmber
@@ -57,9 +57,9 @@ const (
 )
 
 func init() {
-	ICDGroupResetTimer[ICDGroupAinoBurstEnhanced] = 108
-	ICDGroupEleApplicationSequence[ICDGroupAinoBurstEnhanced] = []float64{1, 0, 0, 0, 0, 0, 0, 0}
-	ICDGroupDamageSequence[ICDGroupAinoBurstEnhanced] = []float64{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+	ICDGroupResetTimer[ICDGroupAinoBurstMoonHit] = 108
+	ICDGroupEleApplicationSequence[ICDGroupAinoBurstMoonHit] = []float64{1, 0, 0, 0}
+	ICDGroupDamageSequence[ICDGroupAinoBurstMoonHit] = []float64{1, 1, 1, 1}
 
 	ICDGroupResetTimer[ICDGroupAlhaithamProjectionAttack] = 720
 	ICDGroupEleApplicationSequence[ICDGroupAlhaithamProjectionAttack] = []float64{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0}
@@ -177,13 +177,13 @@ func init() {
 	ICDGroupEleApplicationSequence[ICDGroupLanyanRingAttackMix] = []float64{1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0}
 	ICDGroupDamageSequence[ICDGroupLanyanRingAttackMix] = []float64{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
 
-	ICDGroupResetTimer[ICDGroupLohenSkillAttack] = 300
-	ICDGroupEleApplicationSequence[ICDGroupLohenSkillAttack] = []float64{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0}
-	ICDGroupDamageSequence[ICDGroupLohenSkillAttack] = []float64{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
-
 	ICDGroupResetTimer[ICDGroupLayla] = 180
 	ICDGroupEleApplicationSequence[ICDGroupLayla] = []float64{1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0}
 	ICDGroupDamageSequence[ICDGroupLayla] = []float64{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+
+	ICDGroupResetTimer[ICDGroupLohenSkillAttack] = 300
+	ICDGroupEleApplicationSequence[ICDGroupLohenSkillAttack] = []float64{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0}
+	ICDGroupDamageSequence[ICDGroupLohenSkillAttack] = []float64{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
 
 	ICDGroupResetTimer[ICDGroupLyneyExtra] = 60
 	ICDGroupEleApplicationSequence[ICDGroupLyneyExtra] = []float64{1, 0, 0, 0, 0, 0}

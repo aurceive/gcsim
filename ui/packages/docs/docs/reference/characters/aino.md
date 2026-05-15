@@ -1,5 +1,6 @@
 ---
-title: Aino
+title: >
+  Aino
 ---
 
 import HitlagTable from "@site/src/components/Hitlag/HitlagTable";

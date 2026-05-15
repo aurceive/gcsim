@@ -41,16 +41,11 @@ func (c *char) Init() error {
 }
 
 func (c *char) AnimationStartDelay(k info.AnimationDelayKey) int {
-	if k == info.AnimationXingqiuN0StartDelay {
-		return 9
+	switch k {
+	case info.AnimationXingqiuN0StartDelay:
+		return 24
+	case info.AnimationYelanN0StartDelay:
+		return 16
 	}
 	return c.Character.AnimationStartDelay(k)
-}
-
-func (c *char) getMoonsignLevel() int {
-	count := 0
-	for _, c := range c.Core.Player.Chars() {
-		count += c.Moonsign
-	}
-	return count
 }

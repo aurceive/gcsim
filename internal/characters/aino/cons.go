@@ -81,7 +81,7 @@ func (c *char) c2Init() {
 		if c.Core.Player.Active() == c.Index() {
 			return
 		}
-		if atk.Info.ActorIndex == c.Index() {
+		if atk.Info.ActorIndex != c.Core.Player.Active() {
 			return
 		}
 		if !c.StatusIsActive(burstKey) {
@@ -106,7 +106,7 @@ func (c *char) c2Init() {
 			FlatDmg:    em + c.a4Dmg(),
 		}
 
-		c.Core.QueueAttack(ai, combat.NewCircleHitOnTarget(e, nil, 2.5), 0, 10)
+		c.Core.QueueAttack(ai, combat.NewCircleHitOnTarget(e, nil, 1.5), 0, 10)
 	}, c2Key)
 }
 
@@ -138,7 +138,7 @@ func (c *char) c6Init() {
 					return 0
 				}
 				buff := 0.15
-				if c.getMoonsignLevel() >= 2 {
+				if c.Core.Player.GetMoonsignLevel() >= 2 {
 					buff += 0.2
 				}
 
