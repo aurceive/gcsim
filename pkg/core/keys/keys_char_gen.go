@@ -79,6 +79,7 @@ const (
 	Nahida
 	Navia
 	Neuvillette
+	Nicole
 	Nilou
 	Ningguang
 	Noelle
@@ -406,6 +407,10 @@ func init() {
 	charNames[Neuvillette] = "neuvillette"
 	charPrettyName[Neuvillette] = "Neuvillette"
 	CharKeyToEle[Neuvillette] = attributes.Hydro
+
+	charNames[Nicole] = "nicole"
+	charPrettyName[Nicole] = "nicole"
+	CharKeyToEle[Nicole] = attributes.Pyro
 
 	charNames[Nilou] = "nilou"
 	charPrettyName[Nilou] = "Nilou"

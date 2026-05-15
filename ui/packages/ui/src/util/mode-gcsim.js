@@ -210,6 +210,7 @@ ace.define(
         'ning',
         'ningguang',
         'noelle',
+          'nicole',
         'olorun',
         'ororon',
         'qiqi',
