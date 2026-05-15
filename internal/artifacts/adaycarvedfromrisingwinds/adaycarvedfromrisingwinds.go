@@ -78,7 +78,7 @@ func NewSet(c *core.Core, char *character.CharWrapper, count int, param map[stri
 				return m2
 			},
 		})
-	}, "breeze-4pc")
+	}, "breeze-4pc-"+char.Base.Key.String())
 
 	return &s, nil
 }

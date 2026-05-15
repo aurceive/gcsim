@@ -24,7 +24,7 @@ const (
 	c6Key     = "linnea-c6"
 )
 
-var lcrContributorMult = []float64{1.0, 1.0 / 2.0, 1.0 / 12.0, 1.0 / 12.0}
+var lcrContributorMult = []float64{0.6, 0.3, 0.05, 0.05}
 
 func (c *char) c1Init() {
 	if c.Base.Cons < 1 {
@@ -42,19 +42,44 @@ func (c *char) c1Init() {
 		c.c1Stacks = min(c.c1Stacks+stacks, 18)
 	}, "linnea-c1")
 
-	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
+	// this is emitted up to 4 times per attack, but we should only consume 1 stack per "attack"
+	// so we only add damage in OnLunarReactionAttack, but we will consume in OnEnemyDamage
+	c.Core.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
-
 		switch atk.Info.AttackTag {
 		case attacks.AttackTagReactionLunarCrystallize:
-		case attacks.AttackTagDirectLunarCrystallize:
 		default:
 			return
 		}
-
 		if !c.StatusIsActive(c1Key) {
 			return
 		}
+
+		if c.c1Stacks == 0 {
+			return
+		}
+
+		maxStacks := 1
+		scaling := 0.75
+
+		c6stacks, c6scale := c.c6C1Mult()
+		maxStacks *= c6stacks
+		scaling *= c6scale
+
+		def := c.TotalDef(false)
+		stacks := min(c.c1Stacks, maxStacks)
+		amt := def * scaling * float64(stacks)
+		if c.Core.Flags.LogDebug {
+			c.Core.Log.NewEvent("Linnea C1 proc dmg added to contribution", glog.LogPreDamageMod, atk.Info.ActorIndex).
+				Write("before", atk.Info.FlatDmg).
+				Write("addition", amt).
+				Write("Field Catalog stacks left", c.c1Stacks)
+		}
+		atk.Info.FlatDmg += amt
+	}, "linnea-c1-lcr-reaction")
+
+	c.Core.Events.Subscribe(event.OnEnemyHit, func(args ...any) {
+		atk := args[1].(*info.AttackEvent)
 
 		maxStacks := 1
 		scaling := 0.75
@@ -63,23 +88,40 @@ func (c *char) c1Init() {
 			scaling = 1.5
 		}
 
+		if c.c1Stacks == 0 {
+			return
+		}
+
 		c6stacks, c6scale := c.c6C1Mult()
 		maxStacks *= c6stacks
 		scaling *= c6scale
 
-		if c.c1Stacks > 0 {
-			def := c.TotalDef(false)
-			stacks := min(c.c1Stacks, maxStacks)
-			amt := def * scaling * float64(stacks)
-			if c.Core.Flags.LogDebug {
-				c.Core.Log.NewEvent("Linnea C1 proc dmg add", glog.LogPreDamageMod, atk.Info.ActorIndex).
-					Write("before", atk.Info.FlatDmg).
-					Write("addition", amt).
-					Write("Field Catalog stacks left", c.c1Stacks)
-			}
-			atk.Info.FlatDmg += amt
-			c.c1Stacks -= stacks
+		if !c.StatusIsActive(c1Key) {
+			return
 		}
+
+		stacks := min(c.c1Stacks, maxStacks)
+
+		switch atk.Info.AttackTag {
+		case attacks.AttackTagReactionLunarCrystallize:
+			// we added the damage in OnLunarReactionAttack so we only need to reduce stack count here
+			c.c1Stacks -= stacks
+			return
+		case attacks.AttackTagDirectLunarCrystallize:
+		default:
+			return
+		}
+
+		c.c1Stacks -= stacks
+		def := c.TotalDef(false)
+		amt := def * scaling * float64(stacks)
+		if c.Core.Flags.LogDebug {
+			c.Core.Log.NewEvent("Linnea C1 proc dmg add", glog.LogPreDamageMod, atk.Info.ActorIndex).
+				Write("before", atk.Info.FlatDmg).
+				Write("addition", amt).
+				Write("Field Catalog stacks left", c.c1Stacks)
+		}
+		atk.Info.FlatDmg += amt
 	}, "linnea-c1-dmg")
 }
 
@@ -104,15 +146,12 @@ func (c *char) c2Init() {
 		if _, ok := args[0].(*enemy.Enemy); !ok {
 			return
 		}
-		if !c.StatusIsActive(c1Key) {
-			c.c1Stacks = 0
-		}
 		for _, char := range c.Core.Player.Chars() {
 			switch char.Base.Element {
 			case attributes.Geo:
 			case attributes.Hydro:
 			default:
-				continue
+				return
 			}
 			char.AddStatMod(character.StatMod{
 				Base:         modifier.NewBaseWithHitlag(c2Key, 8*60),
@@ -139,8 +178,9 @@ func (c *char) c2TriggerMoonDrift(ae *info.AttackEvent) {
 	if c.Core.Player.GetMoonsignLevel() < 2 {
 		return
 	}
+	c.Core.Log.NewEventBuildMsg(glog.LogCharacterEvent, c.Index(), "Triggering C2 Moondrift Harmony")
 	c.Core.Events.Emit(event.OnMoondriftHarmony, c.Core.Combat.PrimaryTarget(), ae)
-	c.Core.Log.NewEvent("Linnea C2 Lunar Crystallize attack triggered", glog.LogElementEvent, c.Index())
+	// c.Core.Log.NewEventBuildMsg(glog.LogElementEvent, c.Index(), "Linnea C2 Lunar Crystallize attack triggered")
 	for _, delay := range []int{1, 4, 7} {
 		c.Core.Tasks.Add(func() { c.doSingleLCrAttack() }, delay)
 		if chance, ok := c.Core.Flags.Custom[reactable.LcrExtraHitOverride]; ok && c.Core.Rand.Float64() < chance {
@@ -213,7 +253,7 @@ func (c *char) c6Init() {
 		}
 	}, c6Key+"-direct")
 
-	c.Core.Events.Subscribe(event.OnLunarCrystallizeReactionAttack, func(args ...any) {
+	c.Core.Events.Subscribe(event.OnLunarReactionAttack, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
 		if atk.Info.AttackTag == attacks.AttackTagReactionLunarCrystallize {
 			atk.Info.Elevation += amt
@@ -258,14 +298,15 @@ func (c *char) doSingleLCrAttack() {
 
 		// Emit even so PreDamageMods can be applied to the individual LC contributions
 		// Is there a way to collect these attackMods to show in logs?
-		c.Core.Events.Emit(event.OnLunarCrystallizeReactionAttack, c.Core.Combat.PrimaryTarget(), &ae)
+		c.Core.Events.Emit(event.OnLunarReactionAttack, c.Core.Combat.PrimaryTarget(), &ae)
 
 		em := ae.Snapshot.Stats[attributes.EM]
 		cr := ae.Snapshot.Stats[attributes.CR]
 		cd := ae.Snapshot.Stats[attributes.CD]
 
 		react := char.ReactBonus(ae.Info)
-		flatdmg := combat.CalcLunarCrystallizeDmg(char.Base.Level, react, ae.Info, em)
+		base := (1 + ((6 * em) / (2000 + em)) + react) * combat.CalcReactionBaseDmg(char.Base.Level)
+		flatdmg := 0.96 * base
 		isCrit := false
 
 		if c.Core.Rand.Float64() <= cr {
@@ -293,8 +334,8 @@ func (c *char) doSingleLCrAttack() {
 	})
 
 	for i, contr := range contributions {
-		c.Core.Combat.Log.NewEvent(fmt.Sprint("lunarcrystallize contributor ", (i+1)), glog.LogElementEvent, contr.charInd).
-			Write("target", c.Core.Combat.PrimaryTarget()).
+		c.Core.Combat.Log.NewEventBuildMsg(glog.LogElementEvent, contr.charInd, "lunarcrystallize contributor ", fmt.Sprint(i+1)).
+			Write("target", c.Core.Combat.PrimaryTarget().Key()).
 			Write("damage", &contr.dmg).
 			Write("crit", &contr.isCrit).
 			Write("mult", lcrContributorMult[i]).
