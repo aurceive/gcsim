@@ -9,6 +9,8 @@ var SetNameToKey = map[string]keys.Set{
 	"archaicpetra":                       keys.ArchaicPetra,
 	"ap":                                 keys.ArchaicPetra,
 	"aubadeofmorningstarandmoon":         keys.AubadeOfMorningstarAndMoon,
+	"aubadeofmorningstar":                keys.AubadeOfMorningstarAndMoon,
+	"aubade":                             keys.AubadeOfMorningstarAndMoon,
 	"morningstar":                        keys.AubadeOfMorningstarAndMoon,
 	"berserker":                          keys.Berserker,
 	"blizzardstrayer":                    keys.BlizzardStrayer,

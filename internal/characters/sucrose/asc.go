@@ -93,7 +93,7 @@ func (c *char) a4() {
 		Write("expiry", c.Core.F+480)
 }
 
-func (c *char) hexereiInit() {
+func (c *char) hexInit() {
 	if !c.IsHexerei {
 		return
 	}
@@ -109,7 +109,7 @@ func (c *char) hexereiInit() {
 	c.hexereiBuffBurst[attributes.DmgP] = 0.0714285
 }
 
-func (c *char) hexereiOnSkill() {
+func (c *char) hexOnSkill() {
 	if !c.IsHexerei {
 		return
 	}
@@ -119,8 +119,9 @@ func (c *char) hexereiOnSkill() {
 	}
 
 	for _, char := range c.Core.Player.Chars() {
+		// TODO: Whose hitlag does this use?
 		char.AddAttackMod(character.AttackMod{
-			Base: modifier.NewBase("sucrose-hexerei-skill", -1),
+			Base: modifier.NewBaseWithHitlag("sucrose-hexerei-skill", 15*60),
 			Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 				switch atk.Info.AttackTag {
 				case attacks.AttackTagNormal,
@@ -139,7 +140,7 @@ func (c *char) hexereiOnSkill() {
 	}
 }
 
-func (c *char) hexereiOnBurst() {
+func (c *char) hexOnBurst() {
 	if !c.IsHexerei {
 		return
 	}
@@ -152,8 +153,9 @@ func (c *char) hexereiOnBurst() {
 		if !char.IsHexerei {
 			continue
 		}
+		// TODO: Whose hitlag does this use?
 		char.AddAttackMod(character.AttackMod{
-			Base: modifier.NewBase("sucrose-hexerei-burst", -1),
+			Base: modifier.NewBaseWithHitlag("sucrose-hexerei-burst", 20*60),
 			Amount: func(atk *info.AttackEvent, t info.Target) []float64 {
 				switch atk.Info.AttackTag {
 				case attacks.AttackTagNormal,

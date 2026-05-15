@@ -168,12 +168,14 @@ var weaponNames = []string{
 	"prototypecrescent",
 	"prototyperancour",
 	"prototypestarglitter",
+	"rainbowserpentbow",
 	"rainslasher",
 	"rangegauge",
 	"ravenbow",
 	"recurvebow",
 	"reliquaryoftruth",
 	"redhornstonethresher",
+	"reliquaryoftruth",
 	"rightfulreward",
 	"ringofyaxche",
 	"royalbow",
@@ -398,6 +400,7 @@ const (
 	PrototypeCrescent
 	PrototypeRancour
 	PrototypeStarglitter
+	RainbowSerpentBow
 	Rainslasher
 	RangeGauge
 	RavenBow

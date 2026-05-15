@@ -46,13 +46,12 @@ func (c *char) c6() {
 	stat := attributes.EleToDmgP(c.qAbsorb)
 
 	for _, char := range c.Core.Player.Chars() {
-		currentChar := char
 		char.AddStatMod(character.StatMod{
 			Base:         modifier.NewBaseWithHitlag("sucrose-c6", 60*10),
 			AffectedStat: stat,
 			Amount: func() []float64 {
 				c.c6buff[stat] = .20
-				if currentChar.IsHexerei {
+				if char.IsHexerei {
 					c.c6buff[stat] += 0.0857142
 				}
 				return c.c6buff

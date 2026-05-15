@@ -11,7 +11,11 @@ import (
 	"github.com/genshinsim/gcsim/pkg/modifier"
 )
 
-const a4IcdKey = "fischl-a4-icd"
+const (
+	a4IcdKey   = "fischl-a4-icd"
+	hexAtkpKey = "fischl-hexerei-atkp"
+	hexEMKey   = "fischl-hexerei-em"
+)
 
 // A1 is not implemented:
 // TODO: When Fischl hits Oz with a fully-charged Aimed Shot, Oz brings down Thundering Retribution, dealing AoE Electro DMG equal to 152.7% of the arrow's DMG.
@@ -77,7 +81,7 @@ func (c *char) a4() {
 	c.Core.Events.Subscribe(event.OnAggravate, a4cbNoGadget, "fischl-a4")
 }
 
-func (c *char) hexereiInit() {
+func (c *char) hexInit() {
 	if !c.IsHexerei {
 		return
 	}
@@ -86,86 +90,85 @@ func (c *char) hexereiInit() {
 		return
 	}
 
-	applyAtkP := func() {
-		for _, target := range c.Core.Player.Chars() {
-			bonus := make([]float64, attributes.EndStatType)
-			if target.Index() == c.Index() {
-				target.AddStatMod(character.StatMod{
-					Base:         modifier.NewBase("fischl-hexerei-atkp", 10*60),
-					AffectedStat: attributes.ATKP,
-					Amount: func() []float64 {
-						bonus[attributes.ATKP] = 0.225 * c.c6HexereiBonus()
-						return bonus
-					},
-				})
-				continue
-			}
+	mAtkp := make([]float64, attributes.EndStatType)
+	mAtkp[attributes.ATKP] = 0.225
+	mEM := make([]float64, attributes.EndStatType)
+	mEM[attributes.EM] = 90
 
-			currentTarget := target
-			target.AddStatMod(character.StatMod{
-				Base:         modifier.NewBase("fischl-hexerei-atkp", 10*60),
-				AffectedStat: attributes.ATKP,
-				Amount: func() []float64 {
-					if c.Core.Player.Active() != currentTarget.Index() {
-						return nil
-					}
-					bonus[attributes.ATKP] = 0.225 * c.c6HexereiBonus()
-					return bonus
-				},
-			})
+	for _, other := range c.Core.Player.Chars() {
+		if other.Index() == c.Index() {
+			continue
 		}
+
+		other.AddStatMod(character.StatMod{
+			Base:         modifier.NewBase(hexAtkpKey, -1),
+			AffectedStat: attributes.ATKP,
+			Amount: func() []float64 {
+				if c.Core.Player.Active() != other.Index() {
+					return nil
+				}
+				if !c.StatModIsActive(hexAtkpKey) {
+					return nil
+				}
+				mAtkp[attributes.ATKP] = 0.225 * (1 + c.c6HexBonus())
+				return mAtkp
+			},
+		})
+
+		other.AddStatMod(character.StatMod{
+			Base:         modifier.NewBase(hexEMKey, -1),
+			AffectedStat: attributes.EM,
+			Amount: func() []float64 {
+				if c.Core.Player.Active() != other.Index() {
+					return nil
+				}
+				if !c.StatModIsActive(hexEMKey) {
+					return nil
+				}
+				mEM[attributes.EM] = 90 * (1 + c.c6HexBonus())
+				return mEM
+			},
+		})
 	}
 
-	applyEM := func() {
-		for _, target := range c.Core.Player.Chars() {
-			bonus := make([]float64, attributes.EndStatType)
-			if target.Index() == c.Index() {
-				target.AddStatMod(character.StatMod{
-					Base:         modifier.NewBase("fischl-hexerei-em", 10*60),
-					AffectedStat: attributes.EM,
-					Amount: func() []float64 {
-						bonus[attributes.EM] = 90 * c.c6HexereiBonus()
-						return bonus
-					},
-				})
-				continue
-			}
-
-			currentTarget := target
-			target.AddStatMod(character.StatMod{
-				Base:         modifier.NewBase("fischl-hexerei-em", 10*60),
-				AffectedStat: attributes.EM,
-				Amount: func() []float64 {
-					if c.Core.Player.Active() != currentTarget.Index() {
-						return nil
-					}
-					bonus[attributes.EM] = 90 * c.c6HexereiBonus()
-					return bonus
-				},
-			})
-		}
-	}
-
-	c.Core.Events.Subscribe(event.OnOverload, func(args ...any) {
+	atkpHook := func(args ...any) {
 		if _, ok := args[0].(*enemy.Enemy); !ok {
 			return
 		}
+		// do nothing if oz not on field
 		if !c.StatusIsActive(ozActiveKey) {
 			return
 		}
-		applyAtkP()
-	}, "fischl-hexerei-ol")
 
-	emStatMod := func(args ...any) {
+		c.AddStatMod(character.StatMod{
+			Base:         modifier.NewBaseWithHitlag(hexAtkpKey, 10*60),
+			AffectedStat: attributes.ATKP,
+			Amount: func() []float64 {
+				mAtkp[attributes.ATKP] = 0.225 * (1 + c.c6HexBonus())
+				return mAtkp
+			},
+		})
+	}
+	emHook := func(args ...any) {
 		if _, ok := args[0].(*enemy.Enemy); !ok {
 			return
 		}
+		// do nothing if oz not on field
 		if !c.StatusIsActive(ozActiveKey) {
 			return
 		}
-		applyEM()
+
+		c.AddStatMod(character.StatMod{
+			Base:         modifier.NewBaseWithHitlag(hexEMKey, 10*60),
+			AffectedStat: attributes.EM,
+			Amount: func() []float64 {
+				mEM[attributes.EM] = 90 * (1 + c.c6HexBonus())
+				return mEM
+			},
+		})
 	}
 
-	c.Core.Events.Subscribe(event.OnElectroCharged, emStatMod, "fischl-hexerei-ec")
-	c.Core.Events.Subscribe(event.OnLunarCharged, emStatMod, "fischl-hexerei-lc")
+	c.Core.Events.Subscribe(event.OnOverload, atkpHook, "fischl-hex-ol")
+	c.Core.Events.Subscribe(event.OnElectroCharged, emHook, "fischl-hex-ec")
+	c.Core.Events.Subscribe(event.OnLunarCharged, emHook, "fischl-hex-lc")
 }
