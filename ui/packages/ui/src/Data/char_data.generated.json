@@ -584,6 +584,23 @@
       },
       "name_text_hash_map ": "388272194"
     },
+    "durin": {
+      "id": 10000123,
+      "key": "durin",
+      "rarity": "QUALITY_ORANGE",
+      "body": "BODY_BOY",
+      "region": "ASSOC_TYPE_MONDSTADT",
+      "element": "Fire",
+      "weapon_class": "WEAPON_SWORD_ONE_HAND",
+      "icon_name": "UI_AvatarIcon_Durin",
+      "skill_details": {
+        "skill": 11232,
+        "burst": 11235,
+        "attack": 11231,
+        "burst_energy_cost": 70
+      },
+      "name_text_hash_map ": "2801077538"
+    },
     "emilie": {
       "id": 10000099,
       "key": "emilie",
@@ -804,6 +821,40 @@
         "burst_energy_cost": 60
       },
       "name_text_hash_map ": "1940919482"
+    },
+    "iansan": {
+      "id": 10000110,
+      "key": "iansan",
+      "rarity": "QUALITY_PURPLE",
+      "body": "BODY_LOLI",
+      "region": "ASSOC_TYPE_NATLAN",
+      "element": "Electric",
+      "weapon_class": "WEAPON_POLE",
+      "icon_name": "UI_AvatarIcon_Iansan",
+      "skill_details": {
+        "skill": 11102,
+        "burst": 11105,
+        "attack": 11101,
+        "burst_energy_cost": 70
+      },
+      "name_text_hash_map ": "3120492514"
+    },
+    "illuga": {
+      "id": 10000127,
+      "key": "illuga",
+      "rarity": "QUALITY_PURPLE",
+      "body": "BODY_BOY",
+      "region": "ASSOC_TYPE_NODKRAI",
+      "element": "Rock",
+      "weapon_class": "WEAPON_POLE",
+      "icon_name": "UI_AvatarIcon_Illuga",
+      "skill_details": {
+        "skill": 11272,
+        "burst": 11275,
+        "attack": 11271,
+        "burst_energy_cost": 60
+      },
+      "name_text_hash_map ": "102656986"
     },
     "ineffa": {
       "id": 10000116,
@@ -1947,6 +1998,23 @@
         "burst_energy_cost": 40
       },
       "name_text_hash_map ": "3862787418"
+    },
+    "zibai": {
+      "id": 10000126,
+      "key": "zibai",
+      "rarity": "QUALITY_ORANGE",
+      "body": "BODY_LADY",
+      "region": "ASSOC_TYPE_NODKRAI",
+      "element": "Rock",
+      "weapon_class": "WEAPON_SWORD_ONE_HAND",
+      "icon_name": "UI_AvatarIcon_Zibai",
+      "skill_details": {
+        "skill": 11262,
+        "burst": 11265,
+        "attack": 11261,
+        "burst_energy_cost": 60
+      },
+      "name_text_hash_map ": "937533090"
     }
   }
 }
