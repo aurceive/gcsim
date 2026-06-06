@@ -77,6 +77,7 @@ var WeaponNameToKey = map[string]keys.Weapon{
 	"debateclub":                      keys.DebateClub,
 	"dialoguesofthedesertsages":       keys.DialoguesOfTheDesertSages,
 	"dialogues":                       keys.DialoguesOfTheDesertSages,
+	"disasterandremorse":              keys.DisasterAndRemorse,
 	"dodocotales":                     keys.DodocoTales,
 	"dragonsbane":                     keys.DragonsBane,
 	"dbane":                           keys.DragonsBane,

@@ -77,6 +77,7 @@ var weaponNames = []string{
 	"deathmatch",
 	"debateclub",
 	"dialoguesofthedesertsages",
+	"disasterandremorse",
 	"dodocotales",
 	"dragonsbane",
 	"dragonspinespear",
@@ -310,6 +311,7 @@ const (
 	Deathmatch
 	DebateClub
 	DialoguesOfTheDesertSages
+	DisasterAndRemorse
 	DodocoTales
 	DragonsBane
 	DragonspineSpear
