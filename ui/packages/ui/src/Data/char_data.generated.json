@@ -1111,6 +1111,16 @@
       },
       "name_text_hash_map ": "2889777514"
     },
+    "linnea": {
+      "id": 10000130,
+      "key": "linnea",
+      "rarity": "QUALITY_ORANGE",
+      "body": "BODY_GIRL",
+      "region": "ASSOC_TYPE_NODKRAI",
+      "element": "Rock",
+      "weapon_class": "WEAPON_BOW",
+      "icon_name": "UI_AvatarIcon_Linnea"
+    },
     "lisa": {
       "id": 10000006,
       "key": "lisa",
@@ -1127,6 +1137,23 @@
         "burst_energy_cost": 80
       },
       "name_text_hash_map ": "3344622722"
+    },
+    "lohen": {
+      "id": 10000129,
+      "key": "lohen",
+      "rarity": "QUALITY_ORANGE",
+      "body": "BODY_BOY",
+      "region": "ASSOC_TYPE_MONDSTADT",
+      "element": "Ice",
+      "weapon_class": "WEAPON_POLE",
+      "icon_name": "UI_AvatarIcon_Lohen",
+      "skill_details": {
+        "skill": 11122,
+        "burst": 11125,
+        "attack": 11121,
+        "burst_energy_cost": 60
+      },
+      "name_text_hash_map ": "4035850498"
     },
     "lumineanemo": {
       "id": 10000007,
@@ -1404,6 +1431,23 @@
         "burst_energy_cost": 70
       },
       "name_text_hash_map ": "1504902330"
+    },
+    "nicole": {
+      "id": 10000131,
+      "key": "nicole",
+      "rarity": "QUALITY_ORANGE",
+      "body": "BODY_LADY",
+      "region": "ASSOC_TYPE_MONDSTADT",
+      "element": "Fire",
+      "weapon_class": "WEAPON_CLAYMORE",
+      "icon_name": "UI_AvatarIcon_Nicole",
+      "skill_details": {
+        "skill": 11062,
+        "burst": 11065,
+        "attack": 11061,
+        "burst_energy_cost": 60
+      },
+      "name_text_hash_map ": "113398050"
     },
     "nilou": {
       "id": 10000070,
