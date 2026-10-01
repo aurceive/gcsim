@@ -50,7 +50,7 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		partyChar.AddReactBonusMod(character.ReactBonusMod{
 			Base: modifier.NewBase("breezeborne-refrain-stellar", -1),
 			Amount: func(ai info.AttackInfo) float64 {
-				if !char.StatusIsActive(buffKey) || !attacks.AttackTagIsStellar(ai.AttackTag) {
+				if !char.StatusIsActive(buffKey) || !isStellarReaction(ai.AttackTag) {
 					return 0
 				}
 				return stellarBonus
@@ -81,4 +81,15 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	}, fmt.Sprintf("breezeborne-refrain-%v", char.Base.Key.String()))
 
 	return w, nil
+}
+
+func isStellarReaction(tag attacks.AttackTag) bool {
+	switch tag {
+	case attacks.AttackTagDirectStellarConduct,
+		attacks.AttackTagDirectStellarSwirl,
+		attacks.AttackTagReactionStellarSwirl:
+		return true
+	default:
+		return false
+	}
 }
