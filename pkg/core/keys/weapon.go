@@ -52,6 +52,7 @@ var weaponNames = []string{
 	"balladofthefjords",
 	"beaconofthereedsea",
 	"beginnersprotector",
+	"beyondthechrysalis",
 	"blackcliffagate",
 	"blackclifflongsword",
 	"blackcliffpole",
@@ -61,11 +62,13 @@ var weaponNames = []string{
 	"blacktassel",
 	"bloodsoakedruins",
 	"bloodtaintedgreatsword",
+	"breezebornerefrain",
 	"calamityofeshu",
 	"calamityqueller",
 	"cashflowsupervision",
 	"chainbreaker",
 	"cinnabarspindle",
+	"clashofkings",
 	"cloudforged",
 	"compoundbow",
 	"coolsteel",
@@ -82,7 +85,9 @@ var weaponNames = []string{
 	"dragonspinespear",
 	"dullblade",
 	"earthshaker",
+	"echoesoftheheart",
 	"elegyfortheend",
+	"emberwell",
 	"emeraldorb",
 	"endoftheline",
 	"engulfinglightning",
@@ -118,8 +123,10 @@ var weaponNames = []string{
 	"hamayumi",
 	"harangeppakufutsu",
 	"harbingerofdawn",
+	"hereticsmoltenblade",
 	"huntersbow",
 	"hunterspath",
+	"hymnofthemaelstrom",
 	"ibispiercer",
 	"ironpoint",
 	"ironsting",
@@ -151,6 +158,7 @@ var weaponNames = []string{
 	"moonweaversdawn",
 	"mountainbracingbolt",
 	"mouunsmoon",
+	"newbough",
 	"nightweaverslookingglass",
 	"nocturnescurtaincall",
 	"oathsworneye",
@@ -198,6 +206,7 @@ var weaponNames = []string{
 	"serenityscall",
 	"serpentspine",
 	"sharpshootersoath",
+	"silverlight",
 	"silvershowerheartstrings",
 	"silversword",
 	"skyridergreatsword",
@@ -256,9 +265,11 @@ var weaponNames = []string{
 	"waveridingwhirl",
 	"whiteblind",
 	"whiteirongreatsword",
+	"whitelakefrostfeather",
 	"whitetassel",
 	"windblumeode",
 	"wineandsong",
+	"wintersheavyheart",
 	"wolffang",
 	"wolfsgravestone",
 	"xiphosmoonlight",
@@ -285,6 +296,7 @@ const (
 	BalladOfTheFjords
 	BeaconOfTheReedSea
 	BeginnersProtector
+	BeyondTheChrysalis
 	BlackcliffAgate
 	BlackcliffLongsword
 	BlackcliffPole
@@ -294,11 +306,13 @@ const (
 	BlackTassel
 	BloodsoakedRuins
 	BloodtaintedGreatsword
+	BreezeborneRefrain
 	CalamityOfEshu
 	CalamityQueller
 	CashflowSupervision
 	ChainBreaker
 	CinnabarSpindle
+	ClashOfKings
 	Cloudforged
 	CompoundBow
 	CoolSteel
@@ -315,7 +329,9 @@ const (
 	DragonspineSpear
 	DullBlade
 	EarthShaker
+	EchoesOfTheHeart
 	ElegyForTheEnd
+	Emberwell
 	EmeraldOrb
 	EndOfTheLine
 	EngulfingLightning
@@ -351,8 +367,10 @@ const (
 	Hamayumi
 	HaranGeppakuFutsu
 	HarbingerOfDawn
+	HereticsMoltenBlade
 	HuntersBow
 	HuntersPath
+	HymnOfTheMaelstrom
 	IbisPiercer
 	IronPoint
 	IronSting
@@ -384,6 +402,7 @@ const (
 	MoonweaversDawn
 	MountainBracingBolt
 	MouunsMoon
+	NewBough
 	NightweaversLookingGlass
 	NocturnesCurtainCall
 	OathswornEye
@@ -431,6 +450,7 @@ const (
 	SerenitysCall
 	SerpentSpine
 	SharpshootersOath
+	SilverLight
 	SilvershowerHeartstrings
 	SilverSword
 	SkyriderGreatsword
@@ -489,9 +509,11 @@ const (
 	WaveridingWhirl
 	Whiteblind
 	WhiteIronGreatsword
+	WhitelakeFrostfeather
 	WhiteTassel
 	WindblumeOde
 	WineAndSong
+	WintersHeavyHeart
 	WolfFang
 	WolfsGravestone
 	XiphosMoonlight

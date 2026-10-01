@@ -152,6 +152,13 @@
       "image_name": "UI_EquipIcon_Pole_Gewalt",
       "name_text_hash_map ": "2796697027"
     },
+    "beyondthechrysalis": {
+      "id": 11522,
+      "key": "beyondthechrysalis",
+      "rarity": 5,
+      "weapon_class": "WEAPON_SWORD_ONE_HAND",
+      "image_name": "UI_EquipIcon_Sword_Samosvist"
+    },
     "blackcliffagate": {
       "id": 14408,
       "key": "blackcliffagate",
@@ -224,6 +231,13 @@
       "image_name": "UI_EquipIcon_Claymore_Siegfry",
       "name_text_hash_map ": "4090429643"
     },
+    "breezebornerefrain": {
+      "id": 15437,
+      "key": "breezebornerefrain",
+      "rarity": 4,
+      "weapon_class": "WEAPON_BOW",
+      "image_name": "UI_EquipIcon_Bow_Windtalker"
+    },
     "calamityofeshu": {
       "id": 11432,
       "key": "calamityofeshu",
@@ -263,6 +277,14 @@
       "weapon_class": "WEAPON_SWORD_ONE_HAND",
       "image_name": "UI_EquipIcon_Sword_Opus",
       "name_text_hash_map ": "342097035"
+    },
+    "clashofkings": {
+      "id": 14435,
+      "key": "clashofkings",
+      "rarity": 4,
+      "weapon_class": "WEAPON_CATALYST",
+      "image_name": "UI_EquipIcon_Catalyst_Arrowsmith",
+      "name_text_hash_map ": "3497154619"
     },
     "cloudforged": {
       "id": 15426,
@@ -392,6 +414,14 @@
       "image_name": "UI_EquipIcon_Claymore_Isikhulu",
       "name_text_hash_map ": "2481463563"
     },
+    "echoesoftheheart": {
+      "id": 14436,
+      "key": "echoesoftheheart",
+      "rarity": 4,
+      "weapon_class": "WEAPON_CATALYST",
+      "image_name": "UI_EquipIcon_Catalyst_Arrowsmith",
+      "name_text_hash_map ": "3497154619"
+    },
     "elegyfortheend": {
       "id": 15503,
       "key": "elegyfortheend",
@@ -399,6 +429,13 @@
       "weapon_class": "WEAPON_BOW",
       "image_name": "UI_EquipIcon_Bow_Widsith",
       "name_text_hash_map ": "3112678643"
+    },
+    "emberwell": {
+      "id": 11436,
+      "key": "emberwell",
+      "rarity": 4,
+      "weapon_class": "WEAPON_SWORD_ONE_HAND",
+      "image_name": "UI_EquipIcon_Sword_GlintstoneSword"
     },
     "emeraldorb": {
       "id": 14304,
@@ -672,6 +709,13 @@
       "image_name": "UI_EquipIcon_Sword_Dawn",
       "name_text_hash_map ": "1608953027"
     },
+    "hereticsmoltenblade": {
+      "id": 11435,
+      "key": "hereticsmoltenblade",
+      "rarity": 4,
+      "weapon_class": "WEAPON_SWORD_ONE_HAND",
+      "image_name": "UI_EquipIcon_Sword_SerpentTooth"
+    },
     "huntersbow": {
       "id": 15101,
       "key": "huntersbow",
@@ -687,6 +731,14 @@
       "weapon_class": "WEAPON_BOW",
       "image_name": "UI_EquipIcon_Bow_Ayus",
       "name_text_hash_map ": "1348687251"
+    },
+    "hymnofthemaelstrom": {
+      "id": 14524,
+      "key": "hymnofthemaelstrom",
+      "rarity": 5,
+      "weapon_class": "WEAPON_CATALYST",
+      "image_name": "UI_EquipIcon_Catalyst_Arrowsmith",
+      "name_text_hash_map ": "3497154619"
     },
     "ibispiercer": {
       "id": 15419,
@@ -935,6 +987,13 @@
       "weapon_class": "WEAPON_BOW",
       "image_name": "UI_EquipIcon_Bow_Maria",
       "name_text_hash_map ": "1860795787"
+    },
+    "newbough": {
+      "id": 11437,
+      "key": "newbough",
+      "rarity": 4,
+      "weapon_class": "WEAPON_SWORD_ONE_HAND",
+      "image_name": "UI_EquipIcon_Sword_SpikedStake"
     },
     "nightweaverslookingglass": {
       "id": 14520,
@@ -1311,6 +1370,13 @@
       "weapon_class": "WEAPON_BOW",
       "image_name": "UI_EquipIcon_Bow_Arjuna",
       "name_text_hash_map ": "656120259"
+    },
+    "silverlight": {
+      "id": 11438,
+      "key": "silverlight",
+      "rarity": 4,
+      "weapon_class": "WEAPON_SWORD_ONE_HAND",
+      "image_name": "UI_EquipIcon_Sword_Fajian"
     },
     "silvershowerheartstrings": {
       "id": 15513,
@@ -1776,6 +1842,14 @@
       "image_name": "UI_EquipIcon_Claymore_Tin",
       "name_text_hash_map ": "850802171"
     },
+    "whitelakefrostfeather": {
+      "id": 11520,
+      "key": "whitelakefrostfeather",
+      "rarity": 5,
+      "weapon_class": "WEAPON_SWORD_ONE_HAND",
+      "image_name": "UI_EquipIcon_Sword_Swanlake",
+      "name_text_hash_map ": "3497154619"
+    },
     "whitetassel": {
       "id": 13301,
       "key": "whitetassel",
@@ -1799,6 +1873,14 @@
       "weapon_class": "WEAPON_CATALYST",
       "image_name": "UI_EquipIcon_Catalyst_Outlaw",
       "name_text_hash_map ": "3090373787"
+    },
+    "wintersheavyheart": {
+      "id": 14437,
+      "key": "wintersheavyheart",
+      "rarity": 4,
+      "weapon_class": "WEAPON_CATALYST",
+      "image_name": "UI_EquipIcon_Catalyst_Arrowsmith",
+      "name_text_hash_map ": "3497154619"
     },
     "wolffang": {
       "id": 11424,
