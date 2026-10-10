@@ -13,6 +13,10 @@ import (
 	"github.com/genshinsim/gcsim/pkg/modifier"
 )
 
+// Grants 20%-40% Energy Recharge. Elemental Skill or Burst hits build up to
+// 3 stacks, once every 0.03s; at 3 stacks, they are consumed to grant nearby
+// party members 24%-48% Stellar Glimmer reaction DMG for 12s. No stacks can be
+// gained while this buff is active, and both effects work off-field.
 const (
 	stackICDKey = "breezeborne-refrain-stack-icd"
 	buffKey     = "breezeborne-refrain-buff"

@@ -12,6 +12,9 @@ import (
 	"github.com/genshinsim/gcsim/pkg/modifier"
 )
 
+// Triggering an Elemental Reaction grants 64-128 EM for 12s; a Stellar Glimmer
+// reaction also grants 16%-32% ATK for 12s. Both effects refresh, not stack,
+// and can trigger while the equipping character is off-field.
 func init() {
 	core.RegisterWeaponFunc(keys.BladeOfAtonement, NewWeapon)
 }
@@ -23,9 +26,6 @@ type Weapon struct {
 func (w *Weapon) SetIndex(idx int) { w.Index = idx }
 func (w *Weapon) Init() error      { return nil }
 
-// Triggering an Elemental Reaction grants 64-128 EM for 12s; a Stellar Glimmer
-// reaction also grants 16%-32% ATK for 12s. Both effects refresh, not stack,
-// and can trigger while the equipping character is off-field.
 func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) (info.Weapon, error) {
 	emBonus := make([]float64, attributes.EndStatType)
 	emBonus[attributes.EM] = float64(48 + 16*p.Refine)

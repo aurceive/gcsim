@@ -9,6 +9,8 @@ import (
 	"github.com/genshinsim/gcsim/pkg/modifier"
 )
 
+// Jade Vista grants 64-128 EM per same-element party member and 12%-24% ATK
+// per different-element party member, up to 3 total stacks. EM stacks take priority.
 func init() {
 	core.RegisterWeaponFunc(keys.JadeVista, NewWeapon)
 }
@@ -61,8 +63,6 @@ func stackCounts(sameElement, differentElement int) (int, int) {
 	return sameStacks, differentStacks
 }
 
-// Jade Vista grants 64-128 EM per same-element party member and 12%-24% ATK
-// per different-element party member, up to 3 total stacks. EM stacks take priority.
 func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) (info.Weapon, error) {
 	return &Weapon{
 		refine: p.Refine,

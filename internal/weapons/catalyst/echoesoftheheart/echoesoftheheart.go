@@ -13,6 +13,9 @@ import (
 	"github.com/genshinsim/gcsim/pkg/modifier"
 )
 
+// Triggering an Elemental Reaction grants 60-120 EM for 12s. Triggering a
+// Stellar Glimmer reaction also grants 16%-32% Stellar Glimmer reaction DMG
+// for 12s. Both effects work while the equipping character is off-field.
 func init() {
 	core.RegisterWeaponFunc(keys.EchoesOfTheHeart, NewWeapon)
 }
@@ -24,15 +27,13 @@ type Weapon struct {
 func (w *Weapon) SetIndex(idx int) { w.Index = idx }
 func (w *Weapon) Init() error      { return nil }
 
-// When the equipping character's Elemental Skill hits an opponent, they gain
-// a buff that increases ATK by 16%/20%/24%/28%/32% for 8s. Also increases the
-// reaction damage bonus for Stellar Glimmer-related reactions.
 func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) (info.Weapon, error) {
 	w := &Weapon{}
 	r := p.Refine
 
 	em := make([]float64, attributes.EndStatType)
-	em[attributes.EM] = 30 + float64(r)*15
+	emGain, reactionBonus := passiveBonuses(r)
+	em[attributes.EM] = emGain
 	const (
 		emKey    = "echoes-of-the-heart-em"
 		reactKey = "echoes-of-the-heart-react-status"
@@ -69,11 +70,15 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 			case attacks.AttackTagDirectStellarConduct,
 				attacks.AttackTagDirectStellarSwirl,
 				attacks.AttackTagReactionStellarSwirl:
-				return 0.12 + float64(r)*0.04
+				return reactionBonus
 			default:
 				return 0
 			}
 		},
 	})
 	return w, nil
+}
+
+func passiveBonuses(refine int) (float64, float64) {
+	return float64(45 + refine*15), 0.12 + float64(refine)*0.04
 }

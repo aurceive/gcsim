@@ -13,6 +13,11 @@ import (
 	"github.com/genshinsim/gcsim/pkg/modifier"
 )
 
+// Every 10s, the equipping character cycles through 18%-36% ATK, 120-240 EM,
+// and 28%-56% Stellar Glimmer reaction DMG, each lasting 10s. Triggering a
+// Stellar Glimmer reaction grants a separate 12s copy of the current buff, once
+// every 12s; this copy stacks with the current buff. Both effects can trigger
+// while the equipping character is off-field.
 const (
 	weaponKey     = "golden-melody"
 	atkBuffSuffix = "-atk"
@@ -37,11 +42,6 @@ type Weapon struct {
 func (w *Weapon) SetIndex(idx int) { w.Index = idx }
 func (w *Weapon) Init() error      { return nil }
 
-// Every 10s, the equipping character cycles through 18%-36% ATK, 120-240 EM,
-// and 28%-56% Stellar Glimmer reaction DMG, each lasting 10s. Triggering a
-// Stellar Glimmer reaction grants a separate 12s copy of the current buff, once
-// every 12s; this copy stacks with the current buff. Both effects can trigger
-// while the equipping character is off-field.
 func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) (info.Weapon, error) {
 	w := &Weapon{
 		char:     char,
@@ -97,7 +97,7 @@ func (w *Weapon) applyBuff(contrapuntal bool, duration int) {
 		w.char.AddReactBonusMod(character.ReactBonusMod{
 			Base: modifier.NewBaseWithHitlag(weaponKey+middle+stellarSuffix, duration),
 			Amount: func(ai info.AttackInfo) float64 {
-				if attacks.AttackTagIsStellar(ai.AttackTag) {
+				if isStellarDamageTag(ai.AttackTag) {
 					return w.stellarBuff
 				}
 				return 0
@@ -114,6 +114,10 @@ func (w *Weapon) applyBuff(contrapuntal bool, duration int) {
 	default:
 		panic(fmt.Sprintf("golden melody: unknown buff type: %v", w.curBuff))
 	}
+}
+
+func isStellarDamageTag(tag attacks.AttackTag) bool {
+	return attacks.AttackTagIsStellar(tag) || tag == attacks.AttackTagReactionStellarSwirl
 }
 
 type BuffType int

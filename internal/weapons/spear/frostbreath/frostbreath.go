@@ -10,6 +10,10 @@ import (
 	"github.com/genshinsim/gcsim/pkg/modifier"
 )
 
+// Triggering a Cryo- or Hydro-related reaction grants the equipping character
+// 20%-40% ATK for 15s and restores 6-12 Energy to the other party members.
+// The effect can trigger once every 16s, including while the equipping character
+// is off-field.
 const (
 	buffKey    = "frostbreath-atk"
 	energyKey  = "frostbreath-energy"
@@ -82,10 +86,6 @@ func (w *Weapon) Init() error {
 	return nil
 }
 
-// Triggering a Cryo- or Hydro-related reaction grants the equipping character
-// 20%-40% ATK for 15s and restores 6-12 Energy to the other party members.
-// The effect can trigger once every 16s, including while the equipping character
-// is off-field.
 func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) (info.Weapon, error) {
 	return &Weapon{
 		char:   char,

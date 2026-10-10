@@ -12,6 +12,8 @@ import (
 	"github.com/genshinsim/gcsim/pkg/modifier"
 )
 
+// Elemental Skill use grants 52/65/78/91/104 EM for 12s, up to 2 stacks.
+// Each stack has an independent duration.
 const stackGainICDKey = "silver-light-stack-icd"
 
 func init() {

@@ -7,15 +7,24 @@ import (
 	"github.com/genshinsim/gcsim/pkg/core/attacks"
 	"github.com/genshinsim/gcsim/pkg/core/attributes"
 	"github.com/genshinsim/gcsim/pkg/core/event"
+	"github.com/genshinsim/gcsim/pkg/core/hacks"
 	"github.com/genshinsim/gcsim/pkg/core/info"
 	"github.com/genshinsim/gcsim/pkg/core/keys"
 	"github.com/genshinsim/gcsim/pkg/core/player/character"
+	"github.com/genshinsim/gcsim/pkg/enemy"
 	"github.com/genshinsim/gcsim/pkg/modifier"
+	"github.com/genshinsim/gcsim/pkg/reactable"
 )
 
+// Hitting an opponent within 12s after using an Elemental Skill grants a 6s
+// Verdant stack, once per second, up to 3 stacks. Normally, each stack grants
+// 4%-8% ATK and 20-40 EM. While Radiance: Stellar Glimmer (Stellar Conduct or
+// Stellar Swirl) is active, each instead grants 6%-12% ATK and 8%-16% Stellar
+// Glimmer reaction DMG. Hits can trigger while off-field.
 const (
-	skillWindowKey = "new-bough-skill-window"
-	stackICDKey    = "new-bough-stack-icd"
+	skillWindowKey   = "new-bough-skill-window"
+	stackICDKey      = "new-bough-stack-icd"
+	radianceSwirlKey = "radiance-stellar-swirl"
 )
 
 func init() {
@@ -31,9 +40,6 @@ func (w *Weapon) Init() error      { return nil }
 
 func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) (info.Weapon, error) {
 	w := &Weapon{}
-	r := float64(p.Refine)
-	atkPerStack := 0.045 + 0.015*r
-	reactionPerStack := 0.06 + 0.02*r
 	stackKeys := []string{
 		"new-bough-verdant-1",
 		"new-bough-verdant-2",
@@ -54,11 +60,28 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		Base:         modifier.NewBase("new-bough-atk", -1),
 		AffectedStat: attributes.ATKP,
 		Amount: func() []float64 {
+			atkPerStack, _, _ := stackBonuses(p.Refine, stellarGlimmerActive(char))
 			atk[attributes.ATKP] = atkPerStack * float64(stackCount())
 			if atk[attributes.ATKP] == 0 {
 				return nil
 			}
 			return atk
+		},
+	})
+	em := make([]float64, attributes.EndStatType)
+	char.AddStatMod(character.StatMod{
+		Base:         modifier.NewBase("new-bough-em", -1),
+		AffectedStat: attributes.EM,
+		Amount: func() []float64 {
+			_, emPerStack, _ := stackBonuses(p.Refine, stellarGlimmerActive(char))
+			if emPerStack == 0 {
+				return nil
+			}
+			em[attributes.EM] = emPerStack * float64(stackCount())
+			if em[attributes.EM] == 0 {
+				return nil
+			}
+			return em
 		},
 	})
 	char.AddReactBonusMod(character.ReactBonusMod{
@@ -67,6 +90,7 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 			if stackCount() == 0 {
 				return 0
 			}
+			_, _, reactionPerStack := stackBonuses(p.Refine, stellarGlimmerActive(char))
 			switch ai.AttackTag {
 			case attacks.AttackTagDirectStellarConduct,
 				attacks.AttackTagDirectStellarSwirl,
@@ -111,5 +135,29 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		char.AddStatus(stackICDKey, 60, true)
 	}, fmt.Sprintf("new-bough-hit-%v", char.Base.Key.String()))
 
+	c.Events.Subscribe(event.OnStellarSwirl, func(args ...any) {
+		if _, ok := args[0].(*enemy.Enemy); !ok {
+			return
+		}
+		char.AddStatus(radianceSwirlKey, hacks.StellarSwirlDur(c), false)
+	}, fmt.Sprintf("new-bough-radiance-%v", char.Base.Key.String()))
+
 	return w, nil
+}
+
+func stellarGlimmerActive(char *character.CharWrapper) bool {
+	return char.StatusIsActive(reactable.PolestarFieldKey) ||
+		char.StatusIsActive(radianceSwirlKey)
+}
+
+func stackBonuses(refine int, stellarGlimmer bool) (float64, float64, float64) {
+	atk := 0.03 + 0.01*float64(refine)
+	em := float64(15 + 5*refine)
+	reaction := 0.0
+	if stellarGlimmer {
+		atk = 0.045 + 0.015*float64(refine)
+		em = 0
+		reaction = 0.06 + 0.02*float64(refine)
+	}
+	return atk, em, reaction
 }

@@ -11,6 +11,9 @@ import (
 	"github.com/genshinsim/gcsim/pkg/modifier"
 )
 
+// Triggering an Elemental Reaction grants 16%-32% ATK for 12s. Triggering a
+// Stellar Glimmer reaction also grants 16%-32% Stellar Glimmer reaction DMG
+// for 12s. Both effects can trigger while the equipping character is off-field.
 func init() {
 	core.RegisterWeaponFunc(keys.Emberwell, NewWeapon)
 }

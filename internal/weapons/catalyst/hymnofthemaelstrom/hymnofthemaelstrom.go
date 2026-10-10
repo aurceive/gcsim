@@ -12,6 +12,12 @@ import (
 	"github.com/genshinsim/gcsim/pkg/modifier"
 )
 
+// Grants 4%-12% Healing Bonus. Healing grants up to 3 stacks for 10s, each
+// adding 4%-12% Max HP and 0.4%-1.2% ATK per 1,000 of the equipping character's
+// Max HP above 40,000 (up to 8%-16% ATK per stack) to the active party member.
+// A nearby party member triggering Frozen or Stellar Swirl boosts the HP and
+// ATK effects by 75% for 5s.
+// These effects can trigger while the equipping character is off-field.
 func init() {
 	core.RegisterWeaponFunc(keys.HymnOfTheMaelstrom, NewWeapon)
 }

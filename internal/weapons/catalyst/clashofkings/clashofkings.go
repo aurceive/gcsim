@@ -13,6 +13,9 @@ import (
 	"github.com/genshinsim/gcsim/pkg/modifier"
 )
 
+// Using an Elemental Skill grants 20%-40% ATK and 100-300 EM for 6s, once
+// every 12s. Hitting an opponent with a Charged Attack during the effect
+// extends its duration by 6s, up to one extension.
 func init() {
 	core.RegisterWeaponFunc(keys.ClashOfKings, NewWeapon)
 }
@@ -28,8 +31,7 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	w := &Weapon{}
 	r := p.Refine
 
-	atkGain := 0.15 + float64(r)*0.05
-	emGain := 50 * float64(r)
+	atkGain, emGain := passiveBonuses(r)
 
 	m := make([]float64, attributes.EndStatType)
 	m[attributes.ATKP] = atkGain
@@ -83,4 +85,8 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		},
 	})
 	return w, nil
+}
+
+func passiveBonuses(refine int) (float64, float64) {
+	return 0.15 + float64(refine)*0.05, float64(50 + refine*50)
 }

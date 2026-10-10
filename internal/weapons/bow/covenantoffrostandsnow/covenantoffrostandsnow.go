@@ -10,6 +10,7 @@ import (
 	"github.com/genshinsim/gcsim/pkg/modifier"
 )
 
+// Using an Elemental Skill grants the equipping character 120-240 EM for 12s.
 func init() {
 	core.RegisterWeaponFunc(keys.CovenantOfFrostAndSnow, NewWeapon)
 }
@@ -21,7 +22,6 @@ type Weapon struct {
 func (w *Weapon) SetIndex(idx int) { w.Index = idx }
 func (w *Weapon) Init() error      { return nil }
 
-// Using an Elemental Skill grants the equipping character 120-240 EM for 12s.
 func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) (info.Weapon, error) {
 	emBonus := make([]float64, attributes.EndStatType)
 	emBonus[attributes.EM] = float64(90 + 30*p.Refine)

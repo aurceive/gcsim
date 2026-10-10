@@ -13,6 +13,9 @@ import (
 	"github.com/genshinsim/gcsim/pkg/modifier"
 )
 
+// Elemental Skill or Burst uses cycle through 10s of +56%-120% CRIT DMG,
+// +36%-72% Stellar Swirl reaction DMG, and 5-7 Energy (max once every 4s).
+// Leaving the field removes active effects and resets the sequence.
 const (
 	devotionKey = "beyond-the-chrysalis-devotion"
 	defianceKey = "beyond-the-chrysalis-defiance"

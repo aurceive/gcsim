@@ -4,11 +4,22 @@ import (
 	"github.com/genshinsim/gcsim/pkg/core"
 	"github.com/genshinsim/gcsim/pkg/core/attacks"
 	"github.com/genshinsim/gcsim/pkg/core/attributes"
+	"github.com/genshinsim/gcsim/pkg/core/event"
+	"github.com/genshinsim/gcsim/pkg/core/hacks"
 	"github.com/genshinsim/gcsim/pkg/core/info"
 	"github.com/genshinsim/gcsim/pkg/core/keys"
 	"github.com/genshinsim/gcsim/pkg/core/player/character"
+	"github.com/genshinsim/gcsim/pkg/enemy"
 	"github.com/genshinsim/gcsim/pkg/modifier"
+	"github.com/genshinsim/gcsim/pkg/reactable"
 )
+
+// Each Cryo party member grants 24-48 EM, and each Electro member grants
+// 4.8%-9.6% ATK, up to 4 contributing characters. While Radiance: Stellar
+// Glimmer (Stellar Conduct or Stellar Swirl) is active, this instead grants
+// 20-40 EM and 6%-12% Stellar Glimmer reaction DMG per Cryo or Electro party
+// member, up to 4.
+const radianceSwirlKey = "radiance-stellar-swirl"
 
 func init() {
 	core.RegisterWeaponFunc(keys.WintersHeavyHeart, NewWeapon)
@@ -33,7 +44,7 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		Base:         modifier.NewBase("winters-heavy-heart", -1),
 		AffectedStat: attributes.ATKP,
 		Amount: func() []float64 {
-			if c.Player.GetMoonsignLevel() >= 2 {
+			if stellarGlimmerActive(char) {
 				mATK[attributes.ATKP] = 0
 				return mATK
 			}
@@ -55,7 +66,7 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		Base:         modifier.NewBase("winters-heavy-heart-em", -1),
 		AffectedStat: attributes.EM,
 		Amount: func() []float64 {
-			if c.Player.GetMoonsignLevel() >= 2 {
+			if stellarGlimmerActive(char) {
 				count := 0
 				for _, partyChar := range c.Player.Chars() {
 					if partyChar.Base.Element == attributes.Cryo || partyChar.Base.Element == attributes.Electro {
@@ -81,7 +92,7 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	char.AddReactBonusMod(character.ReactBonusMod{
 		Base: modifier.NewBase("winters-heavy-heart-react", -1),
 		Amount: func(ai info.AttackInfo) float64 {
-			if c.Player.GetMoonsignLevel() < 2 {
+			if !stellarGlimmerActive(char) {
 				return 0
 			}
 			count := 0
@@ -99,5 +110,23 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		},
 	})
 
+	c.Events.Subscribe(event.OnStellarSwirl, func(args ...any) {
+		if _, ok := args[0].(*enemy.Enemy); !ok {
+			return
+		}
+		char.AddStatus(radianceSwirlKey, hacks.StellarSwirlDur(c), false)
+	}, "winters-heavy-heart-radiance-"+char.Base.Key.String())
+
 	return w, nil
+}
+
+func stellarGlimmerActive(char *character.CharWrapper) bool {
+	return isStellarGlimmerActive(
+		char.StatusIsActive(reactable.PolestarFieldKey),
+		char.StatusIsActive(radianceSwirlKey),
+	)
+}
+
+func isStellarGlimmerActive(stellarConduct, stellarSwirl bool) bool {
+	return stellarConduct || stellarSwirl
 }

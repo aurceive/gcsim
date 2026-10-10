@@ -12,6 +12,10 @@ import (
 	"github.com/genshinsim/gcsim/pkg/modifier"
 )
 
+// Elemental Skill use grants a 14s effect that tracks the equipping character's
+// movement. Each second, ATK is set from 18%-36% (R1) to 36%-72% (R5), based on
+// distance traveled during the previous second, up to 7m. Leaving the field
+// removes the effect; it can be triggered once every 14s.
 const (
 	gleamKey     = "heretics-molten-blade-gleam"
 	skillICDKey  = "heretics-molten-blade-skill-icd"

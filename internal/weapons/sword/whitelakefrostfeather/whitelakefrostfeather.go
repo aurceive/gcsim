@@ -13,6 +13,10 @@ import (
 	"github.com/genshinsim/gcsim/pkg/modifier"
 )
 
+// Elemental Skill hits grant 8%-16% ATK per stack for 8s, up to 3 stacks,
+// with independent durations. At 3 stacks, the equipping character's Stellar
+// Glimmer reaction DMG gains 50%-110% CRIT DMG; triggering those reactions
+// restores 4-6 Energy once every 3.5s. The effects work off-field.
 const (
 	stackICDKey    = "whitelake-frostfeather-stack-icd"
 	energyICDKey   = "whitelake-frostfeather-energy-icd"
@@ -30,9 +34,6 @@ type Weapon struct {
 func (w *Weapon) SetIndex(idx int) { w.Index = idx }
 func (w *Weapon) Init() error      { return nil }
 
-// Lake-Hued Lament: when the equipping character's Elemental Skill hits an enemy,
-// ATK is increased by 8%/10%/12%/14%/16% for 8s. At 3 stacks, Stellar Glimmer
-// reaction CRIT DMG is increased and the weapon restores energy.
 func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) (info.Weapon, error) {
 	w := &Weapon{}
 	r := p.Refine
@@ -122,7 +123,7 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	}, fmt.Sprintf("whitelake-frostfeather-energy-%v", char.Base.Key.String()))
 	c.Events.Subscribe(event.OnStellarSwirl, func(args ...any) {
 		atk := args[1].(*info.AttackEvent)
-		if stackCount() < 3 {
+		if atk.Info.ActorIndex != char.Index() || stackCount() < 3 {
 			return
 		}
 		char.AddStatus(stellarCritKey, 1, true)
