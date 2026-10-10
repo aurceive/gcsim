@@ -273,6 +273,12 @@ var weaponNames = []string{
 	"wolffang",
 	"wolfsgravestone",
 	"xiphosmoonlight",
+	"jadevista",
+	"covenantoffrostandsnow",
+	"songofthevigil",
+	"frostbreath",
+	"bladeofatonement",
+	"forgedbythegoldenmelody",
 }
 
 const (
@@ -517,4 +523,10 @@ const (
 	WolfFang
 	WolfsGravestone
 	XiphosMoonlight
+	JadeVista
+	CovenantOfFrostAndSnow
+	SongOfTheVigil
+	Frostbreath
+	BladeOfAtonement
+	ForgedByTheGoldenMelody
 )

@@ -1,0 +1,7 @@
+package_name: forgedbythegoldenmelody
+genshin_id: 12435
+key: forgedbythegoldenmelody
+abilities:
+  - name: default
+    params:
+      buff_type: Sets the buff type to apply first. 0 = ATK%, 1 = EM, 2 = Stellar. Default is 0.

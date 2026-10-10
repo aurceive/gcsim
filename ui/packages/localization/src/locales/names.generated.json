@@ -350,7 +350,13 @@
          "wineandsong": "暗巷的酒与诗",
          "wolffang": "狼牙",
          "wolfsgravestone": "狼的末路",
-         "xiphosmoonlight": "西福斯的月光"
+         "xiphosmoonlight": "西福斯的月光",
+         "jadevista": "悬黎千钧",
+         "covenantoffrostandsnow": "霜雪誓约",
+         "songofthevigil": "戍望谣歌",
+         "frostbreath": "寒息",
+         "bladeofatonement": "救赎之斩",
+         "forgedbythegoldenmelody": "金律铸影"
       },
       "artifact_names": {
          "adaycarvedfromrisingwinds": "风起之日",
@@ -1187,7 +1193,13 @@
          "wineandsong": "Wine and Song",
          "wolffang": "Wolf-Fang",
          "wolfsgravestone": "Wolf's Gravestone",
-         "xiphosmoonlight": "Xiphos' Moonlight"
+         "xiphosmoonlight": "Xiphos' Moonlight",
+         "jadevista": "Jade Vista",
+         "covenantoffrostandsnow": "Covenant of Frost and Snow",
+         "songofthevigil": "Song of the Vigil",
+         "frostbreath": "Frostbreath",
+         "bladeofatonement": "Blade of Atonement",
+         "forgedbythegoldenmelody": "Forged by the Golden Melody"
       },
       "artifact_names": {
          "adaycarvedfromrisingwinds": "A Day Carved From Rising Winds",
@@ -4502,7 +4514,13 @@
          "wineandsong": "Вино и песни",
          "wolffang": "Волчий клык",
          "wolfsgravestone": "Волчья погибель",
-         "xiphosmoonlight": "Лунное сияние ксифоса"
+         "xiphosmoonlight": "Лунное сияние ксифоса",
+         "jadevista": "Поникшая артемизия",
+         "covenantoffrostandsnow": "Завет льда и снега",
+         "songofthevigil": "Песнь бдения",
+         "frostbreath": "Морозное дыхание",
+         "bladeofatonement": "Клинок искупления",
+         "forgedbythegoldenmelody": "Творение золотой мелодии"
       },
       "artifact_names": {
          "adaycarvedfromrisingwinds": "День восходящих ветров",

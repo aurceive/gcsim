@@ -1905,6 +1905,48 @@
       "weapon_class": "WEAPON_SWORD_ONE_HAND",
       "image_name": "UI_EquipIcon_Sword_Pleroma",
       "name_text_hash_map ": "143051931"
+    },
+    "jadevista": {
+      "id": 15435,
+      "key": "jadevista",
+      "rarity": 4,
+      "weapon_class": "WEAPON_BOW",
+      "image_name": "UI_EquipIcon_Bow_ShatteredMirror_Awaken"
+    },
+    "covenantoffrostandsnow": {
+      "id": 15436,
+      "key": "covenantoffrostandsnow",
+      "rarity": 4,
+      "weapon_class": "WEAPON_BOW",
+      "image_name": "UI_EquipIcon_Bow_GlintstoneBow_Awaken"
+    },
+    "songofthevigil": {
+      "id": 13436,
+      "key": "songofthevigil",
+      "rarity": 4,
+      "weapon_class": "WEAPON_POLE",
+      "image_name": "UI_EquipIcon_Pole_GlintstonePolearm_Awaken"
+    },
+    "frostbreath": {
+      "id": 13435,
+      "key": "frostbreath",
+      "rarity": 4,
+      "weapon_class": "WEAPON_POLE",
+      "image_name": "UI_EquipIcon_Pole_FaesCrystalle_Awaken"
+    },
+    "bladeofatonement": {
+      "id": 12436,
+      "key": "bladeofatonement",
+      "rarity": 4,
+      "weapon_class": "WEAPON_CLAYMORE",
+      "image_name": "UI_EquipIcon_Claymore_GlintstoneClaymore_Awaken"
+    },
+    "forgedbythegoldenmelody": {
+      "id": 12435,
+      "key": "forgedbythegoldenmelody",
+      "rarity": 4,
+      "weapon_class": "WEAPON_CLAYMORE",
+      "image_name": "UI_EquipIcon_Claymore_EscapeWheel_Awaken"
     }
   }
 }
