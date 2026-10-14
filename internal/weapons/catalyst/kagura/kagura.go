@@ -25,20 +25,16 @@ func (w *Weapon) SetIndex(idx int) { w.Index = idx }
 func (w *Weapon) Init() error      { return nil }
 
 func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) (info.Weapon, error) {
-	// Gains the Kagura Dance effect when using an Elemental Skill, causing the
-	// Elemental Skill DMG of the character wielding this weapon to increase by
-	// 12% for 16s. Max 3 stacks. This character will gain 12% All Elemental DMG
-	// Bonus when they possess 3 stacks.
+	// Each stack increases Elemental Skill and Stellar-Conduct DMG by 12%-24%
+	// for 24s. At 3 stacks, the wielder also gains 12%-24% All Elemental DMG.
 	w := &Weapon{}
-	r := p.Refine
 	stacks := 0
 	key := fmt.Sprintf("kaguradance-%v", char.Base.Key.String())
-	dmg := 0.12 + 0.03*float64(r-1)
+	dmg := kaguraDamageBonus(p.Refine)
 	val := make([]float64, attributes.EndStatType)
 	const stackKey = "kaguras-verity-stacks"
-	stackDuration := 960 // 16s * 60
+	stackDuration := 24 * 60
 
-	// TODO: this used to be on postskill. make sure nothing broke here
 	c.Events.Subscribe(event.OnSkill, func(args ...any) {
 		if c.Player.Active() != char.Index() {
 			return
@@ -59,7 +55,6 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 			val[attributes.ElectroP] = dmg
 			val[attributes.AnemoP] = dmg
 			val[attributes.GeoP] = dmg
-			val[attributes.PhyP] = dmg
 			val[attributes.DendroP] = dmg
 		} else {
 			// clean stacks ele dmg% otherwise
@@ -69,7 +64,6 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 			val[attributes.ElectroP] = 0
 			val[attributes.AnemoP] = 0
 			val[attributes.GeoP] = 0
-			val[attributes.PhyP] = 0
 			val[attributes.DendroP] = 0
 		}
 		// add mod for duration, override last
@@ -87,7 +81,24 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 				return val
 			},
 		})
+		char.AddReactBonusMod(character.ReactBonusMod{
+			Base: modifier.NewBaseWithHitlag("kaguras-verity-stellar-conduct", stackDuration),
+			Amount: func(ai info.AttackInfo) float64 {
+				return stellarConductBonus(ai.AttackTag, stacks, dmg)
+			},
+		})
 	}, key)
 
 	return w, nil
+}
+
+func kaguraDamageBonus(refine int) float64 {
+	return 0.09 + 0.03*float64(refine)
+}
+
+func stellarConductBonus(tag attacks.AttackTag, stacks int, bonusPerStack float64) float64 {
+	if tag != attacks.AttackTagDirectStellarConduct {
+		return 0
+	}
+	return bonusPerStack * float64(stacks)
 }
