@@ -1199,7 +1199,9 @@
          "songofthevigil": "Song of the Vigil",
          "frostbreath": "Frostbreath",
          "bladeofatonement": "Blade of Atonement",
-         "forgedbythegoldenmelody": "Forged by the Golden Melody"
+         "forgedbythegoldenmelody": "Forged by the Golden Melody",
+         "ateaspoonoftranscendence": "A Teaspoon of Transcendence",
+         "starsealededict": "Starsealed Edict"
       },
       "artifact_names": {
          "adaycarvedfromrisingwinds": "A Day Carved From Rising Winds",
@@ -4520,7 +4522,8 @@
          "songofthevigil": "Песнь бдения",
          "frostbreath": "Морозное дыхание",
          "bladeofatonement": "Клинок искупления",
-         "forgedbythegoldenmelody": "Творение золотой мелодии"
+         "forgedbythegoldenmelody": "Творение золотой мелодии",
+         "ateaspoonoftranscendence": "Чайная ложка трансцендентности"
       },
       "artifact_names": {
          "adaycarvedfromrisingwinds": "День восходящих ветров",

@@ -279,6 +279,8 @@ var weaponNames = []string{
 	"frostbreath",
 	"bladeofatonement",
 	"forgedbythegoldenmelody",
+	"ateaspoonoftranscendence",
+	"starsealededict",
 }
 
 const (
@@ -529,4 +531,6 @@ const (
 	Frostbreath
 	BladeOfAtonement
 	ForgedByTheGoldenMelody
+	ATeaspoonOfTranscendence
+	StarsealedEdict
 )
