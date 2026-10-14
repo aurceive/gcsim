@@ -12,13 +12,16 @@ import (
 	"github.com/genshinsim/gcsim/pkg/core/player/character"
 	"github.com/genshinsim/gcsim/pkg/enemy"
 	"github.com/genshinsim/gcsim/pkg/modifier"
+	"github.com/genshinsim/gcsim/pkg/reactable"
 )
 
 // Grants 24%-48% CRIT DMG. Using an Elemental Skill grants 48-96 EM for 20s.
 // While active, nearby party members' Elemental Reactions grant up to 3 stacks;
-// each adds 24-48 EM and 12%-24% CRIT DMG to Stellar Conduct.
+// each adds 24-48 EM and 12%-24% CRIT DMG to Stellar Conduct while the wearer
+// is in either Stellar Glimmer state.
 const (
-	associationKey = "starsealed-edict-formula-association"
+	associationKey   = "starsealed-edict-formula-association"
+	radianceSwirlKey = "radiance-stellar-swirl"
 )
 
 func init() {
@@ -63,6 +66,7 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		Base: modifier.NewBase("starsealed-edict-stellar-conduct-crit", -1),
 		Amount: func(atk *info.AttackEvent, _ info.Target) []float64 {
 			if !char.StatusIsActive(associationKey) ||
+				!stellarGlimmerActive(char) ||
 				atk.Info.AttackTag != attacks.AttackTagDirectStellarConduct ||
 				stacks == 0 {
 				return nil
@@ -108,4 +112,15 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 
 func passiveBonuses(refine int) (float64, float64, float64) {
 	return float64(36 + 12*refine), float64(18 + 6*refine), 0.09 + 0.03*float64(refine)
+}
+
+func stellarGlimmerActive(char *character.CharWrapper) bool {
+	return isStellarGlimmerActive(
+		char.StatusIsActive(reactable.PolestarFieldKey),
+		char.StatusIsActive(radianceSwirlKey),
+	)
+}
+
+func isStellarGlimmerActive(stellarConduct, stellarSwirl bool) bool {
+	return stellarConduct || stellarSwirl
 }

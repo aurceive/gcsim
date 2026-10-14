@@ -24,3 +24,26 @@ func TestPassiveBonuses(t *testing.T) {
 		}
 	}
 }
+
+func TestStellarGlimmerActive(t *testing.T) {
+	tests := []struct {
+		name           string
+		stellarConduct bool
+		stellarSwirl   bool
+		want           bool
+	}{
+		{name: "inactive"},
+		{name: "Stellar Conduct Radiance", stellarConduct: true, want: true},
+		{name: "Stellar Swirl Radiance", stellarSwirl: true, want: true},
+		{name: "both Radiance states", stellarConduct: true, stellarSwirl: true, want: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isStellarGlimmerActive(tt.stellarConduct, tt.stellarSwirl); got != tt.want {
+				t.Errorf("isStellarGlimmerActive(%t, %t) = %t, want %t",
+					tt.stellarConduct, tt.stellarSwirl, got, tt.want)
+			}
+		})
+	}
+}
