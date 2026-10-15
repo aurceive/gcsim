@@ -18,9 +18,8 @@ import (
 // Glimmer reaction DMG gains 50%-110% CRIT DMG; triggering those reactions
 // restores 4-6 Energy once every 3.5s. The effects work off-field.
 const (
-	stackICDKey    = "whitelake-frostfeather-stack-icd"
-	energyICDKey   = "whitelake-frostfeather-energy-icd"
-	stellarCritKey = "whitelake-frostfeather-stellar-crit"
+	stackICDKey  = "whitelake-frostfeather-stack-icd"
+	energyICDKey = "whitelake-frostfeather-energy-icd"
 )
 
 func init() {
@@ -71,11 +70,10 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 			return mATK
 		},
 	})
-	char.AddStatMod(character.StatMod{
-		Base:         modifier.NewBase("whitelake-frostfeather-stellar-crit", -1),
-		AffectedStat: attributes.CD,
-		Amount: func() []float64 {
-			if !char.StatusIsActive(stellarCritKey) {
+	char.AddAttackMod(character.AttackMod{
+		Base: modifier.NewBase("whitelake-frostfeather-stellar-crit", -1),
+		Amount: func(atk *info.AttackEvent, _ info.Target) []float64 {
+			if stackCount() < 3 || !isStellarGlimmerDamage(atk.Info.AttackTag) {
 				return nil
 			}
 			return mCritDamage
@@ -114,7 +112,6 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		if atk.Info.ActorIndex != char.Index() || stackCount() < 3 {
 			return
 		}
-		char.AddStatus(stellarCritKey, 1, true)
 		if char.StatusIsActive(energyICDKey) {
 			return
 		}
@@ -126,7 +123,6 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		if atk.Info.ActorIndex != char.Index() || stackCount() < 3 {
 			return
 		}
-		char.AddStatus(stellarCritKey, 1, true)
 		if atk.Info.ActorIndex == char.Index() && !char.StatusIsActive(energyICDKey) {
 			char.AddStatus(energyICDKey, 3.5*60, true)
 			char.AddEnergy("whitelake-frostfeather", energyRestore)
@@ -134,4 +130,15 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	}, fmt.Sprintf("whitelake-frostfeather-swirl-%v", char.Base.Key.String()))
 
 	return w, nil
+}
+
+func isStellarGlimmerDamage(tag attacks.AttackTag) bool {
+	switch tag {
+	case attacks.AttackTagDirectStellarConduct,
+		attacks.AttackTagDirectStellarSwirl,
+		attacks.AttackTagReactionStellarSwirl:
+		return true
+	default:
+		return false
+	}
 }
