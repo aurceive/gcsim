@@ -57,6 +57,8 @@ var WeaponNameToKey = map[string]keys.Weapon{
 	"cashflowsupervision":             keys.CashflowSupervision,
 	"cashflow":                        keys.CashflowSupervision,
 	"chainbreaker":                    keys.ChainBreaker,
+	"clashofkings":                    keys.ClashOfKings,
+	"Игры королей":                    keys.ClashOfKings,
 	"cinnabarspindle":                 keys.CinnabarSpindle,
 	"cinnabar":                        keys.CinnabarSpindle,
 	"cloudforged":                     keys.Cloudforged,

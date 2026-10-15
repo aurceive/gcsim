@@ -53,6 +53,7 @@ var weaponMap = map[string]string{
 	"blackcliffagate":                 "UI_EquipIcon_Catalyst_Blackrock",
 	"blackmarrowlantern":              "UI_EquipIcon_Catalyst_Ilmarinen",
 	"cashflowsupervision":             "UI_EquipIcon_Catalyst_Wheatley",
+	"clashofkings":                    "UI_EquipIcon_Catalyst_Arrowsmith",
 	"cranesechoingcall":               "UI_EquipIcon_Catalyst_MountainGale",
 	"dawningfrost":                    "UI_EquipIcon_Catalyst_Ziedas",
 	"dodocotales":                     "UI_EquipIcon_Catalyst_Ludiharpastum",
