@@ -1,8 +1,6 @@
 package breezebornerefrain
 
 import (
-	"fmt"
-
 	"github.com/genshinsim/gcsim/pkg/core"
 	"github.com/genshinsim/gcsim/pkg/core/attacks"
 	"github.com/genshinsim/gcsim/pkg/core/attributes"
@@ -18,8 +16,8 @@ import (
 // party members 24%-48% Stellar Glimmer reaction DMG for 12s. No stacks can be
 // gained while this buff is active, and both effects work off-field.
 const (
-	stackICDKey = "breezeborne-refrain-stack-icd"
-	buffKey     = "breezeborne-refrain-buff"
+	viperKey        = "thus-lied-the-viper"
+	hymnStackICDKey = "hymn-of-the-pure-stack-icd"
 )
 
 func init() {
@@ -27,7 +25,8 @@ func init() {
 }
 
 type Weapon struct {
-	Index int
+	Index        int
+	stackCounter int
 }
 
 func (w *Weapon) SetIndex(idx int) { w.Index = idx }
@@ -38,7 +37,6 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 	r := float64(p.Refine)
 	energyRecharge := 0.15 + 0.05*r
 	stellarBonus := 0.18 + 0.06*r
-	stacks := 0
 
 	er := make([]float64, attributes.EndStatType)
 	er[attributes.ER] = energyRecharge
@@ -54,7 +52,7 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		partyChar.AddReactBonusMod(character.ReactBonusMod{
 			Base: modifier.NewBase("breezeborne-refrain-stellar", -1),
 			Amount: func(ai info.AttackInfo) float64 {
-				if !char.StatusIsActive(buffKey) || !isStellarReaction(ai.AttackTag) {
+				if !char.StatusIsActive(viperKey) || !isStellarReaction(ai.AttackTag) {
 					return 0
 				}
 				return stellarBonus
@@ -62,27 +60,37 @@ func NewWeapon(c *core.Core, char *character.CharWrapper, p info.WeaponProfile) 
 		})
 	}
 
-	c.Events.Subscribe(event.OnEnemyDamage, func(args ...any) {
-		atk := args[1].(*info.AttackEvent)
-		if atk.Info.ActorIndex != char.Index() ||
-			char.StatusIsActive(buffKey) ||
-			char.StatusIsActive(stackICDKey) {
+	onSkillOrBurstHit := func(args ...any) {
+		atk, ok := args[1].(*info.AttackEvent)
+		if !ok {
 			return
 		}
+
+		if atk.Info.ActorIndex != char.Index() ||
+			char.StatusIsActive(viperKey) ||
+			char.StatusIsActive(hymnStackICDKey) {
+			return
+		}
+
 		switch atk.Info.AttackTag {
-		case attacks.AttackTagElementalArt, attacks.AttackTagElementalArtHold, attacks.AttackTagElementalBurst:
+		case attacks.AttackTagElementalArt:
+		case attacks.AttackTagElementalArtHold:
+		case attacks.AttackTagElementalBurst:
 		default:
 			return
 		}
 
-		char.AddStatus(stackICDKey, 2, true)
-		stacks++
-		if stacks < 3 {
+		char.AddStatus(hymnStackICDKey, 2, true)
+
+		w.stackCounter++
+		if w.stackCounter < 3 {
 			return
 		}
-		stacks = 0
-		char.AddStatus(buffKey, 12*60, true)
-	}, fmt.Sprintf("breezeborne-refrain-%v", char.Base.Key.String()))
+		w.stackCounter = 0
+		char.AddStatus(viperKey, 12*60, true)
+	}
+
+	c.Events.Subscribe(event.OnEnemyHit, onSkillOrBurstHit, "breezeborne-refrain-on-hit-"+char.Base.Key.String())
 
 	return w, nil
 }
