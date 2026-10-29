@@ -30,9 +30,17 @@ func errorRecover(r any) error {
 
 // isRunning checks if an id is running
 func (s *Server) isRunning(id string) bool {
-	// WARNING: READ ONLY HERE NOT SAFE FOR WRITE
+	s.Lock()
+	defer s.Unlock()
 	_, ok := s.pool[id]
 	return ok
+}
+
+func (s *Server) getWorker(id string) (*worker, bool) {
+	s.Lock()
+	defer s.Unlock()
+	w, ok := s.pool[id]
+	return w, ok
 }
 
 func flush(aggregators []agg.Aggregator) *model.SimulationStatistics {

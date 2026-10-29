@@ -2,6 +2,7 @@ package servermode
 
 import (
 	"log/slog"
+	"sync"
 
 	"github.com/genshinsim/gcsim/pkg/core/info"
 	"github.com/genshinsim/gcsim/pkg/gcs/ast"
@@ -18,6 +19,11 @@ type worker struct {
 	cfg    string
 	log    *slog.Logger
 	cancel chan bool
+	ready  chan struct{}
+
+	cancelOnce sync.Once
+	readyOnce  sync.Once
+	mu         sync.Mutex
 
 	// state
 	done   bool                    // if simulation is done
@@ -33,21 +39,34 @@ type job struct {
 }
 
 func (w *worker) handleErr(err error) {
-	w.err = err
-	w.result = nil
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if !w.done {
+		w.done = true
+		w.err = err
+		w.result = nil
+	}
+}
+
+func (w *worker) stop() {
+	w.cancelOnce.Do(func() { close(w.cancel) })
+}
+
+func (w *worker) markReady() {
+	w.readyOnce.Do(func() { close(w.ready) })
 }
 
 func (w *worker) run(workerCount, flushInterval int) {
 	w.log.Info("worker run started", "id", w.id)
-	// handle panic
 	defer func() {
 		if r := recover(); r != nil {
 			w.handleErr(errorRecover(r))
 		}
-	}()
-	// done is true regardless of reason once this function exits
-	defer func() {
+		w.mu.Lock()
 		w.done = true
+		w.mu.Unlock()
+		w.markReady()
+		w.stop()
 	}()
 
 	file := ast.NewFile()
@@ -67,6 +86,22 @@ func (w *worker) run(workerCount, flushInterval int) {
 		return
 	}
 	w.log.Info("aggregators ok", "id", w.id)
+
+	result, err := simulator.GenerateResult(w.cfg, simcfg)
+	if err != nil {
+		w.log.Info("generate result failed", "id", w.id, "err", err)
+		w.handleErr(err)
+		return
+	}
+	w.mu.Lock()
+	if w.done {
+		w.mu.Unlock()
+		return
+	}
+	w.result = result
+	w.mu.Unlock()
+	w.markReady()
+	w.log.Info("result initialized ok", "id", w.id)
 
 	// run jobs
 	respCh := make(chan stats.Result)
@@ -96,15 +131,6 @@ func (w *worker) run(workerCount, flushInterval int) {
 		close(workChan)
 	}()
 
-	// setup results
-	w.result, err = simulator.GenerateResult(w.cfg, simcfg)
-	if err != nil {
-		w.log.Info("generate result failed", "id", w.id, "err", err)
-		w.handleErr(err)
-		return
-	}
-	w.log.Info("result initialized ok", "id", w.id)
-
 	count := 0
 	lastFlush := 0
 iters:
@@ -131,15 +157,29 @@ iters:
 			w.log.Debug("flushing results", "id", w.id, "count", count, "flush", lastFlush)
 			lastFlush = count
 			stats := flush(aggregators)
-			w.result.Statistics = stats
+			w.mu.Lock()
+			if w.result != nil {
+				w.result.Statistics = stats
+			}
+			w.mu.Unlock()
 		}
 	}
 	w.log.Info("sim done", "id", w.id, "count", count, "flush", lastFlush)
 	stats := flush(aggregators)
-	w.result.Statistics = stats
+	w.mu.Lock()
+	if w.result != nil {
+		w.result.Statistics = stats
+	}
+	w.mu.Unlock()
 }
 
 func (w *worker) iter(work chan job, res chan stats.Result, errChan chan error) {
+	sendError := func(err error) {
+		select {
+		case errChan <- err:
+		case <-w.cancel:
+		}
+	}
 	for {
 		select {
 		case <-w.cancel:
@@ -152,25 +192,29 @@ func (w *worker) iter(work chan job, res chan stats.Result, errChan chan error) 
 
 			c, err := simulation.NewCore(job.seed, false, job.cfg)
 			if err != nil {
-				errChan <- err
+				sendError(err)
 				return
 			}
 			eval, err := eval.NewEvaluator(job.file, job.node, c)
 			if err != nil {
-				errChan <- err
-				break
+				sendError(err)
+				return
 			}
 			s, err := simulation.New(job.cfg, eval, c)
 			if err != nil {
-				errChan <- err
-				break
+				sendError(err)
+				return
 			}
 			r, err := s.Run()
 			if err != nil {
-				errChan <- err
-				break
+				sendError(err)
+				return
 			}
-			res <- r
+			select {
+			case res <- r:
+			case <-w.cancel:
+				return
+			}
 		}
 	}
 }

@@ -3,6 +3,7 @@ package servermode
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -134,25 +135,24 @@ func (s *Server) run() http.HandlerFunc {
 			w.Write([]byte(err.Error()))
 			return
 		}
-		// don't run if already running
-		if s.isRunning(id) {
-			s.Log.Info("run request failed; already running", "id", id)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("already running!!"))
-			return
-		}
-		s.Log.Info("config decoded ok; running", "id", id)
-
-		// create worker
 		wk := &worker{
 			id:     id,
 			cfg:    payload.Config,
 			log:    s.Log,
 			cancel: make(chan bool),
+			ready:  make(chan struct{}),
 		}
 		s.Lock()
+		if _, ok := s.pool[id]; ok {
+			s.Unlock()
+			s.Log.Info("run request failed; already running", "id", id)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("already running!!"))
+			return
+		}
 		s.pool[id] = wk
 		s.Unlock()
+		s.Log.Info("config decoded ok; running", "id", id)
 
 		// start worker
 		go wk.run(s.WorkerCount, s.FlushInterval)
@@ -161,20 +161,20 @@ func (s *Server) run() http.HandlerFunc {
 		go func() {
 			ctx, cancel := context.WithTimeout(context.Background(), s.Timeout)
 			defer cancel()
-			for {
-				select {
-				case <-wk.cancel:
-					// someone cancelled so we're done
-					return
-				case <-ctx.Done():
-					// context must have timed out
-					close(wk.cancel)
+			select {
+			case <-wk.cancel:
+				return
+			case <-ctx.Done():
+				wk.mu.Lock()
+				if !wk.done {
 					wk.done = true
 					if wk.err == nil {
 						wk.err = fmt.Errorf("execution timed out after %s", s.Timeout)
 					}
-					return
 				}
+				wk.mu.Unlock()
+				wk.markReady()
+				wk.stop()
 			}
 		}()
 
@@ -187,9 +187,14 @@ func (s *Server) latest() http.HandlerFunc {
 		id := chi.URLParam(r, "id")
 		s.Log.Info("request for latest", "id", id)
 
-		wk, ok := s.pool[id]
+		wk, ok := s.getWorker(id)
 		if !ok {
 			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		select {
+		case <-wk.ready:
+		case <-r.Context().Done():
 			return
 		}
 		var res struct {
@@ -198,43 +203,47 @@ func (s *Server) latest() http.HandlerFunc {
 			Done   bool   `json:"done"`
 			Error  string `json:"error"`
 		}
-		res.Done = wk.done
-
-		// regardless of what results looks like, we should delete worker if done
-		defer func() {
-			if res.Done {
-				s.Lock()
-				delete(s.pool, id)
-				s.Unlock()
+		var responseErr error
+		func() {
+			wk.mu.Lock()
+			defer wk.mu.Unlock()
+			res.Done = wk.done
+			if wk.err != nil {
+				res.Error = wk.err.Error()
+				return
 			}
-		}()
-
-		s.Log.Info("found data", "id", id, "res.Error", res.Error, "res.Done", res.Done)
-		if wk.err == nil {
-			// if no error then we expect there to be some kind of result
 			if wk.result == nil {
-				s.Log.Info("unexpected result is nil", "id", id)
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte("unexpected result is blank"))
+				responseErr = errors.New("unexpected result is blank")
 				return
 			}
 			b, err := wk.result.MarshalJSON()
 			if err != nil {
-				s.Log.Info("error marshalling result to json", "id", id, "err", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(err.Error()))
+				responseErr = fmt.Errorf("error marshalling result to json: %w", err)
 				return
 			}
 			res.Result = string(b)
 			res.Hash, err = wk.result.Sign(s.ShareKey)
 			if err != nil {
-				s.Log.Info("error signing result", "id", id, "err", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(err.Error()))
-				return
+				responseErr = fmt.Errorf("error signing result: %w", err)
 			}
-		} else {
-			res.Error = wk.err.Error()
+		}()
+
+		defer func() {
+			if res.Done {
+				s.Lock()
+				if s.pool[id] == wk {
+					delete(s.pool, id)
+				}
+				s.Unlock()
+			}
+		}()
+
+		s.Log.Info("found data", "id", id, "res.Error", res.Error, "res.Done", res.Done)
+		if responseErr != nil {
+			s.Log.Info("error preparing result", "id", id, "err", responseErr)
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(responseErr.Error()))
+			return
 		}
 
 		msg, err := json.Marshal(res)
@@ -252,20 +261,27 @@ func (s *Server) latest() http.HandlerFunc {
 func (s *Server) cancel() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
-		wk, ok := s.pool[id]
+		wk, ok := s.getWorker(id)
 		if !ok {
 			s.Log.Info("cancel request received; worker does not exist", "id", id)
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
+		wk.mu.Lock()
 		if wk.done {
+			wk.mu.Unlock()
 			s.Log.Info("cancel request received; already done", "id", id)
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		s.Log.Info("cancelling run", "id", id)
-		close(wk.cancel)
 		wk.done = true
+		if wk.result == nil && wk.err == nil {
+			wk.err = errors.New("simulation cancelled")
+		}
+		wk.mu.Unlock()
+		s.Log.Info("cancelling run", "id", id)
+		wk.markReady()
+		wk.stop()
 		w.WriteHeader(http.StatusOK)
 	}
 }
