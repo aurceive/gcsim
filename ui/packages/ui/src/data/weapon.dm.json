@@ -140,6 +140,13 @@
       "weapon_class": "WEAPON_POLE",
       "image_name": "UI_EquipIcon_Pole_Gewalt_Awaken"
     },
+    "beyondthechrysalis": {
+      "id": 11522,
+      "key": "beyondthechrysalis",
+      "rarity": 5,
+      "weapon_class": "WEAPON_SWORD_ONE_HAND",
+      "image_name": "UI_EquipIcon_Sword_Samosvist_Awaken"
+    },
     "blackcliffagate": {
       "id": 14408,
       "key": "blackcliffagate",
@@ -209,6 +216,13 @@
       "rarity": 3,
       "weapon_class": "WEAPON_CLAYMORE",
       "image_name": "UI_EquipIcon_Claymore_Siegfry_Awaken"
+    },
+    "breezebornerefrain": {
+      "id": 15437,
+      "key": "breezebornerefrain",
+      "rarity": 4,
+      "weapon_class": "WEAPON_BOW",
+      "image_name": "UI_EquipIcon_Bow_Windtalker_Awaken"
     },
     "calamityofeshu": {
       "id": 11432,
@@ -917,6 +931,13 @@
       "weapon_class": "WEAPON_BOW",
       "image_name": "UI_EquipIcon_Bow_Maria_Awaken"
     },
+    "newbough": {
+      "id": 11437,
+      "key": "newbough",
+      "rarity": 4,
+      "weapon_class": "WEAPON_SWORD_ONE_HAND",
+      "image_name": "UI_EquipIcon_Sword_SpikedStake_Awaken"
+    },
     "nightweaverslookingglass": {
       "id": 14520,
       "key": "nightweaverslookingglass",
@@ -1246,6 +1267,13 @@
       "weapon_class": "WEAPON_BOW",
       "image_name": "UI_EquipIcon_Bow_Arjuna_Awaken"
     },
+    "silverlight": {
+      "id": 11438,
+      "key": "silverlight",
+      "rarity": 4,
+      "weapon_class": "WEAPON_SWORD_ONE_HAND",
+      "image_name": "UI_EquipIcon_Sword_Fajian_Awaken"
+    },
     "silvershowerheartstrings": {
       "id": 15513,
       "key": "silvershowerheartstrings",
@@ -1385,6 +1413,13 @@
       "rarity": 5,
       "weapon_class": "WEAPON_CATALYST",
       "image_name": "UI_EquipIcon_Catalyst_Figurines_Awaken"
+    },
+    "starsealededict": {
+      "id": 14525,
+      "key": "starsealededict",
+      "rarity": 5,
+      "weapon_class": "WEAPON_CATALYST",
+      "image_name": "UI_EquipIcon_Catalyst_Chernaya"
     },
     "sturdybone": {
       "id": 11430,
@@ -1666,6 +1701,13 @@
       "weapon_class": "WEAPON_CLAYMORE",
       "image_name": "UI_EquipIcon_Claymore_Tin_Awaken"
     },
+    "whitelakefrostfeather": {
+      "id": 11520,
+      "key": "whitelakefrostfeather",
+      "rarity": 5,
+      "weapon_class": "WEAPON_SWORD_ONE_HAND",
+      "image_name": "UI_EquipIcon_Sword_Swanlake_Awaken"
+    },
     "whitetassel": {
       "id": 13301,
       "key": "whitetassel",
@@ -1686,6 +1728,13 @@
       "rarity": 4,
       "weapon_class": "WEAPON_CATALYST",
       "image_name": "UI_EquipIcon_Catalyst_Outlaw_Awaken"
+    },
+    "wintersheavyheart": {
+      "id": 14437,
+      "key": "wintersheavyheart",
+      "rarity": 4,
+      "weapon_class": "WEAPON_CATALYST",
+      "image_name": "UI_EquipIcon_Catalyst_FrostScepter_Awaken"
     },
     "wolffang": {
       "id": 11424,

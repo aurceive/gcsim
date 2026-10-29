@@ -1,0 +1,8 @@
+use: pipeline
+kind: weapon
+name: starsealededict
+override:
+  id: 14525
+local_weapon:
+  name: Starsealed Edict
+  data: data.textproto

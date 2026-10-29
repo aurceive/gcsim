@@ -33,6 +33,7 @@ var weaponMap = map[string]string{
 	"bladeofatonement":                "UI_EquipIcon_Claymore_GlintstoneClaymore_Awaken",
 	"bloodsoakedruins":                "UI_EquipIcon_Pole_TummaLyhty_Awaken",
 	"bloodtaintedgreatsword":          "UI_EquipIcon_Claymore_Siegfry_Awaken",
+	"breezebornerefrain":              "UI_EquipIcon_Bow_Windtalker_Awaken",
 	"calamityofeshu":                  "UI_EquipIcon_Sword_SacrificialNgombe_Awaken",
 	"calamityqueller":                 "UI_EquipIcon_Pole_Santika_Awaken",
 	"cashflowsupervision":             "UI_EquipIcon_Catalyst_Wheatley_Awaken",
@@ -247,4 +248,10 @@ var weaponMap = map[string]string{
 	"wolffang":                        "UI_EquipIcon_Sword_Boreas_Awaken",
 	"wolfsgravestone":                 "UI_EquipIcon_Claymore_Wolfmound_Awaken",
 	"xiphosmoonlight":                 "UI_EquipIcon_Sword_Pleroma_Awaken",
+	"beyondthechrysalis":              "UI_EquipIcon_Sword_Samosvist_Awaken",
+	"silverlight":                     "UI_EquipIcon_Sword_Fajian_Awaken",
+	"whitelakefrostfeather":           "UI_EquipIcon_Sword_Swanlake_Awaken",
+	"starsealededict":                 "UI_EquipIcon_Catalyst_Chernaya",
+	"newbough":                        "UI_EquipIcon_Sword_SpikedStake_Awaken",
+	"wintersheavyheart":               "UI_EquipIcon_Catalyst_FrostScepter_Awaken",
 }

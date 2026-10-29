@@ -1,0 +1,8 @@
+use: pipeline
+kind: weapon
+name: newbough
+override:
+  id: 11437
+local_weapon:
+  name: New Bough
+  data: data.textproto

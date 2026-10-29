@@ -270,8 +270,16 @@ func (c *Compiled) build(config *Config) error {
 			return err
 		}
 		for lang, loc := range c.Localization {
-			lang := languages[lang]
-			loc.WeaponNames[spec.Model.Key] = spec.ref.NameTextMapHash.Lang(lang)
+			if spec.ref != nil {
+				loc.WeaponNames[spec.Model.Key] = spec.ref.NameTextMapHash.Lang(languages[lang])
+			} else if lang == "English" {
+				loc.WeaponNames[spec.Model.Key] = spec.Name
+			} else if name := config.LocalWeapon.Names[lang]; name != "" {
+				loc.WeaponNames[spec.Model.Key] = name
+			}
+		}
+		if spec.ref == nil {
+			Log(slog.LevelWarn, "using local weapon data for %s", spec.Model.Key)
 		}
 		config.Weapon = spec
 	default:
@@ -451,7 +459,7 @@ func check(ctx context.Context, cmd *cli.Command) error {
 		}
 		if excel.Find(c.Configuration, func(v *Config) bool {
 			if spec := v.Weapon; spec != nil {
-				return spec.ref.Codex() == codex
+				return spec.Model.Id == codex.WeaponId
 			}
 			return false
 		}) == nil {

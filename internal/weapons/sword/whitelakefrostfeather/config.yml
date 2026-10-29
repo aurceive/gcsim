@@ -1,0 +1,18 @@
+use: pipeline
+kind: weapon
+name: whitelakefrostfeather
+override:
+  id: 11520
+local_weapon:
+  name: Whitelake Frostfeather
+  data: data.textproto
+  names:
+    Chinese: 白湖冬羽
+    German: Winterfeder des weißen Sees
+    Japanese: 白銀の湖を舞う翼
+    Korean: 백조의 호수
+    Russian: Морозное перо белого озера
+    Spanish: Pluma Invernal Lagoblanco
+
+shortcuts:
+  - frostfeather

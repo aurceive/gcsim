@@ -39,22 +39,29 @@ func (c *Compiled) ClearRef() {
 }
 
 type Config struct {
-	Path      string           `yaml:"path,omitempty"`
-	Use       string           `yaml:"use,omitempty"`
-	Kind      Kind             `yaml:"kind,omitempty"`
-	Name      string           `yaml:"name,omitempty"`
-	Override  Override         `yaml:"override,omitempty"`
-	Shortcuts []string         `yaml:"shortcuts,omitempty"`
-	Combat    CombatInfo       `yaml:"combat,omitempty"`
-	Talents   []map[string]any `yaml:"talents,omitempty"`
-	Docs      Documentation    `yaml:"docs,omitempty"`
-	Abilities []*Ability       `yaml:"abilities,omitempty"`
+	Path        string           `yaml:"path,omitempty"`
+	Use         string           `yaml:"use,omitempty"`
+	Kind        Kind             `yaml:"kind,omitempty"`
+	Name        string           `yaml:"name,omitempty"`
+	Override    Override         `yaml:"override,omitempty"`
+	LocalWeapon *LocalWeapon     `yaml:"local_weapon,omitempty"`
+	Shortcuts   []string         `yaml:"shortcuts,omitempty"`
+	Combat      CombatInfo       `yaml:"combat,omitempty"`
+	Talents     []map[string]any `yaml:"talents,omitempty"`
+	Docs        Documentation    `yaml:"docs,omitempty"`
+	Abilities   []*Ability       `yaml:"abilities,omitempty"`
 
 	Artifact   *ArtifactSpec    `yaml:"artifact,omitempty"`
 	Character  *CharacterSpec   `yaml:"character,omitempty"`
 	Monster    *MonsterSpec     `yaml:"monster,omitempty"`
 	Weapon     *WeaponSpec      `yaml:"weapon,omitempty"`
 	Attributes []*AttributeSpec `yaml:"attributes,omitempty"`
+}
+
+type LocalWeapon struct {
+	Name  string            `yaml:"name"`
+	Data  string            `yaml:"data"`
+	Names map[string]string `yaml:"names,omitempty"`
 }
 
 func (c *Config) Dir() string {

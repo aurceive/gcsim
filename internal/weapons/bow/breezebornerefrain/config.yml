@@ -1,0 +1,22 @@
+use: pipeline
+kind: weapon
+name: breezebornerefrain
+override:
+  id: 15437
+local_weapon:
+  name: Breezeborne Refrain
+  data: data.textproto
+  names:
+    Chinese: 柔风游弦
+    German: Lüftchen und Saitenspiel
+    Japanese: 風に遊ぶ弦
+    Korean: 산들바람 활
+    Russian: Напевы нежного ветра
+    Spanish: Estribillo del Viento
+
+shortcuts:
+  - breezeborne
+
+docs:
+  issues:
+    - Multiple wielders are assumed to have independent effects, with only the highest active refinement applying.

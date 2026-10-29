@@ -12,6 +12,7 @@ import (
 	"github.com/genshinsim/gcsim/pkg/model"
 	"github.com/shizukayuki/excel-hk4e"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -28,6 +29,34 @@ func (s *WeaponSpec) ClearRef() {
 	}
 }
 
+func buildLocalWeaponSpec(cfg *Config) (*WeaponSpec, error) {
+	local := cfg.LocalWeapon
+	if local.Name == "" || local.Data == "" || cfg.Override.Id == 0 {
+		return nil, fmt.Errorf("local weapon requires a name, data file and override id")
+	}
+	for lang, name := range local.Names {
+		if _, ok := languages[lang]; !ok || lang == "English" || name == "" {
+			return nil, fmt.Errorf("invalid local weapon translation for %q", lang)
+		}
+	}
+	data, err := projectRoot.ReadFile(path.Join(cfg.Dir(), local.Data))
+	if err != nil {
+		return nil, fmt.Errorf("read local weapon data: %w", err)
+	}
+	modelData := &model.WeaponData{}
+	if err := prototext.Unmarshal(data, modelData); err != nil {
+		return nil, fmt.Errorf("parse local weapon data: %w", err)
+	}
+	if modelData.Id != cfg.Override.Id || modelData.Key != cfg.Name || excel.SlugLower(local.Name) != cfg.Name {
+		return nil, fmt.Errorf("local weapon name, key or id does not match config")
+	}
+	if modelData.Rarity == 0 || modelData.ImageName == "" || modelData.BaseStats == nil ||
+		len(modelData.BaseStats.BaseProps) == 0 || len(modelData.BaseStats.PromoData) == 0 {
+		return nil, fmt.Errorf("local weapon data is incomplete")
+	}
+	return &WeaponSpec{Name: local.Name, Model: modelData}, nil
+}
+
 func buildWeaponSpec(cfg *Config) (*WeaponSpec, error) {
 	refs := excel.Filter(excel.WeaponExcelConfigData, func(v *excel.Weapon) bool {
 		if id := cfg.Override.Id; id != 0 {
@@ -35,6 +64,9 @@ func buildWeaponSpec(cfg *Config) (*WeaponSpec, error) {
 		}
 		return v.StoryId != 0 && excel.SlugLower(v.Name()) == cfg.Name
 	})
+	if cfg.LocalWeapon != nil && (len(refs) == 0 || len(refs) == 1 && refs[0].Name() == "") {
+		return buildLocalWeaponSpec(cfg)
+	}
 	if len(refs) != 1 {
 		return nil, fmt.Errorf("query results in refs=%v but we expect 1", len(refs))
 	}

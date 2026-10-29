@@ -1,4 +1,7 @@
 {
+  "breezebornerefrain": [
+    "Multiple wielders are assumed to have independent effects, with only the highest active refinement applying."
+  ],
   "talkingstick": [
     "The passive is not implemented."
   ]

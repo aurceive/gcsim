@@ -1,0 +1,8 @@
+use: pipeline
+kind: weapon
+name: wintersheavyheart
+override:
+  id: 14437
+local_weapon:
+  name: "Winter's Heavy Heart"
+  data: data.textproto

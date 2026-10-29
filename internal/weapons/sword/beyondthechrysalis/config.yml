@@ -1,0 +1,18 @@
+use: pipeline
+kind: weapon
+name: beyondthechrysalis
+override:
+  id: 11522
+local_weapon:
+  name: Beyond the Chrysalis
+  data: data.textproto
+  names:
+    Chinese: 蝶变
+    German: Schmetterlingswandel
+    Japanese: 蝶の羽化
+    Korean: 나비의 우화
+    Russian: За пределами кокона
+    Spanish: Allende la Crisálida
+
+shortcuts:
+  - chrysalis

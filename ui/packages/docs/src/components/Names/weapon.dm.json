@@ -59,6 +59,9 @@
   "bloodtaintedgreatsword": [
     "bloodtainted"
   ],
+  "breezebornerefrain": [
+    "breezeborne"
+  ],
   "calamityofeshu": [
     "eshu"
   ],
@@ -479,5 +482,11 @@
   ],
   "xiphosmoonlight": [
     "xiphos"
+  ],
+  "beyondthechrysalis": [
+    "chrysalis"
+  ],
+  "whitelakefrostfeather": [
+    "frostfeather"
   ]
 }

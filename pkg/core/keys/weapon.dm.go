@@ -287,6 +287,13 @@ const (
 	WolfFang                                      // wolffang
 	WolfsGravestone                               // wolfsgravestone
 	XiphosMoonlight                               // xiphosmoonlight
+	BeyondTheChrysalis                            // beyondthechrysalis
+	SilverLight                                   // silverlight
+	WhitelakeFrostfeather                         // whitelakefrostfeather
+	StarsealedEdict                               // starsealededict
+	NewBough                                      // newbough
+	WintersHeavyHeart                             // wintersheavyheart
+	BreezeborneRefrain                            // breezebornerefrain
 	InvalidWeapon                                 // invalidweapon
 )
 
@@ -536,6 +543,13 @@ var _WeaponNames = [...]string{
 	"wolffang",
 	"wolfsgravestone",
 	"xiphosmoonlight",
+	"beyondthechrysalis",
+	"silverlight",
+	"whitelakefrostfeather",
+	"starsealededict",
+	"newbough",
+	"wintersheavyheart",
+	"breezebornerefrain",
 	"invalidweapon",
 }
 
@@ -785,5 +799,12 @@ var _WeaponValues = [...]Weapon{
 	WolfFang,
 	WolfsGravestone,
 	XiphosMoonlight,
+	BeyondTheChrysalis,
+	SilverLight,
+	WhitelakeFrostfeather,
+	StarsealedEdict,
+	NewBough,
+	WintersHeavyHeart,
+	BreezeborneRefrain,
 	InvalidWeapon,
 }

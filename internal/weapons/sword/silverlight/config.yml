@@ -1,0 +1,15 @@
+use: pipeline
+kind: weapon
+name: silverlight
+override:
+  id: 11438
+local_weapon:
+  name: Silver Light
+  data: data.textproto
+  names:
+    Chinese: 银釭
+    German: Silberlampe
+    Japanese: 銀灯
+    Korean: 은강검
+    Russian: Серебряный свет
+    Spanish: Luz Plateada

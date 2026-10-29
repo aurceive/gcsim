@@ -93,6 +93,11 @@
 			"luminedendro": "Люмин (Дендро)",
 			"aetherpyro": "Итэр (Пиро)",
 			"luminepyro": "Люмин (Пиро)"
+		},
+		"weapon_names": {
+			"newbough": "Новая ветвь",
+			"starsealededict": "Звёздный указ",
+			"wintersheavyheart": "Застывшее сердце зимы"
 		}
 	},
 	"German": {
