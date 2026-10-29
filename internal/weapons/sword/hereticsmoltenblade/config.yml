@@ -1,0 +1,14 @@
+use: pipeline
+kind: weapon
+name: hereticsmoltenblade
+override:
+  id: 11435
+local_weapon:
+  name: Heretic's Molten Blade
+  data: data.textproto
+  names:
+    Russian: Расплавленный клинок еретика
+
+docs:
+  issues:
+    - Coordinate changes and movement events are added together; the same movement reported by both is counted twice.

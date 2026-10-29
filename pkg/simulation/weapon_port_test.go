@@ -50,6 +50,8 @@ func TestPortWeaponRegistrationAndStats(t *testing.T) {
 		char keys.Char
 	}{
 		{keys.BreezeborneRefrain, "breezebornerefrain", 15437, keys.Amber},
+		{keys.HymnOfTheMaelstrom, "hymnofthemaelstrom", 14524, keys.Barbara},
+		{keys.HereticsMoltenBlade, "hereticsmoltenblade", 11435, keys.Albedo},
 		{keys.BeyondTheChrysalis, "beyondthechrysalis", 11522, keys.Albedo},
 		{keys.NewBough, "newbough", 11437, keys.Albedo},
 		{keys.SilverLight, "silverlight", 11438, keys.Albedo},

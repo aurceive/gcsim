@@ -2,6 +2,14 @@
   "breezebornerefrain": [
     "Multiple wielders are assumed to have independent effects, with only the highest active refinement applying."
   ],
+  "hereticsmoltenblade": [
+    "Coordinate changes and movement events are added together; the same movement reported by both is counted twice."
+  ],
+  "hymnofthemaelstrom": [
+    "A party-wide heal is assumed to generate one stack; separate heals generate separate stacks.",
+    "Each stack is assumed to have its own ATK cap, applied before the reaction boost.",
+    "Multiple wielders are assumed to have independent effects, with only the highest active ATK bonus applying."
+  ],
   "talkingstick": [
     "The passive is not implemented."
   ]

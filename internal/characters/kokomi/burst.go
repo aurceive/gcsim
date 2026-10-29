@@ -125,6 +125,7 @@ func (c *char) makeBurstHealCB() info.AttackCBFunc {
 		done = true
 
 		heal := burstHealPct[c.TalentLvlBurst()]*c.MaxHP() + burstHealFlat[c.TalentLvlBurst()]
+		group := &info.HealGroup{}
 		for _, char := range c.Core.Player.Chars() {
 			src := heal
 
@@ -140,6 +141,7 @@ func (c *char) makeBurstHealCB() info.AttackCBFunc {
 			c.Core.Player.Heal(info.HealInfo{
 				Caller:  c.Index(),
 				Target:  char.Index(),
+				Group:   group,
 				Message: "Ceremonial Garment",
 				Src:     src,
 				Bonus:   c.Stat(attributes.Heal),

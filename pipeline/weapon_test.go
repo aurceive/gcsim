@@ -32,6 +32,8 @@ func TestLocalWeaponFallback(t *testing.T) {
 		weapon          keys.Weapon
 	}{
 		{"internal/weapons/bow/breezebornerefrain/config.yml", "breezebornerefrain", "Breezeborne Refrain", "Напевы нежного ветра", 15437, keys.BreezeborneRefrain},
+		{"internal/weapons/catalyst/hymnofthemaelstrom/config.yml", "hymnofthemaelstrom", "Hymn of the Maelstrom", "Ода водоворота", 14524, keys.HymnOfTheMaelstrom},
+		{"internal/weapons/sword/hereticsmoltenblade/config.yml", "hereticsmoltenblade", "Heretic's Molten Blade", "Расплавленный клинок еретика", 11435, keys.HereticsMoltenBlade},
 		{"internal/weapons/catalyst/starsealededict/config.yml", "starsealededict", "Starsealed Edict", "", 14525, keys.StarsealedEdict},
 		{"internal/weapons/catalyst/wintersheavyheart/config.yml", "wintersheavyheart", "Winter's Heavy Heart", "", 14437, keys.WintersHeavyHeart},
 		{"internal/weapons/sword/newbough/config.yml", "newbough", "New Bough", "", 11437, keys.NewBough},

@@ -1,0 +1,19 @@
+use: pipeline
+kind: weapon
+name: hymnofthemaelstrom
+override:
+  id: 14524
+local_weapon:
+  name: Hymn of the Maelstrom
+  data: data.textproto
+  names:
+    Russian: Ода водоворота
+
+shortcuts:
+  - maelstrom
+
+docs:
+  issues:
+    - A party-wide heal is assumed to generate one stack; separate heals generate separate stacks.
+    - Each stack is assumed to have its own ATK cap, applied before the reaction boost.
+    - Multiple wielders are assumed to have independent effects, with only the highest active ATK bonus applying.

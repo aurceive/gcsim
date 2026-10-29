@@ -294,6 +294,8 @@ const (
 	NewBough                                      // newbough
 	WintersHeavyHeart                             // wintersheavyheart
 	BreezeborneRefrain                            // breezebornerefrain
+	HereticsMoltenBlade                           // hereticsmoltenblade
+	HymnOfTheMaelstrom                            // hymnofthemaelstrom
 	InvalidWeapon                                 // invalidweapon
 )
 
@@ -550,6 +552,8 @@ var _WeaponNames = [...]string{
 	"newbough",
 	"wintersheavyheart",
 	"breezebornerefrain",
+	"hereticsmoltenblade",
+	"hymnofthemaelstrom",
 	"invalidweapon",
 }
 
@@ -806,5 +810,7 @@ var _WeaponValues = [...]Weapon{
 	NewBough,
 	WintersHeavyHeart,
 	BreezeborneRefrain,
+	HereticsMoltenBlade,
+	HymnOfTheMaelstrom,
 	InvalidWeapon,
 }

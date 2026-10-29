@@ -7649,6 +7649,50 @@ var WeaponMap = map[keys.Weapon]*model.WeaponData{
 			},
 		},
 	},
+	keys.HereticsMoltenBlade: {
+		Id:          11435,
+		Key:         "hereticsmoltenblade",
+		Rarity:      4,
+		WeaponClass: model.WeaponType_WEAPON_SWORD_ONE_HAND,
+		ImageName:   "UI_EquipIcon_Sword_SerpentTooth_Awaken",
+		BaseStats: &model.WeaponStatsData{
+			BaseProps: []*model.WeaponProp{
+				{PropType: model.FightPropType_FIGHT_PROP_BASE_ATTACK, InitialValue: 42.401, Curve: model.GrowCurveType_GROW_CURVE_ATTACK_201},
+				{PropType: model.FightPropType_FIGHT_PROP_CRITICAL, InitialValue: 0.06, Curve: model.GrowCurveType_GROW_CURVE_CRITICAL_201},
+			},
+			PromoData: []*model.PromotionData{
+				{MaxLevel: 20},
+				{MaxLevel: 40, AddProps: []*model.PromotionAddProp{{PropType: model.FightPropType_FIGHT_PROP_BASE_ATTACK, Value: 25.9}}},
+				{MaxLevel: 50, AddProps: []*model.PromotionAddProp{{PropType: model.FightPropType_FIGHT_PROP_BASE_ATTACK, Value: 51.9}}},
+				{MaxLevel: 60, AddProps: []*model.PromotionAddProp{{PropType: model.FightPropType_FIGHT_PROP_BASE_ATTACK, Value: 77.8}}},
+				{MaxLevel: 70, AddProps: []*model.PromotionAddProp{{PropType: model.FightPropType_FIGHT_PROP_BASE_ATTACK, Value: 103.7}}},
+				{MaxLevel: 80, AddProps: []*model.PromotionAddProp{{PropType: model.FightPropType_FIGHT_PROP_BASE_ATTACK, Value: 129.7}}},
+				{MaxLevel: 90, AddProps: []*model.PromotionAddProp{{PropType: model.FightPropType_FIGHT_PROP_BASE_ATTACK, Value: 155.6}}},
+			},
+		},
+	},
+	keys.HymnOfTheMaelstrom: {
+		Id:          14524,
+		Key:         "hymnofthemaelstrom",
+		Rarity:      5,
+		WeaponClass: model.WeaponType_WEAPON_CATALYST,
+		ImageName:   "UI_EquipIcon_Catalyst_Bludnye_Awaken",
+		BaseStats: &model.WeaponStatsData{
+			BaseProps: []*model.WeaponProp{
+				{PropType: model.FightPropType_FIGHT_PROP_BASE_ATTACK, InitialValue: 44.336, Curve: model.GrowCurveType_GROW_CURVE_ATTACK_304},
+				{PropType: model.FightPropType_FIGHT_PROP_HP_PERCENT, InitialValue: 0.144, Curve: model.GrowCurveType_GROW_CURVE_CRITICAL_301},
+			},
+			PromoData: []*model.PromotionData{
+				{MaxLevel: 20},
+				{MaxLevel: 40, AddProps: []*model.PromotionAddProp{{PropType: model.FightPropType_FIGHT_PROP_BASE_ATTACK, Value: 31.1}}},
+				{MaxLevel: 50, AddProps: []*model.PromotionAddProp{{PropType: model.FightPropType_FIGHT_PROP_BASE_ATTACK, Value: 62.2}}},
+				{MaxLevel: 60, AddProps: []*model.PromotionAddProp{{PropType: model.FightPropType_FIGHT_PROP_BASE_ATTACK, Value: 93.4}}},
+				{MaxLevel: 70, AddProps: []*model.PromotionAddProp{{PropType: model.FightPropType_FIGHT_PROP_BASE_ATTACK, Value: 124.5}}},
+				{MaxLevel: 80, AddProps: []*model.PromotionAddProp{{PropType: model.FightPropType_FIGHT_PROP_BASE_ATTACK, Value: 155.6}}},
+				{MaxLevel: 90, AddProps: []*model.PromotionAddProp{{PropType: model.FightPropType_FIGHT_PROP_BASE_ATTACK, Value: 186.7}}},
+			},
+		},
+	},
 	keys.HuntersBow: {
 		Id:          15101,
 		Key:         "huntersbow",
